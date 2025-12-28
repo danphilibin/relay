@@ -1,0 +1,20 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "workflows-starter",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-21",
+  "observability": {
+    "enabled": true,
+  },
+  "workflows": [
+    {
+      "name": "workflow-workflows-starter",
+      "binding": "RELAY_WORKFLOW",
+      "class_name": "RelayWorkflow",
+    },
+  ],
+}

@@ -1,0 +1,16 @@
+{
+	"name": "workflows-starter",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"start": "wrangler dev",
+		"dev": "wrangler dev",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"prettier": "^3.7.4",
+		"typescript": "^5.0.4",
+		"wrangler": "^4.56.0"
+	}
+}
