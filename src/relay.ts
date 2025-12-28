@@ -10,7 +10,7 @@ import {
 } from "./stream-message";
 
 /**
- * Extended WorkflowEntrypoint that provides relay.write() functionality
+ * Extended WorkflowEntrypoint that provides Relay functionality
  */
 export class RelayWorkflowEntrypoint<Env, Params> extends WorkflowEntrypoint<
   Env,
@@ -44,7 +44,7 @@ export class RelayWorkflowEntrypoint<Env, Params> extends WorkflowEntrypoint<
   }
 
   relay = {
-    write: async (text: string): Promise<void> => {
+    output: async (text: string): Promise<void> => {
       await this.sendMessage(createLogMessage(text));
     },
 

@@ -21,7 +21,7 @@ export class RelayWorkflow extends RelayWorkflowEntrypoint<Env, Params> {
     const handler = workflows[type];
 
     if (!handler) {
-      await this.relay.write(`Error: Unknown workflow type: ${type}`);
+      await this.relay.output(`Error: Unknown workflow type: ${type}`);
       throw new Error(`Unknown workflow type: ${type}`);
     }
 
