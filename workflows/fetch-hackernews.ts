@@ -1,6 +1,6 @@
-import { createAction } from "../src/sdk/types";
+import { createWorkflow } from "../src/sdk/types";
 
-export const fetchHackernews = createAction(async ({ step, relay }) => {
+export const fetchHackernews = createWorkflow(async ({ step, relay }) => {
   await relay.output("Fetching top Hacker News posts...");
 
   const topStoryIds = await step.do("fetch top stories", async () => {

@@ -9,10 +9,10 @@ export type WorkflowContext = {
   params: any;
 };
 
-export type ActionHandler = (ctx: WorkflowContext) => Promise<void>;
+export type WorkflowHandler = (ctx: WorkflowContext) => Promise<void>;
 
-export function createAction(fn: ActionHandler): ActionHandler {
+export function createWorkflow(fn: WorkflowHandler): WorkflowHandler {
   return fn;
 }
 
-export type ActionRegistry = Record<string, ActionHandler>;
+export type WorkflowRegistry = Record<string, WorkflowHandler>;
