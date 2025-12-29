@@ -21,9 +21,14 @@ export default function Workflow() {
   }, [messages]);
 
   useEffect(() => {
-    if (runId) {
-      connectToStream(runId);
-    }
+    if (!runId) return;
+
+    const abortController = new AbortController();
+    connectToStream(runId, abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
   }, [runId]);
 
   async function submitInput(eventName: string, workflowId: string) {
@@ -55,26 +60,41 @@ export default function Workflow() {
     }
   }
 
-  async function connectToStream(workflowId: string) {
+  async function connectToStream(workflowId: string, signal: AbortSignal) {
     setMessages([]);
     setStatus("Connecting to stream...");
 
     try {
-      const streamResponse = await fetch(`/stream/${workflowId}`);
+      const streamResponse = await fetch(`/stream/${workflowId}`, { signal });
       const reader = streamResponse.body?.getReader();
       if (!reader) throw new Error("No reader available");
 
       const decoder = new TextDecoder();
       setStatus("Connected to stream. Receiving messages...");
 
+      // Buffer for incomplete lines split across chunks
+      let buffer = "";
+
       while (true) {
+        if (signal.aborted) {
+          reader.cancel();
+          break;
+        }
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim());
+        // Append new chunk to buffer
+        buffer += decoder.decode(value, { stream: true });
+
+        // Split by newlines and process complete lines
+        const lines = buffer.split("\n");
+
+        // Keep the last element in buffer (might be incomplete)
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
+          if (!line.trim()) continue;
+
           let message;
           try {
             message = JSON.parse(line);
@@ -125,6 +145,10 @@ export default function Workflow() {
 
       setStatus("Stream complete.");
     } catch (error) {
+      if ((error as Error).name === "AbortError") {
+        // Stream was intentionally aborted, ignore
+        return;
+      }
       setStatus(`Error: ${(error as Error).message}`);
     }
   }
