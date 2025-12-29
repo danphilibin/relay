@@ -9,7 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:8787 in your browser, select a workflow, and click "Start Workflow" to see the stream in G.
+Open http://localhost:8787 in your browser, select a workflow, and click "Start Workflow".
 
 ## How it works
 
