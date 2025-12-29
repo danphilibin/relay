@@ -10,6 +10,9 @@
   "observability": {
     "enabled": true,
   },
+  "assets": {
+    "directory": "build/client",
+  },
   "workflows": [
     {
       "name": "relay-workflow-prototype",
@@ -29,13 +32,6 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["RelayDurableObject"],
-    },
-  ],
-  "rules": [
-    {
-      "type": "Text",
-      "globs": ["**/*.html"],
-      "fallthrough": true,
     },
   ],
 }

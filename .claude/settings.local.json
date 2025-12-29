@@ -5,7 +5,9 @@
       "Bash(pnpm dev)",
       "Bash(curl:*)",
       "Bash(pnpm run typecheck:*)",
-      "WebFetch(domain:developers.cloudflare.com)"
+      "WebFetch(domain:developers.cloudflare.com)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run build:*)"
     ]
   }
 }

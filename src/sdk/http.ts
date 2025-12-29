@@ -1,18 +1,5 @@
-import html from "../index.html";
-
 export const httpHandler = async (req: Request, env: Env) => {
   const url = new URL(req.url);
-
-  if (url.pathname.startsWith("/favicon")) {
-    return Response.json({}, { status: 404 });
-  }
-
-  // GET / - serve the frontend
-  if (url.pathname === "/") {
-    return new Response(html, {
-      headers: { "Content-Type": "text/html" },
-    });
-  }
 
   // GET /stream/:id - connect to workflow stream
   const streamMatch = url.pathname.match(/^\/stream\/(.+)$/);
@@ -61,6 +48,6 @@ export const httpHandler = async (req: Request, env: Env) => {
     return Response.json({ success: true });
   }
 
-  // Default: return OK for any other requests
-  return new Response("OK", { status: 200 });
+  // For all other routes, return null to let assets be served
+  return null;
 };

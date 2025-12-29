@@ -1,10 +1,14 @@
 import {
   WorkflowEntrypoint,
-  WorkflowEvent,
+  type WorkflowEvent,
   WorkflowStep,
 } from "cloudflare:workers";
 import { workflows } from "../registry";
-import { createInputRequest, createLogMessage, StreamMessage } from "./stream";
+import {
+  createInputRequest,
+  createLogMessage,
+  type StreamMessage,
+} from "./stream";
 
 // Params passed to workflows
 type WorkflowParams = {
