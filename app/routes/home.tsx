@@ -1,33 +1,21 @@
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import type { Route } from "./+types/home";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Workflow Stream Demo" },
-    { name: "description", content: "Workflow Stream Demo" },
+    { title: "Workflows" },
+    { name: "description", content: "Select a workflow to run" },
   ];
 }
 
 export default function Home() {
+  const navigate = useNavigate();
   const [workflows, setWorkflows] = useState<string[]>([]);
-  const [selectedWorkflow, setSelectedWorkflow] = useState("");
-  const [status, setStatus] = useState("");
-  const [messages, setMessages] = useState<JSX.Element[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentWorkflowIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const [creatingWorkflow, setCreatingWorkflow] = useState<string | null>(null);
 
   useEffect(() => {
     loadWorkflows();
-    const urlParams = new URLSearchParams(window.location.search);
-    const workflowId = urlParams.get("workflowId");
-    if (workflowId) {
-      connectToStream(workflowId);
-    }
   }, []);
 
   async function loadWorkflows() {
@@ -35,196 +23,62 @@ export default function Home() {
       const response = await fetch("/workflows");
       const data = (await response.json()) as { workflows: string[] };
       setWorkflows(data.workflows);
-      if (data.workflows.length > 0) {
-        setSelectedWorkflow(data.workflows[0]);
-      }
     } catch (error) {
       console.error("Error loading workflows:", error);
     }
   }
 
-  async function submitInput(eventName: string, workflowId: string) {
-    const inputEl = document.getElementById(
-      `input-${eventName}`,
-    ) as HTMLInputElement;
-    const value = inputEl?.value;
-
-    if (!value) {
-      alert("Please enter a value");
-      return;
-    }
-
-    inputEl.disabled = true;
-    const button = inputEl.parentElement?.querySelector("button");
-    if (button) {
-      (button as HTMLButtonElement).disabled = true;
-    }
-
-    try {
-      await fetch(`/workflow/${workflowId}/event/${eventName}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ value }),
-      });
-    } catch (error) {
-      console.error("Failed to submit input:", error);
-      alert("Failed to submit input");
-    }
-  }
-
-  async function connectToStream(workflowId: string) {
-    setIsConnected(true);
-    setMessages([]);
-    setStatus("Connecting to stream...");
-    currentWorkflowIdRef.current = workflowId;
-
-    const url = new URL(window.location.href);
-    url.searchParams.set("workflowId", workflowId);
-    window.history.pushState({}, "", url);
-
-    try {
-      const streamResponse = await fetch(`/stream/${workflowId}`);
-      const reader = streamResponse.body?.getReader();
-      if (!reader) throw new Error("No reader available");
-
-      const decoder = new TextDecoder();
-      setStatus("Connected to stream. Receiving messages...");
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim());
-
-        for (const line of lines) {
-          let message;
-          try {
-            message = JSON.parse(line);
-          } catch (e) {
-            console.error("Failed to parse JSON:", line, e);
-            continue;
-          }
-
-          try {
-            if (message.type === "log") {
-              setMessages((prev) => [
-                ...prev,
-                <div key={prev.length} className="my-1">
-                  {message.text}
-                </div>,
-              ]);
-            } else if (message.type === "input_request") {
-              setMessages((prev) => [
-                ...prev,
-                <div key={prev.length} className="my-2 p-2 bg-blue-50 rounded">
-                  <div className="mb-1">{message.prompt}</div>
-                  <input
-                    type="text"
-                    id={`input-${message.eventName}`}
-                    className="px-2 py-1 border rounded w-48"
-                  />
-                  <button
-                    onClick={() => submitInput(message.eventName, workflowId)}
-                    className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Submit
-                  </button>
-                </div>,
-              ]);
-            } else if (message.type === "input_received") {
-              setMessages((prev) => [
-                ...prev,
-                <div key={prev.length} className="my-1 text-gray-600">
-                  &gt; {message.value}
-                </div>,
-              ]);
-            }
-          } catch (e) {
-            console.error("Failed to handle message:", message, e);
-          }
-        }
-      }
-
-      setStatus("Stream complete.");
-    } catch (error) {
-      setStatus(`Error: ${(error as Error).message}`);
-    } finally {
-      setIsConnected(false);
-    }
-  }
-
-  async function startWorkflow() {
-    if (!selectedWorkflow) {
-      setStatus("Please select a workflow type");
-      return;
-    }
-
-    setStatus(`Creating ${selectedWorkflow} workflow...`);
+  async function startWorkflow(workflowName: string) {
+    setCreatingWorkflow(workflowName);
 
     try {
       const response = await fetch("/workflow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: selectedWorkflow, params: {} }),
+        body: JSON.stringify({ type: workflowName, params: {} }),
       });
       const data = (await response.json()) as { id: string };
-      await connectToStream(data.id);
+      navigate(`/${workflowName}/${data.id}`);
     } catch (error) {
-      setStatus(`Error: ${(error as Error).message}`);
+      console.error("Error creating workflow:", error);
+      setCreatingWorkflow(null);
     }
   }
 
-  function reset() {
-    window.location.href = "/";
+  function formatWorkflowName(name: string): string {
+    return name
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">Workflow Stream Demo</h1>
+    <div className="max-w-5xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-8">Workflows</h1>
 
-      <div className="mb-4 flex gap-2">
-        <label htmlFor="workflowType" className="self-center">
-          Workflow:
-        </label>
-        <select
-          id="workflowType"
-          value={selectedWorkflow}
-          onChange={(e) => setSelectedWorkflow(e.target.value)}
-          disabled={isConnected}
-          className="px-3 py-2 border rounded disabled:opacity-50"
-        >
-          {workflows.length === 0 ? (
-            <option>Loading...</option>
-          ) : (
-            workflows.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))
-          )}
-        </select>
-        <button
-          onClick={startWorkflow}
-          disabled={isConnected}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Start Workflow
-        </button>
-        <button
-          onClick={reset}
-          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-        >
-          Reset
-        </button>
-      </div>
-
-      {status && <div className="mb-4 text-gray-600">{status}</div>}
-
-      <div className="bg-gray-50 rounded p-4 min-h-[200px] font-mono text-sm">
-        {messages}
-        <div ref={messagesEndRef} />
-      </div>
+      {workflows.length === 0 ? (
+        <div className="text-gray-500">Loading workflows...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {workflows.map((workflow) => (
+            <button
+              key={workflow}
+              onClick={() => startWorkflow(workflow)}
+              disabled={creatingWorkflow === workflow}
+              className="p-6 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <h2 className="text-xl font-semibold mb-2">
+                {formatWorkflowName(workflow)}
+              </h2>
+              <p className="text-gray-500 text-sm">
+                {creatingWorkflow === workflow
+                  ? "Starting..."
+                  : "Click to start"}
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

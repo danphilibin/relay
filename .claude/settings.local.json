@@ -7,7 +7,8 @@
       "Bash(pnpm run typecheck:*)",
       "WebFetch(domain:developers.cloudflare.com)",
       "Bash(pnpm install:*)",
-      "Bash(pnpm run build:*)"
+      "Bash(pnpm run build:*)",
+      "Bash(timeout 60 pnpm run typecheck:*)"
     ]
   }
 }
