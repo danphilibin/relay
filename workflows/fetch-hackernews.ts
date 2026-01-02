@@ -1,6 +1,6 @@
-import { createWorkflow } from "../src/sdk/types";
+import type { WorkflowContext } from "../src/sdk/workflow";
 
-export const fetchHackernews = createWorkflow(async ({ step, output }) => {
+export const fetchHackernews = async ({ step, output }: WorkflowContext) => {
   await output("Fetching top Hacker News posts...");
   await output("Requesting story IDs from HN API...");
 
@@ -33,4 +33,4 @@ export const fetchHackernews = createWorkflow(async ({ step, output }) => {
   }
 
   await output("Hacker News fetch complete!");
-});
+};

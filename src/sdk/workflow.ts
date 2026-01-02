@@ -16,6 +16,21 @@ type WorkflowParams = {
   params?: any;
 };
 
+/**
+ * Context passed to workflow handlers.
+ * Use `input` and `output` to interact with the user.
+ */
+export type WorkflowContext = {
+  step: WorkflowStep;
+  input: RelayWorkflow["input"];
+  output: RelayWorkflow["output"];
+  params: any;
+};
+
+export type WorkflowHandler = (ctx: WorkflowContext) => Promise<void>;
+
+export type WorkflowRegistry = Record<string, WorkflowHandler>;
+
 export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   protected stream: DurableObjectStub | null = null;
   protected step: WorkflowStep | null = null;

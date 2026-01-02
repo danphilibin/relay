@@ -1,6 +1,6 @@
-import { createWorkflow } from "../src/sdk/types";
+import type { WorkflowContext } from "../src/sdk/workflow";
 
-export const processFiles = createWorkflow(async ({ step, output }) => {
+export const processFiles = async ({ step, output }: WorkflowContext) => {
   await output("Workflow started");
   await output("Fetching files from API...");
 
@@ -31,4 +31,4 @@ export const processFiles = createWorkflow(async ({ step, output }) => {
   }
 
   await output("Workflow completed successfully!");
-});
+};
