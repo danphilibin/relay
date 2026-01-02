@@ -1,6 +1,6 @@
-import type { WorkflowContext } from "../src/sdk/workflow";
+import type { RelayContext } from "../src/sdk/workflow";
 
-export const processFiles = async ({ step, output }: WorkflowContext) => {
+export const processFiles = async ({ step, output }: RelayContext) => {
   await output("Workflow started");
   await output("Fetching files from API...");
 
