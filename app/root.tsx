@@ -2,10 +2,12 @@ import {
   isRouteErrorResponse,
   Links,
   Meta,
+  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { useEffect, useState } from "react";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -23,6 +25,56 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+function Sidebar() {
+  const [workflows, setWorkflows] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/workflows")
+      .then((res) => res.json() as Promise<{ workflows: string[] }>)
+      .then((data) => setWorkflows(data.workflows))
+      .catch((err) => console.error("Failed to load workflows:", err));
+  }, []);
+
+  function formatWorkflowName(name: string): string {
+    return name
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
+  return (
+    <div className="w-[260px] bg-[#0a0a0a] border-r border-[#222] flex flex-col">
+      <div className="p-5 border-b border-[#222] flex items-center justify-between">
+        <NavLink
+          to="/"
+          className="text-base font-semibold tracking-tight flex items-center gap-2"
+        >
+          Workflows
+        </NavLink>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3">
+        {workflows.map((workflow) => (
+          <NavLink
+            key={workflow}
+            to={`/${workflow}`}
+            className={({ isActive }) =>
+              `block w-full text-left px-3.5 py-3 rounded-md mb-1 transition-colors ${
+                isActive
+                  ? "bg-[#1a1a1a] text-white"
+                  : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
+              }`
+            }
+          >
+            <div className="font-medium text-sm">
+              {formatWorkflowName(workflow)}
+            </div>
+          </NavLink>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -33,7 +85,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <div className="flex h-screen bg-black text-[#fafafa] font-sans">
+          <Sidebar />
+          {children}
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -62,14 +117,16 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
+    <main className="flex-1 flex items-center justify-center text-[#666]">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-2">{message}</h1>
+        <p>{details}</p>
+        {stack && (
+          <pre className="mt-4 p-4 bg-[#111] rounded-lg text-left text-sm overflow-x-auto max-w-xl">
+            <code>{stack}</code>
+          </pre>
+        )}
+      </div>
     </main>
   );
 }

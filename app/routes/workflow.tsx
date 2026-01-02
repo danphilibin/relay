@@ -4,32 +4,70 @@ import type { Route } from "./+types/workflow";
 
 export function meta({ params }: Route.MetaArgs) {
   return [
-    { title: `${params.workflowName} - Workflow Stream` },
+    { title: `${params.workflowName} - Workflow` },
     { name: "description", content: "Workflow Stream" },
   ];
 }
 
+type WorkflowStatus = "idle" | "connecting" | "streaming" | "complete" | "error";
+
 export default function Workflow() {
   const { workflowName, runId } = useParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<WorkflowStatus>("idle");
   const [messages, setMessages] = useState<JSX.Element[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   useEffect(() => {
-    if (!runId) return;
-
     const abortController = new AbortController();
-    connectToStream(runId, abortController.signal);
+
+    async function initWorkflow() {
+      setMessages([]);
+      setStatus("connecting");
+
+      try {
+        let currentRunId = runId;
+
+        // Create new run if no runId
+        if (!currentRunId) {
+          const response = await fetch("/workflow", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: workflowName, params: {} }),
+            signal: abortController.signal,
+          });
+          const data = (await response.json()) as { id: string };
+          currentRunId = data.id;
+          navigate(`/${workflowName}/${currentRunId}`, { replace: true });
+        }
+
+        await connectToStream(currentRunId, abortController.signal);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setStatus("error");
+          setMessages([
+            <div key="error" className="py-3 text-base text-[#666] flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Error: {(error as Error).message}
+            </div>,
+          ]);
+        }
+      }
+    }
+
+    initWorkflow();
 
     return () => {
       abortController.abort();
     };
-  }, [runId]);
+  }, [workflowName, runId, navigate]);
 
   async function submitInput(eventName: string, workflowId: string) {
     const inputEl = document.getElementById(
@@ -38,7 +76,6 @@ export default function Workflow() {
     const value = inputEl?.value;
 
     if (!value) {
-      alert("Please enter a value");
       return;
     }
 
@@ -56,23 +93,18 @@ export default function Workflow() {
       });
     } catch (error) {
       console.error("Failed to submit input:", error);
-      alert("Failed to submit input");
     }
   }
 
   async function connectToStream(workflowId: string, signal: AbortSignal) {
-    setMessages([]);
-    setStatus("Connecting to stream...");
-
     try {
       const streamResponse = await fetch(`/stream/${workflowId}`, { signal });
       const reader = streamResponse.body?.getReader();
       if (!reader) throw new Error("No reader available");
 
       const decoder = new TextDecoder();
-      setStatus("Connected to stream. Receiving messages...");
+      setStatus("streaming");
 
-      // Buffer for incomplete lines split across chunks
       let buffer = "";
 
       while (true) {
@@ -83,13 +115,8 @@ export default function Workflow() {
         const { done, value } = await reader.read();
         if (done) break;
 
-        // Append new chunk to buffer
         buffer += decoder.decode(value, { stream: true });
-
-        // Split by newlines and process complete lines
         const lines = buffer.split("\n");
-
-        // Keep the last element in buffer (might be incomplete)
         buffer = lines.pop() || "";
 
         for (const line of lines) {
@@ -107,42 +134,51 @@ export default function Workflow() {
             if (message.type === "log") {
               setMessages((prev) => [
                 ...prev,
-                <div key={prev.length} className="my-1">
+                <div key={prev.length} className="py-3 text-base leading-relaxed text-[#888]">
                   {message.text}
                 </div>,
               ]);
             } else if (message.type === "input_request") {
               setMessages((prev) => [
                 ...prev,
-                <div key={prev.length} className="my-3 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {message.prompt}
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      id={`input-${message.eventName}`}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          submitInput(message.eventName, workflowId);
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => submitInput(message.eventName, workflowId)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                    >
-                      Submit
-                    </button>
+                <div
+                  key={prev.length}
+                  className="my-4 p-5 rounded-xl border bg-[#111] border-[#222]"
+                >
+                  <div className="flex flex-col gap-4">
+                    <label className="flex flex-col gap-2">
+                      <span className="text-base font-medium text-[#fafafa]">
+                        {message.prompt}
+                      </span>
+                      <input
+                        type="text"
+                        id={`input-${message.eventName}`}
+                        data-1p-ignore
+                        placeholder="Type here..."
+                        className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            submitInput(message.eventName, workflowId);
+                          }
+                        }}
+                      />
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => submitInput(message.eventName, workflowId)}
+                        className="px-3.5 py-2 text-[15px] font-medium bg-white text-black rounded-md hover:opacity-90 active:scale-[0.98] disabled:bg-[#333] disabled:text-[#666] disabled:cursor-default transition-all"
+                      >
+                        Continue
+                      </button>
+                    </div>
                   </div>
                 </div>,
               ]);
             } else if (message.type === "input_received") {
               setMessages((prev) => [
                 ...prev,
-                <div key={prev.length} className="my-1 text-gray-600">
-                  &gt; {message.value}
+                <div key={prev.length} className="py-3 text-base leading-relaxed text-[#888]">
+                  <span className="text-[#666]">&gt;</span> {message.value}
                 </div>,
               ]);
             }
@@ -152,13 +188,12 @@ export default function Workflow() {
         }
       }
 
-      setStatus("Stream complete.");
+      setStatus("complete");
     } catch (error) {
       if ((error as Error).name === "AbortError") {
-        // Stream was intentionally aborted, ignore
         return;
       }
-      setStatus(`Error: ${(error as Error).message}`);
+      throw error;
     }
   }
 
@@ -171,62 +206,44 @@ export default function Workflow() {
   }
 
   async function startNewRun() {
-    try {
-      const response = await fetch("/workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: workflowName }),
-      });
-      const data = await response.json();
-      if (data.id) {
-        navigate(`/${workflowName}/${data.id}`);
-      }
-    } catch (error) {
-      console.error("Failed to start new workflow:", error);
-    }
+    navigate(`/${workflowName}`);
   }
 
-  const isLoading = status === "Connecting to stream..." || status === "Connected to stream. Receiving messages...";
-  const hasError = status.startsWith("Error:");
-  const isComplete = status === "Stream complete.";
-
   return (
-    <div className="max-w-3xl mx-auto p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <button
-            onClick={() => navigate("/")}
-            className="text-blue-500 hover:text-blue-600 text-sm mb-2 flex items-center gap-1"
-          >
-            ← Back to workflows
-          </button>
-          <h1 className="text-2xl font-bold">
-            {formatWorkflowName(workflowName)}
-          </h1>
-        </div>
-        <button
-          onClick={startNewRun}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          New Run
-        </button>
-      </div>
-
-      <div className="bg-gray-50 rounded p-4 min-h-[400px] font-mono text-sm">
-        {isLoading && messages.length === 0 && (
-          <div className="flex items-center gap-2 text-gray-500">
-            <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full"></div>
-            Waiting for messages...
+    <div className="flex h-full w-full">
+      <div ref={containerRef} className="flex-1 overflow-y-auto">
+        <div className="max-w-[640px] p-8">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-[#fafafa]">
+              {formatWorkflowName(workflowName)}
+            </h1>
+            <button
+              onClick={startNewRun}
+              className="px-3 py-1.5 text-sm font-medium text-[#888] border border-[#333] rounded-md hover:bg-[#1a1a1a] hover:text-white transition-colors"
+            >
+              New Run
+            </button>
           </div>
-        )}
-        {hasError && (
-          <div className="text-red-500">{status}</div>
-        )}
-        {isComplete && messages.length === 0 && (
-          <div className="text-gray-500">No messages received.</div>
-        )}
-        {messages}
-        <div ref={messagesEndRef} />
+
+          {/* Connecting state */}
+          {status === "connecting" && (
+            <div className="py-3 text-base text-[#666] flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#666] animate-pulse-dot" />
+              Connecting...
+            </div>
+          )}
+
+          {/* Messages */}
+          {messages}
+
+          {/* Complete state with no messages */}
+          {status === "complete" && messages.length === 0 && (
+            <div className="py-3 text-base text-[#666]">
+              No messages received.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
