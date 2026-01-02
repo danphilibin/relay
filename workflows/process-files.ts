@@ -1,8 +1,8 @@
 import { createWorkflow } from "../src/sdk/types";
 
-export const processFiles = createWorkflow(async ({ step, relay }) => {
-  await relay.output("Workflow started");
-  await relay.output("Fetching files from API...");
+export const processFiles = createWorkflow(async ({ step, output }) => {
+  await output("Workflow started");
+  await output("Fetching files from API...");
 
   const files = await step.do("fetch files", async () => {
     return [
@@ -17,18 +17,18 @@ export const processFiles = createWorkflow(async ({ step, relay }) => {
     ];
   });
 
-  await relay.output(`Found ${files.length} files`);
+  await output(`Found ${files.length} files`);
   await step.sleep("pause", "3 seconds");
-  await relay.output("Starting file processing...");
+  await output("Starting file processing...");
 
   for (let i = 0; i < files.length; i++) {
     await step.do(`process file ${i}`, async () => {
       // Simulate processing time
       await new Promise((resolve) => setTimeout(resolve, 500));
     });
-    await relay.output(`Processing ${files[i]}...`);
-    await relay.output(`✓ Completed ${files[i]}`);
+    await output(`Processing ${files[i]}...`);
+    await output(`✓ Completed ${files[i]}`);
   }
 
-  await relay.output("Workflow completed successfully!");
+  await output("Workflow completed successfully!");
 });

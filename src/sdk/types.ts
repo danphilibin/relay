@@ -2,10 +2,8 @@ import { WorkflowStep } from "cloudflare:workers";
 
 export type WorkflowContext = {
   step: WorkflowStep;
-  relay: {
-    input: (prompt: string) => Promise<string>;
-    output: (msg: string) => Promise<void>;
-  };
+  input: (prompt: string) => Promise<string>;
+  output: (msg: string) => Promise<void>;
   params: any;
 };
 

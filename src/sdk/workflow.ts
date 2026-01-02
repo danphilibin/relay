@@ -30,11 +30,11 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     const handler = workflows[type];
 
     if (!handler) {
-      await this.relay.output(`Error: Unknown workflow type: ${type}`);
+      await this.output(`Error: Unknown workflow type: ${type}`);
       throw new Error(`Unknown workflow type: ${type}`);
     }
 
-    await handler({ step, relay: this.relay, params });
+    await handler({ step, input: this.input, output: this.output, params });
   }
 
   private async sendMessage(message: StreamMessage): Promise<void> {
@@ -53,40 +53,43 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   private outputCounter = 0;
   private inputCounter = 0;
 
-  // Public "SDK" methods for interacting with the workflow
-  relay = {
-    output: async (text: string): Promise<void> => {
-      if (!this.step) {
-        throw new Error("Relay not initialized. Call initRelay() first.");
-      }
+  /**
+   * Output a message to the workflow stream.
+   */
+  output = async (text: string): Promise<void> => {
+    if (!this.step) {
+      throw new Error("Relay not initialized. Call initRelay() first.");
+    }
 
-      const stepName = `relay-output-${this.outputCounter++}`;
-      await this.step.do(stepName, async () => {
-        await this.sendMessage(createLogMessage(text));
-      });
-    },
+    const stepName = `relay-output-${this.outputCounter++}`;
+    await this.step.do(stepName, async () => {
+      await this.sendMessage(createLogMessage(text));
+    });
+  };
 
-    input: async (prompt: string): Promise<string> => {
-      if (!this.step) {
-        throw new Error("Relay not initialized. Call initRelay() first.");
-      }
+  /**
+   * Request input from the user and wait for a response.
+   */
+  input = async (prompt: string): Promise<string> => {
+    if (!this.step) {
+      throw new Error("Relay not initialized. Call initRelay() first.");
+    }
 
-      // Generate unique event name based on counter for deterministic naming
-      const eventName = `input-${this.inputCounter++}`;
+    // Generate unique event name based on counter for deterministic naming
+    const eventName = `input-${this.inputCounter++}`;
 
-      // Send input request inside a step (idempotent on replay)
-      await this.step.do(`relay-input-request-${eventName}`, async () => {
-        await this.sendMessage(createInputRequest(eventName, prompt));
-      });
+    // Send input request inside a step (idempotent on replay)
+    await this.step.do(`relay-input-request-${eventName}`, async () => {
+      await this.sendMessage(createInputRequest(eventName, prompt));
+    });
 
-      // Wait for the user to respond
-      const event = await this.step.waitForEvent(eventName, {
-        type: eventName,
-        timeout: "5 minutes",
-      });
+    // Wait for the user to respond
+    const event = await this.step.waitForEvent(eventName, {
+      type: eventName,
+      timeout: "5 minutes",
+    });
 
-      // Return the payload as a string
-      return event.payload as string;
-    },
+    // Return the payload as a string
+    return event.payload as string;
   };
 }

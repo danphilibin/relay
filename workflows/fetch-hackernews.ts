@@ -1,8 +1,8 @@
 import { createWorkflow } from "../src/sdk/types";
 
-export const fetchHackernews = createWorkflow(async ({ step, relay }) => {
-  await relay.output("Fetching top Hacker News posts...");
-  await relay.output("Requesting story IDs from HN API...");
+export const fetchHackernews = createWorkflow(async ({ step, output }) => {
+  await output("Fetching top Hacker News posts...");
+  await output("Requesting story IDs from HN API...");
 
   const topStoryIds = await step.do("fetch top stories", async () => {
     const res = await fetch(
@@ -12,8 +12,8 @@ export const fetchHackernews = createWorkflow(async ({ step, relay }) => {
     return ids.slice(0, 5);
   });
 
-  await relay.output(`Got ${topStoryIds.length} story IDs`);
-  await relay.output("Fetching story details...");
+  await output(`Got ${topStoryIds.length} story IDs`);
+  await output("Fetching story details...");
 
   for (let i = 0; i < topStoryIds.length; i++) {
     const id = topStoryIds[i];
@@ -27,10 +27,10 @@ export const fetchHackernews = createWorkflow(async ({ step, relay }) => {
         score: number;
       }>();
     });
-    await relay.output(
+    await output(
       `${i + 1}. ${story.title} (${story.score} points by ${story.by})`,
     );
   }
 
-  await relay.output("Hacker News fetch complete!");
+  await output("Hacker News fetch complete!");
 });
