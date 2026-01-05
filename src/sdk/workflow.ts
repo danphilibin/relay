@@ -61,6 +61,14 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
 
 export type RelayWorkflowRegistry = Record<string, RelayHandler>;
 
+/**
+ * Factory function for creating typed workflow handlers.
+ * Provides full type inference for step, input, output, and loading.
+ */
+export function createWorkflow(handler: RelayHandler): RelayHandler {
+  return handler;
+}
+
 export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   protected stream: DurableObjectStub | null = null;
   protected step: WorkflowStep | null = null;
