@@ -1,23 +1,17 @@
-export type InputSchema = Record<
-  string,
-  {
-    type: string;
-    label: string;
-    placeholder?: string;
-    options?: { value: string; label: string }[];
-  }
->;
+// Re-export stream message types from SDK
+export type {
+  StreamMessage as WorkflowMessage,
+  InputSchema,
+  LogMessage,
+  InputRequestMessage,
+  InputReceivedMessage,
+  LoadingMessage,
+} from "../../src/sdk/stream";
 
-export type WorkflowMessage =
-  | { type: "log"; text: string }
-  | {
-      type: "input_request";
-      eventName: string;
-      prompt: string;
-      schema?: InputSchema;
-    }
-  | { type: "input_received"; value: unknown }
-  | { type: "loading"; id: string; text: string; complete: boolean };
+export {
+  StreamMessageSchema as WorkflowMessageSchema,
+  parseStreamMessage,
+} from "../../src/sdk/stream";
 
 export type WorkflowStatus =
   | "idle"

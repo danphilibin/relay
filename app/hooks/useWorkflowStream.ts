@@ -4,7 +4,9 @@ import type {
   WorkflowMessage,
   WorkflowStatus,
   InputSchema,
+  LoadingMessage,
 } from "../types/workflow";
+import { parseStreamMessage } from "../types/workflow";
 
 interface UseWorkflowStreamOptions {
   workflowName: string;
@@ -98,18 +100,19 @@ export function useWorkflowStream({
         for (const line of lines) {
           if (!line.trim()) continue;
 
-          let message;
+          let parsed;
           try {
-            message = JSON.parse(line);
+            parsed = JSON.parse(line);
           } catch (e) {
             console.error("Failed to parse JSON:", line, e);
             continue;
           }
 
           try {
+            const message = parseStreamMessage(parsed);
             handleStreamMessage(message);
           } catch (e) {
-            console.error("Failed to handle message:", message, e);
+            console.error("Failed to validate message:", parsed, e);
           }
         }
       }
@@ -123,58 +126,28 @@ export function useWorkflowStream({
     }
   }
 
-  function handleStreamMessage(message: {
-    type: string;
-    [key: string]: unknown;
-  }) {
-    switch (message.type) {
-      case "log":
-        setMessages((prev) => [
-          ...prev,
-          { type: "log", text: message.text as string },
-        ]);
-        break;
-
-      case "input_request":
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "input_request",
-            eventName: message.eventName as string,
-            prompt: message.prompt as string,
-            schema: message.schema as InputSchema | undefined,
-          },
-        ]);
-        break;
-
-      case "input_received":
-        setMessages((prev) => [
-          ...prev,
-          { type: "input_received", value: message.value },
-        ]);
-        break;
-
-      case "loading_start":
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "loading",
-            id: message.id as string,
-            text: message.text as string,
-            complete: false,
-          },
-        ]);
-        break;
-
-      case "loading_complete":
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.type === "loading" && msg.id === message.id
-              ? { ...msg, text: message.text as string, complete: true }
-              : msg,
-          ),
+  function handleStreamMessage(message: WorkflowMessage) {
+    if (message.type === "loading") {
+      // Update existing loading message or add new one
+      setMessages((prev) => {
+        const existingIndex = prev.findIndex(
+          (msg): msg is LoadingMessage =>
+            msg.type === "loading" && msg.id === message.id,
         );
-        break;
+
+        if (existingIndex !== -1) {
+          // Update existing loading message
+          const updated = [...prev];
+          updated[existingIndex] = message;
+          return updated;
+        }
+
+        // Add new loading message
+        return [...prev, message];
+      });
+    } else {
+      // All other messages are appended directly
+      setMessages((prev) => [...prev, message]);
     }
   }
 

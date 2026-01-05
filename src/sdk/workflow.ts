@@ -6,8 +6,7 @@ import {
 import { workflows } from "../registry";
 import {
   createInputRequest,
-  createLoadingComplete,
-  createLoadingStart,
+  createLoadingMessage,
   createLogMessage,
   type StreamMessage,
   type InputSchema,
@@ -160,7 +159,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
     // Send loading start inside a step (idempotent on replay)
     await this.step.do(`relay-loading-start-${loadingId}`, async () => {
-      await this.sendMessage(createLoadingStart(loadingId, message));
+      await this.sendMessage(createLoadingMessage(loadingId, message, false));
     });
 
     // Track the completion message
@@ -175,7 +174,9 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
     // Send loading complete inside a step (idempotent on replay)
     await this.step.do(`relay-loading-complete-${loadingId}`, async () => {
-      await this.sendMessage(createLoadingComplete(loadingId, completeMessage));
+      await this.sendMessage(
+        createLoadingMessage(loadingId, completeMessage, true),
+      );
     });
   };
 }

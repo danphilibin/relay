@@ -14,12 +14,16 @@ export function InputRequestMessage({
   schema,
   onSubmit,
 }: InputRequestMessageProps) {
-  const handleSubmit = () => onSubmit(eventName, schema);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await onSubmit(eventName, schema);
+  };
 
   return (
-    <div
+    <form
       id={`form-${eventName}`}
       className="my-4 p-5 rounded-xl border bg-[#111] border-[#222]"
+      onSubmit={handleSubmit}
     >
       <div className="flex flex-col gap-4">
         <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
@@ -34,24 +38,19 @@ export function InputRequestMessage({
             placeholder="Type here..."
             autoFocus
             className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSubmit();
-              }
-            }}
           />
         )}
 
         <div className="flex gap-2">
           <button
-            onClick={handleSubmit}
+            type="submit"
             className="px-3.5 py-2 text-[15px] font-medium bg-white text-black rounded-md hover:opacity-90 active:scale-[0.98] disabled:bg-[#333] disabled:text-[#666] disabled:cursor-default transition-all"
           >
             Continue
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 
