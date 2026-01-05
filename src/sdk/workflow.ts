@@ -6,6 +6,8 @@ import {
 import { workflows } from "../registry";
 import {
   createInputRequest,
+  createLoadingComplete,
+  createLoadingStart,
   createLogMessage,
   type StreamMessage,
   type InputSchema,
@@ -30,13 +32,29 @@ export type RelayInputFn = {
 };
 
 /**
+ * Context passed to the loading callback
+ */
+export type LoadingContext = {
+  complete: (message: string) => void;
+};
+
+/**
+ * Loading function type
+ */
+export type RelayLoadingFn = (
+  message: string,
+  callback: (ctx: LoadingContext) => Promise<void>,
+) => Promise<void>;
+
+/**
  * Context passed to workflow handlers.
- * Use `input` and `output` to interact with the user.
+ * Use `input`, `output`, and `loading` to interact with the user.
  */
 export type RelayContext = {
   step: WorkflowStep;
   input: RelayInputFn;
   output: RelayWorkflow["output"];
+  loading: RelayLoadingFn;
   params: any;
 };
 
@@ -62,7 +80,13 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       throw new Error(`Unknown workflow type: ${type}`);
     }
 
-    await handler({ step, input: this.input, output: this.output, params });
+    await handler({
+      step,
+      input: this.input,
+      output: this.output,
+      loading: this.loading,
+      params,
+    });
   }
 
   private async sendMessage(message: StreamMessage): Promise<void> {
@@ -77,9 +101,10 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     });
   }
 
-  // Counter for generating unique step names
+  // Counters for generating unique step names
   private outputCounter = 0;
   private inputCounter = 0;
+  private loadingCounter = 0;
 
   /**
    * Output a message to the workflow stream.
@@ -121,4 +146,36 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     // Return the payload - either a string or structured object based on schema
     return event.payload;
   }) as RelayInputFn;
+
+  /**
+   * Show a loading indicator while performing async work.
+   * Call `complete()` in the callback to update the message when done.
+   */
+  loading: RelayLoadingFn = async (message, callback) => {
+    if (!this.step) {
+      throw new Error("Relay not initialized. Call initRelay() first.");
+    }
+
+    const loadingId = `loading-${this.loadingCounter++}`;
+
+    // Send loading start inside a step (idempotent on replay)
+    await this.step.do(`relay-loading-start-${loadingId}`, async () => {
+      await this.sendMessage(createLoadingStart(loadingId, message));
+    });
+
+    // Track the completion message
+    let completeMessage = message;
+
+    // Execute the callback
+    await callback({
+      complete: (msg: string) => {
+        completeMessage = msg;
+      },
+    });
+
+    // Send loading complete inside a step (idempotent on replay)
+    await this.step.do(`relay-loading-complete-${loadingId}`, async () => {
+      await this.sendMessage(createLoadingComplete(loadingId, completeMessage));
+    });
+  };
 }

@@ -69,6 +69,16 @@ export type StreamMessage =
   | {
       type: "input_received";
       value: string | Record<string, unknown>;
+    }
+  | {
+      type: "loading_start";
+      id: string;
+      text: string;
+    }
+  | {
+      type: "loading_complete";
+      id: string;
+      text: string;
     };
 
 export function createLogMessage(text: string): StreamMessage {
@@ -90,4 +100,12 @@ export function createInputReceived(
   value: string | Record<string, unknown>,
 ): StreamMessage {
   return { type: "input_received", value };
+}
+
+export function createLoadingStart(id: string, text: string): StreamMessage {
+  return { type: "loading_start", id, text };
+}
+
+export function createLoadingComplete(id: string, text: string): StreamMessage {
+  return { type: "loading_complete", id, text };
 }

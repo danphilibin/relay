@@ -1,6 +1,11 @@
 import type { RelayContext } from "../src/sdk/workflow";
 
-export const newsletterSignup = async ({ input, output }: RelayContext) => {
+export const newsletterSignup = async ({
+  step,
+  input,
+  output,
+  loading,
+}: RelayContext) => {
   const name = await input("What is your name?");
 
   const { email, newsletter } = await input("Enter more info", {
@@ -9,12 +14,10 @@ export const newsletterSignup = async ({ input, output }: RelayContext) => {
   });
 
   if (newsletter) {
-    // TODO: Task 3 & 4 - loading indicator not yet implemented
-    // await loading("Subscribing to newsletter...", async ({ complete }) => {
-    //   await sleep("2s");
-    //   complete("Subscribed to newsletter!");
-    // });
-    await output("Subscribing to newsletter...");
+    await loading("Subscribing to newsletter...", async ({ complete }) => {
+      await step.sleep("subscribe-delay", "2 seconds");
+      complete("Subscribed to newsletter!");
+    });
   }
 
   await output(`Thanks, ${name}! Check ${email} for next steps.`);

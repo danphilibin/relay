@@ -10,7 +10,7 @@
     "dev:react": "react-router dev",
     "build": "react-router build",
     "typecheck": "pnpm run cf-typegen && react-router typegen && tsc",
-    "format": "prettier --write .",
+    "format": "prettier --write --log-level warn .",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {

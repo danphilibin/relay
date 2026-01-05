@@ -202,83 +202,106 @@ export default function Workflow() {
                     </span>
                     {schema ? (
                       // Render schema-based fields
-                      Object.entries(schema).map(([fieldName, fieldDef]) => {
-                        if (fieldDef.type === "checkbox") {
-                          return (
-                            <label
-                              key={fieldName}
-                              className="flex items-center gap-3 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                id={`input-${message.eventName}-${fieldName}`}
-                                className="w-4 h-4 rounded border-[#333] bg-black text-white focus:ring-white/20 focus:ring-offset-0"
-                              />
-                              <span className="text-sm text-[#ccc]">
-                                {fieldDef.label}
-                              </span>
-                            </label>
-                          );
-                        } else if (fieldDef.type === "number") {
-                          return (
-                            <label
-                              key={fieldName}
-                              className="flex flex-col gap-2"
-                            >
-                              <span className="text-sm text-[#888]">
-                                {fieldDef.label}
-                              </span>
-                              <input
-                                type="number"
-                                id={`input-${message.eventName}-${fieldName}`}
-                                data-1p-ignore
-                                placeholder={fieldDef.placeholder || ""}
-                                className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
-                              />
-                            </label>
-                          );
-                        } else if (fieldDef.type === "select") {
-                          return (
-                            <label
-                              key={fieldName}
-                              className="flex flex-col gap-2"
-                            >
-                              <span className="text-sm text-[#888]">
-                                {fieldDef.label}
-                              </span>
-                              <select
-                                id={`input-${message.eventName}-${fieldName}`}
-                                className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
-                              >
-                                {fieldDef.options?.map((opt) => (
-                                  <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                          );
-                        } else {
-                          // Default to text input
-                          return (
-                            <label
-                              key={fieldName}
-                              className="flex flex-col gap-2"
-                            >
-                              <span className="text-sm text-[#888]">
-                                {fieldDef.label}
-                              </span>
-                              <input
-                                type="text"
-                                id={`input-${message.eventName}-${fieldName}`}
-                                data-1p-ignore
-                                placeholder={fieldDef.placeholder || ""}
-                                className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
-                              />
-                            </label>
-                          );
-                        }
-                      })
+                      (() => {
+                        // Find the first text input field name (text type or default, excluding checkbox/number/select)
+                        const firstTextFieldName = Object.entries(schema).find(
+                          ([, fieldDef]) =>
+                            fieldDef.type === "text" ||
+                            !fieldDef.type ||
+                            (fieldDef.type !== "checkbox" &&
+                              fieldDef.type !== "number" &&
+                              fieldDef.type !== "select"),
+                        )?.[0];
+
+                        return Object.entries(schema).map(
+                          ([fieldName, fieldDef]) => {
+                            const isFirstTextInput =
+                              fieldName === firstTextFieldName &&
+                              (fieldDef.type === "text" ||
+                                !fieldDef.type ||
+                                (fieldDef.type !== "checkbox" &&
+                                  fieldDef.type !== "number" &&
+                                  fieldDef.type !== "select"));
+
+                            if (fieldDef.type === "checkbox") {
+                              return (
+                                <label
+                                  key={fieldName}
+                                  className="flex items-center gap-3 cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    id={`input-${message.eventName}-${fieldName}`}
+                                    className="w-4 h-4 rounded border-[#333] bg-black text-white focus:ring-white/20 focus:ring-offset-0"
+                                  />
+                                  <span className="text-sm text-[#ccc]">
+                                    {fieldDef.label}
+                                  </span>
+                                </label>
+                              );
+                            } else if (fieldDef.type === "number") {
+                              return (
+                                <label
+                                  key={fieldName}
+                                  className="flex flex-col gap-2"
+                                >
+                                  <span className="text-sm text-[#888]">
+                                    {fieldDef.label}
+                                  </span>
+                                  <input
+                                    type="number"
+                                    id={`input-${message.eventName}-${fieldName}`}
+                                    data-1p-ignore
+                                    placeholder={fieldDef.placeholder || ""}
+                                    className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
+                                  />
+                                </label>
+                              );
+                            } else if (fieldDef.type === "select") {
+                              return (
+                                <label
+                                  key={fieldName}
+                                  className="flex flex-col gap-2"
+                                >
+                                  <span className="text-sm text-[#888]">
+                                    {fieldDef.label}
+                                  </span>
+                                  <select
+                                    id={`input-${message.eventName}-${fieldName}`}
+                                    className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
+                                  >
+                                    {fieldDef.options?.map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              );
+                            } else {
+                              // Default to text input
+                              return (
+                                <label
+                                  key={fieldName}
+                                  className="flex flex-col gap-2"
+                                >
+                                  <span className="text-sm text-[#888]">
+                                    {fieldDef.label}
+                                  </span>
+                                  <input
+                                    type="text"
+                                    id={`input-${message.eventName}-${fieldName}`}
+                                    data-1p-ignore
+                                    placeholder={fieldDef.placeholder || ""}
+                                    autoFocus={isFirstTextInput}
+                                    className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
+                                  />
+                                </label>
+                              );
+                            }
+                          },
+                        );
+                      })()
                     ) : (
                       // Simple text input (no schema)
                       <input
@@ -286,6 +309,7 @@ export default function Workflow() {
                         id={`input-${message.eventName}`}
                         data-1p-ignore
                         placeholder="Type here..."
+                        autoFocus
                         className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
@@ -324,6 +348,49 @@ export default function Workflow() {
                   <span className="text-[#666]">&gt;</span> {displayValue}
                 </div>,
               ]);
+            } else if (message.type === "loading_start") {
+              const loadingId = message.id;
+              setMessages((prev) => [
+                ...prev,
+                <div
+                  key={`loading-${loadingId}`}
+                  data-loading-id={loadingId}
+                  className="py-3 text-base leading-relaxed text-[#888] flex items-center gap-2"
+                >
+                  <span className="inline-block w-4 h-4 border-2 border-[#444] border-t-[#888] rounded-full animate-spin" />
+                  {message.text}
+                </div>,
+              ]);
+            } else if (message.type === "loading_complete") {
+              const loadingId = message.id;
+              // Replace the loading element with the completed version
+              setMessages((prev) =>
+                prev.map((el) =>
+                  el.key === `loading-${loadingId}` ? (
+                    <div
+                      key={`loading-${loadingId}`}
+                      className="py-3 text-base leading-relaxed text-[#888] flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-4 h-4 text-green-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      {message.text}
+                    </div>
+                  ) : (
+                    el
+                  ),
+                ),
+              );
             }
           } catch (e) {
             console.error("Failed to handle message:", message, e);
