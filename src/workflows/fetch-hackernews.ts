@@ -18,9 +18,9 @@ type Comment = {
   time: number;
 };
 
-export const fetchHackernews = createWorkflow(
-  "Fetch Hacker News",
-  async ({ step, input, output }) => {
+export const fetchHackernews = createWorkflow({
+  name: "Fetch Hacker News",
+  handler: async ({ step, input, output }) => {
     await output("Fetching top Hacker News stories...");
 
     // Fetch top story IDs
@@ -111,4 +111,4 @@ export const fetchHackernews = createWorkflow(
 
     await output("✨ Done!");
   },
-);
+});

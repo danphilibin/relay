@@ -58,10 +58,13 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
  * Factory function for creating and registering workflow handlers.
  * Provides full type inference for step, input, output, and loading.
  */
-export function createWorkflow(
-  name: string,
-  handler: RelayHandler,
-): RelayHandler {
+export function createWorkflow({
+  name,
+  handler,
+}: {
+  name: string;
+  handler: RelayHandler;
+}): RelayHandler {
   registerWorkflow(name, handler);
   return handler;
 }

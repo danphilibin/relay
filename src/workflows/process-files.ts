@@ -1,8 +1,8 @@
 import { createWorkflow } from "@/sdk/workflow";
 
-export const processFiles = createWorkflow(
-  "Process Files",
-  async ({ step, output }) => {
+export const processFiles = createWorkflow({
+  name: "Process Files",
+  handler: async ({ step, output }) => {
     await output("Workflow started");
     await output("Fetching files from API...");
 
@@ -34,4 +34,4 @@ export const processFiles = createWorkflow(
 
     await output("Workflow completed successfully!");
   },
-);
+});

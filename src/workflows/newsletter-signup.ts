@@ -1,8 +1,8 @@
 import { createWorkflow } from "@/sdk/workflow";
 
-export const newsletterSignup = createWorkflow(
-  "Newsletter Signup",
-  async ({ step, input, output, loading }) => {
+export const newsletterSignup = createWorkflow({
+  name: "Newsletter Signup",
+  handler: async ({ step, input, output, loading }) => {
     const name = await input("What is your name?");
 
     const { email, newsletter } = await input("Enter more info", {
@@ -19,4 +19,4 @@ export const newsletterSignup = createWorkflow(
 
     await output(`Thanks, ${name}! Check ${email} for next steps.`);
   },
-);
+});
