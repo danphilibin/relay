@@ -6,12 +6,12 @@ export type {
   InputRequestMessage,
   InputReceivedMessage,
   LoadingMessage,
-} from "../../src/sdk/stream";
+} from "../../src/sdk/utils";
 
 export {
   StreamMessageSchema as WorkflowMessageSchema,
   parseStreamMessage,
-} from "../../src/sdk/stream";
+} from "../../src/sdk/utils";
 
 export type WorkflowStatus =
   | "idle"

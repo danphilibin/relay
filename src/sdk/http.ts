@@ -1,4 +1,5 @@
-import { StartWorkflowParams, WorkflowParamsSchema } from "./stream";
+import { StartWorkflowParams, WorkflowParamsSchema } from "./utils";
+import { getWorkflowTypes } from "./utils";
 
 /**
  * HTTP handler for the Relay workflow engine.
@@ -14,7 +15,6 @@ export const httpHandler = async (req: Request, env: Env) => {
 
   // GET /workflows - lists available workflows
   if (req.method === "GET" && url.pathname === "/workflows") {
-    const { getWorkflowTypes } = await import("../registry");
     return Response.json({ workflows: getWorkflowTypes() });
   }
 

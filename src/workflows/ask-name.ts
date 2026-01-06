@@ -1,6 +1,6 @@
 import { createWorkflow } from "@/sdk/workflow";
 
-export const askName = createWorkflow(async ({ input, output }) => {
+export const askName = createWorkflow("ask-name", async ({ input, output }) => {
   await output("Hello! I'd like to get to know you.");
   const name = await input("What's your name?");
   await output(`Nice to meet you, ${name}!`);

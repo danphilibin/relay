@@ -1,4 +1,21 @@
 import { z } from "zod";
+import type { RelayHandler } from "./workflow";
+
+export type RelayWorkflowRegistry = Record<string, RelayHandler>;
+
+const workflows: RelayWorkflowRegistry = {};
+
+export function registerWorkflow(name: string, handler: RelayHandler): void {
+  workflows[name] = handler;
+}
+
+export function getWorkflow(name: string): RelayHandler | undefined {
+  return workflows[name];
+}
+
+export function getWorkflowTypes(): string[] {
+  return Object.keys(workflows);
+}
 
 export const WorkflowParamsSchema = z.object({
   name: z.string(),

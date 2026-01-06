@@ -1,6 +1,7 @@
 import { createWorkflow } from "@/sdk/workflow";
 
 export const newsletterSignup = createWorkflow(
+  "newsletter-signup",
   async ({ step, input, output, loading }) => {
     const name = await input("What is your name?");
 

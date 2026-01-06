@@ -3,8 +3,9 @@ import {
   type WorkflowEvent,
   WorkflowStep,
 } from "cloudflare:workers";
-import { workflows } from "../registry";
 import {
+  getWorkflow,
+  registerWorkflow,
   createInputRequest,
   createLoadingMessage,
   createLogMessage,
@@ -12,7 +13,7 @@ import {
   type InputSchema,
   type InferInputResult,
   type WorkflowParams,
-} from "./stream";
+} from "./utils";
 
 /**
  * Input function type with overloads for simple and structured inputs
@@ -53,13 +54,15 @@ export type RelayContext = {
 
 export type RelayHandler = (ctx: RelayContext) => Promise<void>;
 
-export type RelayWorkflowRegistry = Record<string, RelayHandler>;
-
 /**
- * Factory function for creating typed workflow handlers.
+ * Factory function for creating and registering workflow handlers.
  * Provides full type inference for step, input, output, and loading.
  */
-export function createWorkflow(handler: RelayHandler): RelayHandler {
+export function createWorkflow(
+  name: string,
+  handler: RelayHandler,
+): RelayHandler {
+  registerWorkflow(name, handler);
   return handler;
 }
 
@@ -82,7 +85,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     this.stream = this.env.RELAY_DURABLE_OBJECT.getByName(event.instanceId);
 
     const { name } = event.payload;
-    const handler = workflows[name];
+    const handler = getWorkflow(name);
 
     if (!handler) {
       await this.output(`Error: Unknown workflow: ${name}`);

@@ -6,7 +6,7 @@ import type {
   LoadingMessage,
 } from "../types/workflow";
 import { parseStreamMessage } from "../types/workflow";
-import { StartWorkflowParams, WorkflowParams } from "@/sdk/stream";
+import { StartWorkflowParams, WorkflowParams } from "@/sdk/utils";
 
 interface UseWorkflowStreamOptions {
   workflowName: string;
