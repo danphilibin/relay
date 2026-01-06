@@ -5,7 +5,7 @@ interface LoadingMessageProps {
 
 export function LoadingMessage({ text, complete }: LoadingMessageProps) {
   return (
-    <div className="py-3 text-base leading-relaxed text-[#888] flex items-center gap-2">
+    <div className="text-base leading-relaxed text-[#888] flex items-center gap-2">
       {complete ? (
         <svg
           className="w-4 h-4 text-green-500"

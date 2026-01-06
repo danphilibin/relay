@@ -53,7 +53,7 @@ export function MessageList({
   const pairedMessages = pairInputMessages(messages);
 
   return (
-    <>
+    <div className="space-y-4">
       {pairedMessages.map(({ message, submittedValue }, index) => {
         switch (message.type) {
           case "log":
@@ -85,6 +85,6 @@ export function MessageList({
             return null;
         }
       })}
-    </>
+    </div>
   );
 }

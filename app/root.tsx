@@ -37,7 +37,7 @@ function Sidebar() {
 
   return (
     <div className="w-[260px] bg-[#0a0a0a] border-r border-[#222] flex flex-col">
-      <div className="p-5 border-b border-[#222] flex items-center justify-between">
+      <div className="p-5 h-16 border-b border-[#222] flex items-center justify-between">
         <NavLink
           to="/"
           className="text-base font-semibold tracking-tight flex items-center gap-2"
