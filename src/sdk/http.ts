@@ -59,6 +59,5 @@ export const httpHandler = async (req: Request, env: Env) => {
     return Response.json({ success: true });
   }
 
-  // For all other routes, return null to let assets be served
-  return null;
+  return new Response("Not Found", { status: 404 });
 };
