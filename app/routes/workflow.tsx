@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import type { Route } from "./+types/workflow";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
 import { MessageList } from "../components/workflow/MessageList";
+import { LoadingMessage } from "../components/workflow/LoadingMessage";
 
 export function meta({ params }: Route.MetaArgs) {
   return [
@@ -54,11 +55,11 @@ export default function Workflow() {
       <div ref={containerRef} className="flex-1 overflow-y-auto">
         <div className="max-w-[640px] p-8 space-y-4">
           {status === "connecting" && (
-            <ConnectionState message="Connecting..." isLoading />
+            <LoadingMessage text="Connecting..." complete={false} />
           )}
 
           {status === "streaming" && messages.length === 0 && (
-            <ConnectionState message="Waiting for workflow..." isLoading />
+            <ConnectionState message="Waiting for workflow..." />
           )}
 
           <MessageList
@@ -68,7 +69,7 @@ export default function Workflow() {
           />
 
           {status === "complete" && messages.length === 0 && (
-            <ConnectionState message="No messages received." />
+            <div className="text-base text-[#666]">No messages received.</div>
           )}
         </div>
       </div>
@@ -76,18 +77,10 @@ export default function Workflow() {
   );
 }
 
-function ConnectionState({
-  message,
-  isLoading,
-}: {
-  message: string;
-  isLoading?: boolean;
-}) {
+export function ConnectionState({ message }: { message: string }) {
   return (
     <div className="text-base text-[#666] flex items-center gap-2">
-      {isLoading && (
-        <span className="w-1.5 h-1.5 rounded-full bg-[#666] animate-pulse-dot" />
-      )}
+      <span className="w-1.5 h-1.5 rounded-full bg-[#666] animate-pulse-dot" />
       {message}
     </div>
   );

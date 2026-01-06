@@ -2,6 +2,8 @@ import type { WorkflowMessage } from "../../types/workflow";
 import { LogMessage } from "./LogMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
+import { ConnectionState } from "../../routes/workflow";
+import { useDelayedWaitingIndicator } from "../../hooks/useDelayedWaitingIndicator";
 
 interface MessageListProps {
   messages: WorkflowMessage[];
@@ -52,9 +54,14 @@ export function MessageList({
 }: MessageListProps) {
   const pairedMessages = pairInputMessages(messages);
 
+  // Detect if we're waiting for a response after user input
+  const lastMessage = messages[messages.length - 1];
+  const isWaitingForResponse = lastMessage?.type === "input_received";
+  const showWaitingIndicator = useDelayedWaitingIndicator(isWaitingForResponse);
+
   return (
     <div className="space-y-4">
-      {pairedMessages.map(({ message, submittedValue }, index) => {
+      {pairedMessages.map(({ message, submittedValue }) => {
         switch (message.type) {
           case "log":
             return <LogMessage key={message.id} text={message.text} />;
@@ -85,6 +92,9 @@ export function MessageList({
             return null;
         }
       })}
+      {showWaitingIndicator && (
+        <ConnectionState message="Waiting for workflow..." />
+      )}
     </div>
   );
 }
