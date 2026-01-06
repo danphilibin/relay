@@ -55,18 +55,15 @@ export function MessageList({
   return (
     <>
       {pairedMessages.map(({ message, submittedValue }, index) => {
-        const key =
-          message.type === "loading" ? `loading-${message.id}` : index;
-
         switch (message.type) {
           case "log":
-            return <LogMessage key={key} text={message.text} />;
+            return <LogMessage key={message.id} text={message.text} />;
 
           case "input_request":
             return (
               <InputRequestMessage
-                key={key}
-                eventName={message.eventName}
+                key={message.id}
+                eventName={message.id}
                 prompt={message.prompt}
                 schema={message.schema}
                 workflowId={workflowId}
@@ -78,7 +75,7 @@ export function MessageList({
           case "loading":
             return (
               <LoadingMessage
-                key={key}
+                key={message.id}
                 text={message.text}
                 complete={message.complete}
               />

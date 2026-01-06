@@ -1,38 +1,44 @@
-import { WorkflowParams } from "./workflow";
+import { StartWorkflowParams, WorkflowParamsSchema } from "./stream";
 
+/**
+ * HTTP handler for the Relay workflow engine.
+ *
+ * Provides the following endpoints:
+ * - GET  /workflows - lists available workflows
+ * - POST /workflows - spawns a new workflow instance
+ * - GET  /workflows/:id/stream - connects to workflow stream
+ * - POST /workflows/:id/event/:name - submits an event to a workflow
+ */
 export const httpHandler = async (req: Request, env: Env) => {
   const url = new URL(req.url);
 
-  // GET /stream/:id - connect to workflow stream
-  const streamMatch = url.pathname.match(/^\/stream\/(.+)$/);
-  if (streamMatch) {
-    const workflowId = streamMatch[1];
-    const stub = env.RELAY_DURABLE_OBJECT.getByName(workflowId);
-    return stub.fetch("http://internal/stream");
-  }
-
-  // GET /workflows - list available workflows
+  // GET /workflows - lists available workflows
   if (req.method === "GET" && url.pathname === "/workflows") {
     const { getWorkflowTypes } = await import("../registry");
     return Response.json({ workflows: getWorkflowTypes() });
   }
 
-  // POST /workflow - spawn a new workflow instance
-  if (req.method === "POST" && url.pathname === "/workflow") {
-    const body = await req.json<WorkflowParams>();
-    const instance = await env.RELAY_WORKFLOW.create({
-      params: { name: body.name },
-    });
+  // POST /workflows - spawns a new workflow instance
+  if (url.pathname === "/workflows") {
+    const params = WorkflowParamsSchema.parse(await req.json());
+    const instance = await env.RELAY_WORKFLOW.create({ params });
     return Response.json({
       id: instance.id,
-      streamUrl: `/stream/${instance.id}`,
-      name: body.name,
-    });
+      name: params.name,
+    } satisfies StartWorkflowParams);
   }
 
-  // POST /workflow/:id/event/:name - submit event to workflow
+  // GET /workflows/:id/stream - connects to workflow stream
+  const streamMatch = url.pathname.match(/^\/workflows\/([^/]+)\/stream$/);
+  if (streamMatch) {
+    const [, workflowId] = streamMatch;
+    const stub = env.RELAY_DURABLE_OBJECT.getByName(workflowId);
+    return stub.fetch("http://internal/stream");
+  }
+
+  // POST /workflows/:id/event/:name - submits an event to a workflow
   const eventMatch = url.pathname.match(
-    /^\/workflow\/([^/]+)\/event\/([^/]+)$/,
+    /^\/workflows\/([^/]+)\/event\/([^/]+)$/,
   );
   if (req.method === "POST" && eventMatch) {
     const [, instanceId, eventName] = eventMatch;

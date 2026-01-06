@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export const WorkflowParamsSchema = z.object({
+  name: z.string(),
+});
+
+export type WorkflowParams = z.infer<typeof WorkflowParamsSchema>;
+
+export const StartWorkflowParamsSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type StartWorkflowParams = z.infer<typeof StartWorkflowParamsSchema>;
+
 /**
  * Input field definition schemas for structured input
  */
@@ -72,25 +85,27 @@ export type InferInputResult<T extends InputSchema> = {
  * Stream message schemas
  */
 export const LogMessageSchema = z.object({
+  id: z.string(),
   type: z.literal("log"),
   text: z.string(),
 });
 
 export const InputRequestMessageSchema = z.object({
+  id: z.string(),
   type: z.literal("input_request"),
-  eventName: z.string(),
   prompt: z.string(),
   schema: InputSchemaSchema,
 });
 
 export const InputReceivedMessageSchema = z.object({
+  id: z.string(),
   type: z.literal("input_received"),
   value: z.record(z.string(), z.unknown()),
 });
 
 export const LoadingMessageSchema = z.object({
-  type: z.literal("loading"),
   id: z.string(),
+  type: z.literal("loading"),
   text: z.string(),
   complete: z.boolean(),
 });
@@ -111,12 +126,12 @@ export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 /**
  * Factory functions for creating messages
  */
-export function createLogMessage(text: string): LogMessage {
-  return { type: "log", text };
+export function createLogMessage(id: string, text: string): LogMessage {
+  return { id, type: "log", text };
 }
 
 export function createInputRequest(
-  eventName: string,
+  id: string,
   prompt: string,
   schema?: InputSchema,
 ): InputRequestMessage {
@@ -124,13 +139,14 @@ export function createInputRequest(
   const normalizedSchema: InputSchema = schema ?? {
     input: { type: "text", label: prompt },
   };
-  return { type: "input_request", eventName, prompt, schema: normalizedSchema };
+  return { type: "input_request", id, prompt, schema: normalizedSchema };
 }
 
 export function createInputReceived(
+  id: string,
   value: Record<string, unknown>,
 ): InputReceivedMessage {
-  return { type: "input_received", value };
+  return { id, type: "input_received", value };
 }
 
 export function createLoadingMessage(
@@ -138,7 +154,7 @@ export function createLoadingMessage(
   text: string,
   complete: boolean,
 ): LoadingMessage {
-  return { type: "loading", id, text, complete };
+  return { id, type: "loading", text, complete };
 }
 
 /**

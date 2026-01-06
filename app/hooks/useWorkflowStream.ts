@@ -6,6 +6,7 @@ import type {
   LoadingMessage,
 } from "../types/workflow";
 import { parseStreamMessage } from "../types/workflow";
+import { StartWorkflowParams, WorkflowParams } from "@/sdk/stream";
 
 interface UseWorkflowStreamOptions {
   workflowName: string;
@@ -44,15 +45,19 @@ export function useWorkflowStream({
       try {
         let activeRunId = runId;
 
+        const body = {
+          name: workflowName,
+        } satisfies WorkflowParams;
+
         // Create new run if no runId
         if (!activeRunId) {
-          const response = await fetch("/workflow", {
+          const response = await fetch("/workflows", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: workflowName }),
+            body: JSON.stringify(body),
             signal: abortController.signal,
           });
-          const data = (await response.json()) as { id: string };
+          const data = await response.json<StartWorkflowParams>();
           activeRunId = data.id;
           setCurrentRunId(activeRunId);
           navigate(`/${workflowName}/${activeRunId}`, { replace: true });
@@ -63,7 +68,11 @@ export function useWorkflowStream({
         if ((error as Error).name !== "AbortError") {
           setStatus("error");
           setMessages([
-            { type: "log", text: `Error: ${(error as Error).message}` },
+            {
+              id: "error",
+              type: "log",
+              text: `Error: ${(error as Error).message}`,
+            },
           ]);
         }
       }
@@ -78,7 +87,9 @@ export function useWorkflowStream({
 
   async function connectToStream(workflowId: string, signal: AbortSignal) {
     try {
-      const streamResponse = await fetch(`/stream/${workflowId}`, { signal });
+      const streamResponse = await fetch(`/workflows/${workflowId}/stream`, {
+        signal,
+      });
       const reader = streamResponse.body?.getReader();
       if (!reader) throw new Error("No reader available");
 
@@ -159,7 +170,7 @@ export function useWorkflowStream({
   ) {
     if (!currentRunId) return;
 
-    await fetch(`/workflow/${currentRunId}/event/${eventName}`, {
+    await fetch(`/workflows/${currentRunId}/event/${eventName}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ value }),

@@ -11,12 +11,8 @@ import {
   type StreamMessage,
   type InputSchema,
   type InferInputResult,
+  type WorkflowParams,
 } from "./stream";
-
-// Params passed to workflows
-export type WorkflowParams = {
-  name: string;
-};
 
 /**
  * Input function type with overloads for simple and structured inputs
@@ -72,13 +68,17 @@ export function createWorkflow(handler: RelayHandler): RelayHandler {
  * All workflow functions run through this class.
  */
 export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
-  protected stream: DurableObjectStub | null = null;
   protected step: WorkflowStep | null = null;
+
+  // Each workflow run gets a Durable Object named using workflow's instance ID
+  protected stream: DurableObjectStub | null = null;
+
+  // Counter for generating unique step names
+  private counter = 0;
 
   async run(event: WorkflowEvent<WorkflowParams>, step: WorkflowStep) {
     this.step = step;
 
-    // Each workflow run gets a Durable Object named using workflow's instance ID
     this.stream = this.env.RELAY_DURABLE_OBJECT.getByName(event.instanceId);
 
     const { name } = event.payload;
@@ -109,10 +109,9 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     });
   }
 
-  // Counters for generating unique step names
-  private outputCounter = 0;
-  private inputCounter = 0;
-  private loadingCounter = 0;
+  private stepName(prefix: string): string {
+    return `relay-${prefix}-${this.counter++}`;
+  }
 
   /**
    * Output a message to the workflow stream.
@@ -122,9 +121,10 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       throw new Error("Relay not initialized. Call initRelay() first.");
     }
 
-    const stepName = `relay-output-${this.outputCounter++}`;
-    await this.step.do(stepName, async () => {
-      await this.sendMessage(createLogMessage(text));
+    const eventName = this.stepName("output");
+
+    await this.step.do(eventName, async () => {
+      await this.sendMessage(createLogMessage(eventName, text));
     });
   };
 
@@ -137,15 +137,12 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       throw new Error("Relay not initialized. Call initRelay() first.");
     }
 
-    // Generate unique event name based on counter for deterministic naming
-    const eventName = `input-${this.inputCounter++}`;
+    const eventName = this.stepName("input");
 
-    // Send input request inside a step (idempotent on replay)
-    await this.step.do(`relay-input-request-${eventName}`, async () => {
+    await this.step.do(`${eventName}-request`, async () => {
       await this.sendMessage(createInputRequest(eventName, prompt, schema));
     });
 
-    // Wait for the user to respond
     const event = await this.step.waitForEvent(eventName, {
       type: eventName,
       timeout: "5 minutes",
@@ -156,6 +153,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     if (!schema) {
       return payload.input;
     }
+
     return payload;
   }) as RelayInputFn;
 
@@ -168,11 +166,16 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       throw new Error("Relay not initialized. Call initRelay() first.");
     }
 
-    const loadingId = `loading-${this.loadingCounter++}`;
+    const eventName = this.stepName("loading");
+    const startEventName = `${eventName}-start`;
+    const completeEventName = `${eventName}-complete`;
+
+    // Note: we send the base `eventName` as the ID in both the start and complete
+    // events so the UI can progressively update the loading status
 
     // Send loading start inside a step (idempotent on replay)
-    await this.step.do(`relay-loading-start-${loadingId}`, async () => {
-      await this.sendMessage(createLoadingMessage(loadingId, message, false));
+    await this.step.do(startEventName, async () => {
+      await this.sendMessage(createLoadingMessage(eventName, message, false));
     });
 
     // Track the completion message
@@ -186,9 +189,9 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     });
 
     // Send loading complete inside a step (idempotent on replay)
-    await this.step.do(`relay-loading-complete-${loadingId}`, async () => {
+    await this.step.do(completeEventName, async () => {
       await this.sendMessage(
-        createLoadingMessage(loadingId, completeMessage, true),
+        createLoadingMessage(eventName, completeMessage, true),
       );
     });
   };

@@ -7,7 +7,6 @@ export default defineConfig(({ command }) => ({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
   server: {
     proxy: {
-      "/workflow": "http://localhost:8787",
       "/stream": "http://localhost:8787",
       "/workflows": "http://localhost:8787",
     },

@@ -5,7 +5,7 @@ import { type StreamMessage } from "./stream";
  * Durable Object that stores and streams messages for a workflow run.
  *
  * Supports two endpoints:
- * - GET /stream - returns the stream of messages
+ * - GET  /stream - returns the stream of messages
  * - POST /stream - appends a message to the stream
  */
 export class RelayDurableObject extends DurableObject {
