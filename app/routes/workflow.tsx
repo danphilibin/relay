@@ -32,7 +32,7 @@ export default function Workflow() {
   }, [messages]);
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex-1 flex h-full w-full flex-col">
       <div className="w-full border-b border-[#222] px-8 h-16 flex items-center justify-between">
         <h1 className="text-base font-semibold text-[#fafafa]">
           {formatWorkflowName(workflowName)}
