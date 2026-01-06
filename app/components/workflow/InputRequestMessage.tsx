@@ -10,6 +10,7 @@ interface InputRequestMessageProps {
     eventName: string,
     value: Record<string, unknown>,
   ) => Promise<void>;
+  submittedValue?: Record<string, unknown>;
 }
 
 export function InputRequestMessage({
@@ -17,8 +18,9 @@ export function InputRequestMessage({
   prompt,
   schema,
   onSubmit,
+  submittedValue,
 }: InputRequestMessageProps) {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(!!submittedValue);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,7 +52,11 @@ export function InputRequestMessage({
       <div className="flex flex-col gap-4">
         <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
 
-        <SchemaFields schema={schema} disabled={isSubmitted} />
+        <SchemaFields
+          schema={schema}
+          disabled={isSubmitted}
+          values={submittedValue}
+        />
 
         <div className="flex gap-2">
           <button
@@ -69,9 +75,10 @@ export function InputRequestMessage({
 interface SchemaFieldsProps {
   schema: InputSchema;
   disabled: boolean;
+  values?: Record<string, unknown>;
 }
 
-function SchemaFields({ schema, disabled }: SchemaFieldsProps) {
+function SchemaFields({ schema, disabled, values }: SchemaFieldsProps) {
   // Find the first text input field name for autofocus
   const firstTextFieldName = Object.entries(schema).find(
     ([, fieldDef]) =>
@@ -103,6 +110,7 @@ function SchemaFields({ schema, disabled }: SchemaFieldsProps) {
                 type="checkbox"
                 name={fieldName}
                 disabled={disabled}
+                defaultChecked={values?.[fieldName] === true}
                 className="w-4 h-4 rounded border-[#333] bg-black text-white focus:ring-white/20 focus:ring-offset-0"
               />
               <span className="text-sm text-[#ccc]">{fieldDef.label}</span>
@@ -119,6 +127,7 @@ function SchemaFields({ schema, disabled }: SchemaFieldsProps) {
                 name={fieldName}
                 data-1p-ignore
                 disabled={disabled}
+                defaultValue={values?.[fieldName] as number | undefined}
                 placeholder={fieldDef.placeholder || ""}
                 className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
               />
@@ -133,6 +142,7 @@ function SchemaFields({ schema, disabled }: SchemaFieldsProps) {
               <select
                 name={fieldName}
                 disabled={disabled}
+                defaultValue={values?.[fieldName] as string | undefined}
                 className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"
               >
                 {fieldDef.options?.map((opt) => (
@@ -154,6 +164,7 @@ function SchemaFields({ schema, disabled }: SchemaFieldsProps) {
               name={fieldName}
               data-1p-ignore
               disabled={disabled}
+              defaultValue={values?.[fieldName] as string | undefined}
               placeholder={fieldDef.placeholder || ""}
               autoFocus={isFirstTextInput}
               className="w-full px-3 py-2.5 text-base bg-black border border-[#333] rounded-md text-[#fafafa] placeholder:text-[#666] focus:outline-none focus:border-[#888] focus:ring-[3px] focus:ring-white/5 disabled:bg-[#0a0a0a] disabled:border-[#222] disabled:text-[#888] transition-all"

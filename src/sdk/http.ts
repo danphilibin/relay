@@ -39,6 +39,17 @@ export const httpHandler = async (req: Request, env: Env) => {
     const [, instanceId, eventName] = eventMatch;
     const body = await req.json<{ value: any }>();
 
+    // Write input_received to the stream
+    const stub = env.RELAY_DURABLE_OBJECT.getByName(instanceId);
+    await stub.fetch("http://internal/write", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: { type: "input_received", value: body.value },
+      }),
+    });
+
+    // Send event to workflow engine
     const instance = await env.RELAY_WORKFLOW.get(instanceId);
     await instance.sendEvent({
       type: eventName,
