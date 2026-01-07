@@ -50,7 +50,7 @@ export const httpHandler = async (req: Request, env: Env) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message: { type: "input_received", value: body.value },
+        message: { type: "input_received", id: eventName, value: body.value },
       }),
     });
 
