@@ -1,4 +1,8 @@
-import { StartWorkflowParams, WorkflowParamsSchema } from "./utils";
+import {
+  StartWorkflowParams,
+  WorkflowParamsSchema,
+  getWorkflow,
+} from "./utils";
 import { getWorkflowList } from "./utils";
 
 /**
@@ -62,6 +66,39 @@ export const httpHandler = async (req: Request, env: Env) => {
     });
 
     return Response.json({ success: true });
+  }
+
+  // GET /workflows/:slug/loader/:loaderKey - invokes a loader (outside workflow step)
+  // Query params are passed to the loader (e.g., ?page=2&userId=123)
+  const loaderMatch = url.pathname.match(
+    /^\/workflows\/([^/]+)\/loader\/([^/]+)$/,
+  );
+  if (req.method === "GET" && loaderMatch) {
+    const [, slug, loaderKey] = loaderMatch;
+    const workflow = getWorkflow(slug);
+
+    if (!workflow) {
+      return Response.json({ error: "Workflow not found" }, { status: 404 });
+    }
+
+    const loader = workflow.loaders?.[loaderKey];
+    if (!loader) {
+      return Response.json({ error: "Loader not found" }, { status: 404 });
+    }
+
+    // Convert query params to object and pass to loader
+    const params: Record<string, unknown> = {};
+    for (const [key, value] of url.searchParams.entries()) {
+      // Try to parse JSON values (for numbers, booleans, objects)
+      try {
+        params[key] = JSON.parse(value);
+      } catch {
+        params[key] = value;
+      }
+    }
+
+    const result = await loader(params);
+    return Response.json({ result });
   }
 
   return new Response("Not Found", { status: 404 });

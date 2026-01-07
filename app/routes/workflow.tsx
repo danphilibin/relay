@@ -84,6 +84,7 @@ export default function Workflow() {
           <MessageList
             messages={messages}
             workflowId={currentRunId}
+            workflowSlug={workflowName!}
             onSubmitInput={submitInput}
           />
 

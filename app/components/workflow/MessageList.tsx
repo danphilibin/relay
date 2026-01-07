@@ -2,12 +2,14 @@ import type { WorkflowMessage } from "../../types/workflow";
 import { LogMessage } from "./LogMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
+import { ButtonOutputMessage } from "./ButtonOutputMessage";
 import { ConnectionState } from "../../routes/workflow";
 import { useDelayedWaitingIndicator } from "../../hooks/useDelayedWaitingIndicator";
 
 interface MessageListProps {
   messages: WorkflowMessage[];
   workflowId: string | null;
+  workflowSlug: string;
   onSubmitInput: (
     eventName: string,
     value: string | Record<string, unknown>,
@@ -50,6 +52,7 @@ function pairInputMessages(messages: WorkflowMessage[]) {
 export function MessageList({
   messages,
   workflowId,
+  workflowSlug,
   onSubmitInput,
 }: MessageListProps) {
   const pairedMessages = pairInputMessages(messages);
@@ -85,6 +88,17 @@ export function MessageList({
                 key={message.id}
                 text={message.text}
                 complete={message.complete}
+              />
+            );
+
+          case "button_output":
+            return (
+              <ButtonOutputMessage
+                key={message.id}
+                label={message.label}
+                loaderKey={message.loaderKey}
+                workflowSlug={workflowSlug}
+                context={message.context}
               />
             );
 

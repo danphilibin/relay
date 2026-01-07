@@ -6,6 +6,7 @@ export type {
   InputRequestMessage,
   InputReceivedMessage,
   LoadingMessage,
+  ButtonOutputMessage,
 } from "../../src/sdk/utils";
 
 export {

@@ -9,6 +9,7 @@ import {
   createInputRequest,
   createLoadingMessage,
   createLogMessage,
+  createButtonOutput,
   type StreamMessage,
   type InputSchema,
   type InferInputResult,
@@ -41,31 +42,53 @@ export type RelayLoadingFn = (
   callback: (ctx: LoadingContext) => Promise<void>,
 ) => Promise<void>;
 
+export type LoaderParams = Record<string, unknown>;
+export type LoaderFn = (params: LoaderParams) => Promise<unknown>;
+
+/**
+ * Output function that can display text or interactive elements
+ */
+export type RelayOutputFn<TLoaders extends Record<string, LoaderFn>> = {
+  (text: string): Promise<void>;
+  button: <K extends keyof TLoaders>(
+    label: string,
+    opts: { loader: K; context?: LoaderParams },
+  ) => Promise<void>;
+};
+
 /**
  * Context passed to workflow handlers.
  * Use `input`, `output`, and `loading` to interact with the user.
  */
-export type RelayContext = {
+export type RelayContext<
+  TLoaders extends Record<string, LoaderFn> = Record<string, LoaderFn>,
+> = {
   step: WorkflowStep;
   input: RelayInputFn;
-  output: RelayWorkflow["output"];
+  output: RelayOutputFn<TLoaders>;
   loading: RelayLoadingFn;
 };
 
-export type RelayHandler = (ctx: RelayContext) => Promise<void>;
+export type RelayHandler<
+  TLoaders extends Record<string, LoaderFn> = Record<string, LoaderFn>,
+> = (ctx: RelayContext<TLoaders>) => Promise<void>;
 
 /**
  * Factory function for creating and registering workflow handlers.
  * Provides full type inference for step, input, output, and loading.
  */
-export function createWorkflow({
+export function createWorkflow<
+  TLoaders extends Record<string, LoaderFn> = Record<string, LoaderFn>,
+>({
   name,
+  loaders,
   handler,
 }: {
   name: string;
-  handler: RelayHandler;
-}): RelayHandler {
-  registerWorkflow(name, handler);
+  loaders?: TLoaders;
+  handler: RelayHandler<TLoaders>;
+}): RelayHandler<TLoaders> {
+  registerWorkflow(name, handler as RelayHandler, loaders);
   return handler;
 }
 
@@ -88,14 +111,14 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     this.stream = this.env.RELAY_DURABLE_OBJECT.getByName(event.instanceId);
 
     const { name } = event.payload;
-    const handler = getWorkflow(name);
+    const workflow = getWorkflow(name);
 
-    if (!handler) {
+    if (!workflow) {
       await this.output(`Error: Unknown workflow: ${name}`);
       throw new Error(`Unknown workflow: ${name}`);
     }
 
-    await handler({
+    await workflow.handler({
       step,
       input: this.input,
       output: this.output,
@@ -122,17 +145,37 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   /**
    * Output a message to the workflow stream.
    */
-  output = async (text: string): Promise<void> => {
-    if (!this.step) {
-      throw new Error("Relay not initialized. Call initRelay() first.");
-    }
+  output: RelayOutputFn<Record<string, LoaderFn>> = Object.assign(
+    async (text: string): Promise<void> => {
+      if (!this.step) {
+        throw new Error("Relay not initialized. Call initRelay() first.");
+      }
 
-    const eventName = this.stepName("output");
+      const eventName = this.stepName("output");
 
-    await this.step.do(eventName, async () => {
-      await this.sendMessage(createLogMessage(eventName, text));
-    });
-  };
+      await this.step.do(eventName, async () => {
+        await this.sendMessage(createLogMessage(eventName, text));
+      });
+    },
+    {
+      button: async (
+        label: string,
+        opts: { loader: string; context?: LoaderParams },
+      ): Promise<void> => {
+        if (!this.step) {
+          throw new Error("Relay not initialized. Call initRelay() first.");
+        }
+
+        const eventName = this.stepName("button");
+
+        await this.step.do(eventName, async () => {
+          await this.sendMessage(
+            createButtonOutput(eventName, label, opts.loader, opts.context),
+          );
+        });
+      },
+    },
+  );
 
   /**
    * Request input from the user and wait for a response.

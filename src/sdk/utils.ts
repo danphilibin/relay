@@ -1,10 +1,11 @@
 import { z } from "zod";
-import type { RelayHandler } from "./workflow";
+import type { LoaderFn, RelayHandler } from "./workflow";
 
 export type WorkflowDefinition = {
   slug: string;
   title: string;
   handler: RelayHandler;
+  loaders?: Record<string, LoaderFn>;
 };
 
 const workflows: Map<string, WorkflowDefinition> = new Map();
@@ -21,13 +22,17 @@ export function slugify(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function registerWorkflow(title: string, handler: RelayHandler): void {
+export function registerWorkflow(
+  title: string,
+  handler: RelayHandler,
+  loaders?: Record<string, LoaderFn>,
+): void {
   const slug = slugify(title);
-  workflows.set(slug, { slug, title, handler });
+  workflows.set(slug, { slug, title, handler, loaders });
 }
 
-export function getWorkflow(slug: string): RelayHandler | undefined {
-  return workflows.get(slug)?.handler;
+export function getWorkflow(slug: string) {
+  return workflows.get(slug);
 }
 
 export function getWorkflowList(): { slug: string; title: string }[] {
@@ -149,17 +154,27 @@ export const LoadingMessageSchema = z.object({
   complete: z.boolean(),
 });
 
+export const ButtonOutputMessageSchema = z.object({
+  id: z.string(),
+  type: z.literal("button_output"),
+  label: z.string(),
+  loaderKey: z.string(),
+  context: z.record(z.string(), z.unknown()).optional(),
+});
+
 export const StreamMessageSchema = z.discriminatedUnion("type", [
   LogMessageSchema,
   InputRequestMessageSchema,
   InputReceivedMessageSchema,
   LoadingMessageSchema,
+  ButtonOutputMessageSchema,
 ]);
 
 export type LogMessage = z.infer<typeof LogMessageSchema>;
 export type InputRequestMessage = z.infer<typeof InputRequestMessageSchema>;
 export type InputReceivedMessage = z.infer<typeof InputReceivedMessageSchema>;
 export type LoadingMessage = z.infer<typeof LoadingMessageSchema>;
+export type ButtonOutputMessage = z.infer<typeof ButtonOutputMessageSchema>;
 export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 
 /**
@@ -194,6 +209,15 @@ export function createLoadingMessage(
   complete: boolean,
 ): LoadingMessage {
   return { id, type: "loading", text, complete };
+}
+
+export function createButtonOutput(
+  id: string,
+  label: string,
+  loaderKey: string,
+  context?: Record<string, unknown>,
+): ButtonOutputMessage {
+  return { id, type: "button_output", label, loaderKey, context };
 }
 
 /**
