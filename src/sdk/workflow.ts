@@ -32,13 +32,13 @@ export type RelayInputFn = {
   ): Promise<InferInputResult<T>>;
 
   // Prompt with buttons
-  <B extends readonly ButtonDef[]>(
+  <const B extends readonly ButtonDef[]>(
     prompt: string,
     options: InputOptions<B>,
   ): Promise<{ value: string; $choice: ButtonLabels<B> }>;
 
   // Schema with buttons
-  <T extends InputSchema, B extends readonly ButtonDef[]>(
+  <T extends InputSchema, const B extends readonly ButtonDef[]>(
     prompt: string,
     schema: T,
     options: InputOptions<B>,
