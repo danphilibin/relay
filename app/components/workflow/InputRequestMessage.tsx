@@ -65,8 +65,15 @@ export function InputRequestMessage({
     await onSubmit(eventName, value);
   };
 
-  const handleButtonClick = (label: string) => {
+  const handleButtonClick = (
+    label: string,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     choiceRef.current = label;
+    // If multiple buttons, we use type="button" so manually submit
+    if (buttons.length > 1) {
+      e.currentTarget.form?.requestSubmit();
+    }
   };
 
   return (
@@ -87,9 +94,9 @@ export function InputRequestMessage({
           {buttons.map((btn) => (
             <button
               key={btn.label}
-              type="submit"
+              type={buttons.length === 1 ? "submit" : "button"}
               disabled={isSubmitted}
-              onClick={() => handleButtonClick(btn.label)}
+              onClick={(e) => handleButtonClick(btn.label, e)}
               className={`px-3.5 py-2 text-[15px] font-medium rounded-md active:scale-[0.98] disabled:bg-[#333] disabled:text-[#666] disabled:cursor-default transition-all ${intentStyles[btn.intent]}`}
             >
               {btn.label}
