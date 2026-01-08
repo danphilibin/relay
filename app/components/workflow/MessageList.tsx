@@ -73,6 +73,7 @@ export function MessageList({
                 eventName={message.id}
                 prompt={message.prompt}
                 schema={message.schema}
+                buttons={message.buttons}
                 workflowId={workflowId}
                 onSubmit={onSubmitInput}
                 submittedValue={submittedValue}
