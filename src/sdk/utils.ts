@@ -101,6 +101,45 @@ export const InputSchemaSchema = z.record(
 export type InputSchema = z.infer<typeof InputSchemaSchema>;
 
 /**
+ * Button definitions for input options
+ */
+export type ButtonDef =
+  | string
+  | { label: string; intent?: "primary" | "secondary" | "danger" };
+
+export type NormalizedButton = {
+  label: string;
+  intent: "primary" | "secondary" | "danger";
+};
+
+export type InputOptions<
+  B extends readonly ButtonDef[] = readonly ButtonDef[],
+> = {
+  buttons: B;
+};
+
+type ButtonLabel<B extends ButtonDef> = B extends string
+  ? B
+  : B extends { label: infer L }
+    ? L
+    : never;
+
+export type ButtonLabels<B extends readonly ButtonDef[]> = ButtonLabel<
+  B[number]
+>;
+
+function normalizeButtons(buttons?: ButtonDef[]): NormalizedButton[] {
+  if (!buttons?.length) {
+    return [{ label: "Continue", intent: "primary" }];
+  }
+  return buttons.map((btn) =>
+    typeof btn === "string"
+      ? { label: btn, intent: "primary" }
+      : { label: btn.label, intent: btn.intent ?? "primary" },
+  );
+}
+
+/**
  * Maps a single field definition to its result type
  */
 type InferFieldType<T extends InputFieldDefinition> = T["type"] extends "text"
@@ -129,11 +168,17 @@ export const LogMessageSchema = z.object({
   text: z.string(),
 });
 
+const NormalizedButtonSchema = z.object({
+  label: z.string(),
+  intent: z.enum(["primary", "secondary", "danger"]),
+});
+
 export const InputRequestMessageSchema = z.object({
   id: z.string(),
   type: z.literal("input_request"),
   prompt: z.string(),
   schema: InputSchemaSchema,
+  buttons: z.array(NormalizedButtonSchema),
 });
 
 export const InputReceivedMessageSchema = z.object({
@@ -173,12 +218,19 @@ export function createInputRequest(
   id: string,
   prompt: string,
   schema?: InputSchema,
+  buttons?: ButtonDef[],
 ): InputRequestMessage {
   // Normalize simple prompts to a single text field schema
   const normalizedSchema: InputSchema = schema ?? {
     input: { type: "text", label: prompt },
   };
-  return { type: "input_request", id, prompt, schema: normalizedSchema };
+  return {
+    type: "input_request",
+    id,
+    prompt,
+    schema: normalizedSchema,
+    buttons: normalizeButtons(buttons),
+  };
 }
 
 export function createInputReceived(

@@ -13,17 +13,36 @@ import {
   type InputSchema,
   type InferInputResult,
   type WorkflowParams,
+  type ButtonDef,
+  type ButtonLabels,
+  type InputOptions,
 } from "./utils";
 
 /**
  * Input function type with overloads for simple and structured inputs
  */
 export type RelayInputFn = {
+  // Simple prompt
   (prompt: string): Promise<string>;
+
+  // Prompt with schema
   <T extends InputSchema>(
     prompt: string,
     schema: T,
   ): Promise<InferInputResult<T>>;
+
+  // Prompt with buttons
+  <const B extends readonly ButtonDef[]>(
+    prompt: string,
+    options: InputOptions<B>,
+  ): Promise<{ value: string; $choice: ButtonLabels<B> }>;
+
+  // Schema with buttons
+  <T extends InputSchema, const B extends readonly ButtonDef[]>(
+    prompt: string,
+    schema: T,
+    options: InputOptions<B>,
+  ): Promise<InferInputResult<T> & { $choice: ButtonLabels<B> }>;
 };
 
 /**
@@ -119,6 +138,24 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     return `relay-${prefix}-${this.counter++}`;
   }
 
+  private normalizeInputArgs(
+    schemaOrOptions?: InputSchema | InputOptions,
+    maybeOptions?: InputOptions,
+  ): {
+    schema: InputSchema | undefined;
+    options: InputOptions | undefined;
+    buttons: ButtonDef[] | undefined;
+  } {
+    const isOptions = (v: unknown): v is InputOptions =>
+      typeof v === "object" && v !== null && "buttons" in v;
+
+    const schema = isOptions(schemaOrOptions) ? undefined : schemaOrOptions;
+    const options = isOptions(schemaOrOptions) ? schemaOrOptions : maybeOptions;
+    const buttons = options?.buttons as ButtonDef[] | undefined;
+
+    return { schema, options, buttons };
+  }
+
   /**
    * Output a message to the workflow stream.
    */
@@ -136,17 +173,27 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
   /**
    * Request input from the user and wait for a response.
-   * Supports simple string prompts or structured input with a schema.
    */
-  input: RelayInputFn = (async (prompt: string, schema?: InputSchema) => {
+  input: RelayInputFn = (async (
+    prompt: string,
+    schemaOrOptions?: InputSchema | InputOptions,
+    maybeOptions?: InputOptions,
+  ) => {
     if (!this.step) {
       throw new Error("Relay not initialized. Call initRelay() first.");
     }
 
+    const { schema, buttons } = this.normalizeInputArgs(
+      schemaOrOptions,
+      maybeOptions,
+    );
+
     const eventName = this.stepName("input");
 
     await this.step.do(`${eventName}-request`, async () => {
-      await this.sendMessage(createInputRequest(eventName, prompt, schema));
+      await this.sendMessage(
+        createInputRequest(eventName, prompt, schema, buttons),
+      );
     });
 
     const event = await this.step.waitForEvent(eventName, {
@@ -154,8 +201,17 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       timeout: "5 minutes",
     });
 
-    // Unwrap for simple case (no schema provided = normalized to { input: value })
     const payload = event.payload as Record<string, unknown>;
+
+    // With buttons: always return object (with $choice)
+    if (buttons) {
+      if (!schema) {
+        return { value: payload.input, $choice: payload.$choice };
+      }
+      return payload;
+    }
+
+    // No buttons: unwrap simple case
     if (!schema) {
       return payload.input;
     }

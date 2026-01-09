@@ -1,10 +1,11 @@
-import { useState } from "react";
-import type { InputSchema } from "../../types/workflow";
+import { useState, useRef } from "react";
+import type { InputSchema, NormalizedButton } from "../../types/workflow";
 
 interface InputRequestMessageProps {
   eventName: string;
   prompt: string;
   schema: InputSchema;
+  buttons: NormalizedButton[];
   workflowId: string | null;
   onSubmit: (
     eventName: string,
@@ -13,20 +14,27 @@ interface InputRequestMessageProps {
   submittedValue?: Record<string, unknown>;
 }
 
+const intentStyles: Record<string, string> = {
+  primary: "bg-white text-black hover:opacity-90",
+  secondary: "bg-[#222] text-[#fafafa] hover:bg-[#333]",
+  danger: "bg-red-600 text-white hover:bg-red-700",
+};
+
 export function InputRequestMessage({
   eventName,
   prompt,
   schema,
+  buttons,
   onSubmit,
   submittedValue,
 }: InputRequestMessageProps) {
   const [isSubmitted, setIsSubmitted] = useState(!!submittedValue);
+  const choiceRef = useRef<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (isSubmitted) return;
-
-    const formData = new FormData(e.currentTarget);
+  const collectFormValues = (
+    form: HTMLFormElement,
+  ): Record<string, unknown> => {
+    const formData = new FormData(form);
     const value: Record<string, unknown> = {};
 
     for (const [fieldName, fieldDef] of Object.entries(schema)) {
@@ -40,8 +48,32 @@ export function InputRequestMessage({
       }
     }
 
+    return value;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmitted) return;
+
+    const value = collectFormValues(e.currentTarget);
+
+    if (choiceRef.current) {
+      value.$choice = choiceRef.current;
+    }
+
     setIsSubmitted(true);
     await onSubmit(eventName, value);
+  };
+
+  const handleButtonClick = (
+    label: string,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    choiceRef.current = label;
+    // If multiple buttons, we use type="button" so manually submit
+    if (buttons.length > 1) {
+      e.currentTarget.form?.requestSubmit();
+    }
   };
 
   return (
@@ -59,13 +91,17 @@ export function InputRequestMessage({
         />
 
         <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={isSubmitted}
-            className="px-3.5 py-2 text-[15px] font-medium bg-white text-black rounded-md hover:opacity-90 active:scale-[0.98] disabled:bg-[#333] disabled:text-[#666] disabled:cursor-default transition-all"
-          >
-            Continue
-          </button>
+          {buttons.map((btn) => (
+            <button
+              key={btn.label}
+              type={buttons.length === 1 ? "submit" : "button"}
+              disabled={isSubmitted}
+              onClick={(e) => handleButtonClick(btn.label, e)}
+              className={`px-3.5 py-2 text-[15px] font-medium rounded-md active:scale-[0.98] disabled:bg-[#333] disabled:text-[#666] disabled:cursor-default transition-all ${intentStyles[btn.intent]}`}
+            >
+              {btn.label}
+            </button>
+          ))}
         </div>
       </div>
     </form>
