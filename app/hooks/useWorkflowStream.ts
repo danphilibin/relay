@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import type {
-  WorkflowMessage,
-  WorkflowStatus,
-  LoadingMessage,
-} from "../types/workflow";
-import { parseStreamMessage } from "../types/workflow";
-import { StartWorkflowParams, WorkflowParams } from "@/sdk/utils";
+import {
+  type StreamMessage,
+  type WorkflowStatus,
+  type LoadingMessage,
+  parseStreamMessage,
+  type StartWorkflowParams,
+  type WorkflowParams,
+} from "@/sdk";
 
 interface UseWorkflowStreamOptions {
   workflowName: string;
@@ -15,7 +16,7 @@ interface UseWorkflowStreamOptions {
 
 interface UseWorkflowStreamResult {
   status: WorkflowStatus;
-  messages: WorkflowMessage[];
+  messages: StreamMessage[];
   currentRunId: string | null;
   submitInput: (
     eventName: string,
@@ -30,7 +31,7 @@ export function useWorkflowStream({
 }: UseWorkflowStreamOptions): UseWorkflowStreamResult {
   const navigate = useNavigate();
   const [status, setStatus] = useState<WorkflowStatus>("idle");
-  const [messages, setMessages] = useState<WorkflowMessage[]>([]);
+  const [messages, setMessages] = useState<StreamMessage[]>([]);
   const [currentRunId, setCurrentRunId] = useState<string | null>(
     runId ?? null,
   );
@@ -139,7 +140,7 @@ export function useWorkflowStream({
     }
   }
 
-  function handleStreamMessage(message: WorkflowMessage) {
+  function handleStreamMessage(message: StreamMessage) {
     if (message.type === "loading") {
       // Update existing loading message or add new one
       setMessages((prev) => {

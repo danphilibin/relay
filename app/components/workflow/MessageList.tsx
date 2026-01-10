@@ -1,4 +1,4 @@
-import type { WorkflowMessage } from "../../types/workflow";
+import { type StreamMessage } from "@/sdk";
 import { LogMessage } from "./LogMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
@@ -6,7 +6,7 @@ import { ConnectionState } from "../../routes/workflow";
 import { useDelayedWaitingIndicator } from "../../hooks/useDelayedWaitingIndicator";
 
 interface MessageListProps {
-  messages: WorkflowMessage[];
+  messages: StreamMessage[];
   workflowId: string | null;
   onSubmitInput: (
     eventName: string,
@@ -18,9 +18,9 @@ interface MessageListProps {
  * Pairs input_request messages with their following input_received responses.
  * Returns a processed list where input_received messages are consumed by their requests.
  */
-function pairInputMessages(messages: WorkflowMessage[]) {
+function pairInputMessages(messages: StreamMessage[]) {
   const paired: Array<{
-    message: WorkflowMessage;
+    message: StreamMessage;
     submittedValue?: Record<string, unknown>;
   }> = [];
 

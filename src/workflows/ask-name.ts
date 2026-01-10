@@ -1,4 +1,4 @@
-import { createWorkflow } from "@/sdk/workflow";
+import { createWorkflow } from "@/sdk";
 
 export const askName = createWorkflow({
   name: "Ask Name",
