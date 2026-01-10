@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import type { InputSchema, NormalizedButton } from "../../types/workflow";
+import { type InputSchema, type NormalizedButton } from "@/sdk";
 
 interface InputRequestMessageProps {
   eventName: string;

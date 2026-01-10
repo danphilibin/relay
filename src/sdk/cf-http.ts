@@ -1,5 +1,8 @@
-import { StartWorkflowParams, WorkflowParamsSchema } from "./utils";
-import { getWorkflowList } from "./utils";
+import {
+  getWorkflowList,
+  WorkflowParamsSchema,
+  type StartWorkflowParams,
+} from "./registry";
 
 /**
  * HTTP handler for the Relay workflow engine.

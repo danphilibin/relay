@@ -4,46 +4,18 @@ import {
   WorkflowStep,
 } from "cloudflare:workers";
 import {
-  getWorkflow,
-  registerWorkflow,
+  type InputSchema,
+  type ButtonDef,
+  type InputOptions,
+  type RelayInputFn,
+} from "./input";
+import {
   createInputRequest,
   createLoadingMessage,
   createLogMessage,
   type StreamMessage,
-  type InputSchema,
-  type InferInputResult,
-  type WorkflowParams,
-  type ButtonDef,
-  type ButtonLabels,
-  type InputOptions,
-} from "./utils";
-
-/**
- * Input function type with overloads for simple and structured inputs
- */
-export type RelayInputFn = {
-  // Simple prompt
-  (prompt: string): Promise<string>;
-
-  // Prompt with schema
-  <T extends InputSchema>(
-    prompt: string,
-    schema: T,
-  ): Promise<InferInputResult<T>>;
-
-  // Prompt with buttons
-  <const B extends readonly ButtonDef[]>(
-    prompt: string,
-    options: InputOptions<B>,
-  ): Promise<{ value: string; $choice: ButtonLabels<B> }>;
-
-  // Schema with buttons
-  <T extends InputSchema, const B extends readonly ButtonDef[]>(
-    prompt: string,
-    schema: T,
-    options: InputOptions<B>,
-  ): Promise<InferInputResult<T> & { $choice: ButtonLabels<B> }>;
-};
+} from "./messages";
+import { getWorkflow, registerWorkflow, type WorkflowParams } from "./registry";
 
 /**
  * Context passed to the loading callback
