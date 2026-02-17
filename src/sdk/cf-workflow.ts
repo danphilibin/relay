@@ -13,6 +13,7 @@ import {
   createInputRequest,
   createLoadingMessage,
   createLogMessage,
+  createConfirmRequest,
   type StreamMessage,
 } from "./messages";
 import { getWorkflow, registerWorkflow, type WorkflowParams } from "./registry";
@@ -33,14 +34,20 @@ export type RelayLoadingFn = (
 ) => Promise<void>;
 
 /**
+ * Confirm function type - prompts user for approval
+ */
+export type RelayConfirmFn = (message: string) => Promise<boolean>;
+
+/**
  * Context passed to workflow handlers.
- * Use `input`, `output`, and `loading` to interact with the user.
+ * Use `input`, `output`, `loading`, and `confirm` to interact with the user.
  */
 export type RelayContext = {
   step: WorkflowStep;
   input: RelayInputFn;
   output: RelayWorkflow["output"];
   loading: RelayLoadingFn;
+  confirm: RelayConfirmFn;
 };
 
 export type RelayHandler = (ctx: RelayContext) => Promise<void>;
@@ -91,6 +98,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       input: this.input,
       output: this.output,
       loading: this.loading,
+      confirm: this.confirm,
     });
   }
 
@@ -228,5 +236,28 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
         createLoadingMessage(eventName, completeMessage, true),
       );
     });
+  };
+
+  /**
+   * Request confirmation from the user (approve/reject).
+   * Returns true if approved, false if rejected.
+   */
+  confirm: RelayConfirmFn = async (message: string): Promise<boolean> => {
+    if (!this.step) {
+      throw new Error("Relay not initialized. Call initRelay() first.");
+    }
+
+    const eventName = this.stepName("confirm");
+
+    await this.step.do(`${eventName}-request`, async () => {
+      await this.sendMessage(createConfirmRequest(eventName, message));
+    });
+
+    const event = await this.step.waitForEvent(eventName, {
+      type: eventName,
+      timeout: "5 minutes",
+    });
+
+    return (event.payload as { approved: boolean }).approved;
   };
 }

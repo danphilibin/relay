@@ -22,6 +22,7 @@ interface UseWorkflowStreamResult {
     eventName: string,
     value: string | Record<string, unknown>,
   ) => Promise<void>;
+  submitConfirm: (eventName: string, approved: boolean) => Promise<void>;
   startNewRun: () => void;
 }
 
@@ -178,6 +179,16 @@ export function useWorkflowStream({
     });
   }
 
+  async function submitConfirm(eventName: string, approved: boolean) {
+    if (!currentRunId) return;
+
+    await fetch(`/workflows/${currentRunId}/event/${eventName}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approved }),
+    });
+  }
+
   function startNewRun() {
     navigate(`/${workflowName}`);
   }
@@ -187,6 +198,7 @@ export function useWorkflowStream({
     messages,
     currentRunId,
     submitInput,
+    submitConfirm,
     startNewRun,
   };
 }

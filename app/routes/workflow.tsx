@@ -22,11 +22,17 @@ export default function Workflow() {
   const { workflowName, runId } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { status, messages, currentRunId, submitInput, startNewRun } =
-    useWorkflowStream({
-      workflowName: workflowName!,
-      runId,
-    });
+  const {
+    status,
+    messages,
+    currentRunId,
+    submitInput,
+    submitConfirm,
+    startNewRun,
+  } = useWorkflowStream({
+    workflowName: workflowName!,
+    runId,
+  });
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -85,6 +91,7 @@ export default function Workflow() {
             messages={messages}
             workflowId={currentRunId}
             onSubmitInput={submitInput}
+            onSubmitConfirm={submitConfirm}
           />
 
           {status === "complete" && messages.length === 0 && (

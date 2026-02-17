@@ -6,8 +6,11 @@ export {
   type InputRequestMessage,
   type InputReceivedMessage,
   type LoadingMessage,
+  type ConfirmRequestMessage,
+  type ConfirmReceivedMessage,
   StreamMessageSchema,
   parseStreamMessage,
+  createConfirmReceived,
 } from "./messages";
 
 export type { InputSchema, NormalizedButton } from "./input";

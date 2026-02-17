@@ -45,23 +45,27 @@ export const httpHandler = async (req: Request, env: Env) => {
   );
   if (req.method === "POST" && eventMatch) {
     const [, instanceId, eventName] = eventMatch;
-    const body = await req.json<{ value: any }>();
+    const body = await req.json<{ value?: any; approved?: boolean }>();
 
-    // Write input_received to the stream
     const stub = env.RELAY_DURABLE_OBJECT.getByName(instanceId);
+
+    // Determine message type based on payload shape
+    const isConfirm = typeof body.approved === "boolean";
+    const streamMessage = isConfirm
+      ? { type: "confirm_received", id: eventName, approved: body.approved }
+      : { type: "input_received", id: eventName, value: body.value };
+
     await stub.fetch("http://internal/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: { type: "input_received", id: eventName, value: body.value },
-      }),
+      body: JSON.stringify({ message: streamMessage }),
     });
 
     // Send event to workflow engine
     const instance = await env.RELAY_WORKFLOW.get(instanceId);
     await instance.sendEvent({
       type: eventName,
-      payload: body.value,
+      payload: isConfirm ? { approved: body.approved } : body.value,
     });
 
     return Response.json({ success: true });

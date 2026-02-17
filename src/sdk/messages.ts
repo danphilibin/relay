@@ -41,17 +41,33 @@ export const LoadingMessageSchema = z.object({
   complete: z.boolean(),
 });
 
+export const ConfirmRequestMessageSchema = z.object({
+  id: z.string(),
+  type: z.literal("confirm_request"),
+  message: z.string(),
+});
+
+export const ConfirmReceivedMessageSchema = z.object({
+  id: z.string(),
+  type: z.literal("confirm_received"),
+  approved: z.boolean(),
+});
+
 export const StreamMessageSchema = z.discriminatedUnion("type", [
   LogMessageSchema,
   InputRequestMessageSchema,
   InputReceivedMessageSchema,
   LoadingMessageSchema,
+  ConfirmRequestMessageSchema,
+  ConfirmReceivedMessageSchema,
 ]);
 
 export type LogMessage = z.infer<typeof LogMessageSchema>;
 export type InputRequestMessage = z.infer<typeof InputRequestMessageSchema>;
 export type InputReceivedMessage = z.infer<typeof InputReceivedMessageSchema>;
 export type LoadingMessage = z.infer<typeof LoadingMessageSchema>;
+export type ConfirmRequestMessage = z.infer<typeof ConfirmRequestMessageSchema>;
+export type ConfirmReceivedMessage = z.infer<typeof ConfirmReceivedMessageSchema>;
 export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 
 /**
@@ -93,6 +109,20 @@ export function createLoadingMessage(
   complete: boolean,
 ): LoadingMessage {
   return { id, type: "loading", text, complete };
+}
+
+export function createConfirmRequest(
+  id: string,
+  message: string,
+): ConfirmRequestMessage {
+  return { id, type: "confirm_request", message };
+}
+
+export function createConfirmReceived(
+  id: string,
+  approved: boolean,
+): ConfirmReceivedMessage {
+  return { id, type: "confirm_received", approved };
 }
 
 /**

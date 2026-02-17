@@ -12,3 +12,4 @@ import "@/workflows/process-files";
 import "@/workflows/ask-name";
 import "@/workflows/newsletter-signup";
 import "@/workflows/survey";
+import "@/workflows/approval-test";
