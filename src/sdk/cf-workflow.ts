@@ -14,6 +14,7 @@ import {
   createLoadingMessage,
   createLogMessage,
   createConfirmRequest,
+  createWorkflowComplete,
   type StreamMessage,
 } from "./messages";
 import { getWorkflow, registerWorkflow, type WorkflowParams } from "./registry";
@@ -99,6 +100,11 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       output: this.output,
       loading: this.loading,
       confirm: this.confirm,
+    });
+
+    // Signal that the workflow has completed
+    await step.do("relay-workflow-complete", async () => {
+      await this.sendMessage(createWorkflowComplete("relay-workflow-complete"));
     });
   }
 

@@ -8,9 +8,11 @@ export {
   type LoadingMessage,
   type ConfirmRequestMessage,
   type ConfirmReceivedMessage,
+  type WorkflowCompleteMessage,
   StreamMessageSchema,
   parseStreamMessage,
   createConfirmReceived,
+  createWorkflowComplete,
 } from "./messages";
 
 export type { InputSchema, NormalizedButton } from "./input";

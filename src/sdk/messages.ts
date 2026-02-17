@@ -53,6 +53,11 @@ export const ConfirmReceivedMessageSchema = z.object({
   approved: z.boolean(),
 });
 
+export const WorkflowCompleteMessageSchema = z.object({
+  id: z.string(),
+  type: z.literal("workflow_complete"),
+});
+
 export const StreamMessageSchema = z.discriminatedUnion("type", [
   LogMessageSchema,
   InputRequestMessageSchema,
@@ -60,6 +65,7 @@ export const StreamMessageSchema = z.discriminatedUnion("type", [
   LoadingMessageSchema,
   ConfirmRequestMessageSchema,
   ConfirmReceivedMessageSchema,
+  WorkflowCompleteMessageSchema,
 ]);
 
 export type LogMessage = z.infer<typeof LogMessageSchema>;
@@ -68,6 +74,7 @@ export type InputReceivedMessage = z.infer<typeof InputReceivedMessageSchema>;
 export type LoadingMessage = z.infer<typeof LoadingMessageSchema>;
 export type ConfirmRequestMessage = z.infer<typeof ConfirmRequestMessageSchema>;
 export type ConfirmReceivedMessage = z.infer<typeof ConfirmReceivedMessageSchema>;
+export type WorkflowCompleteMessage = z.infer<typeof WorkflowCompleteMessageSchema>;
 export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 
 /**
@@ -123,6 +130,10 @@ export function createConfirmReceived(
   approved: boolean,
 ): ConfirmReceivedMessage {
   return { id, type: "confirm_received", approved };
+}
+
+export function createWorkflowComplete(id: string): WorkflowCompleteMessage {
+  return { id, type: "workflow_complete" };
 }
 
 /**
