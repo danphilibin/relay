@@ -16,16 +16,15 @@ interface InputRequestMessageProps {
     value: Record<string, unknown>,
   ) => Promise<void>;
   submittedValue?: Record<string, unknown>;
+  suppressAutoFocus?: boolean;
 }
 
-const intentToVariant: Record<
-  string,
-  "primary" | "secondary" | "destructive"
-> = {
-  primary: "primary",
-  secondary: "secondary",
-  danger: "destructive",
-};
+const intentToVariant: Record<string, "primary" | "secondary" | "destructive"> =
+  {
+    primary: "primary",
+    secondary: "secondary",
+    danger: "destructive",
+  };
 
 export function InputRequestMessage({
   eventName,
@@ -34,6 +33,7 @@ export function InputRequestMessage({
   buttons,
   onSubmit,
   submittedValue,
+  suppressAutoFocus,
 }: InputRequestMessageProps) {
   const [isSubmitted, setIsSubmitted] = useState(!!submittedValue);
   const choiceRef = useRef<string | null>(null);
@@ -101,6 +101,7 @@ export function InputRequestMessage({
           disabled={isSubmitted}
           values={submittedValue}
           controlledValues={controlledValues}
+          suppressAutoFocus={suppressAutoFocus}
         />
 
         <div className="flex gap-2">
@@ -126,6 +127,7 @@ interface SchemaFieldsProps {
   disabled: boolean;
   values?: Record<string, unknown>;
   controlledValues: React.RefObject<Record<string, unknown>>;
+  suppressAutoFocus?: boolean;
 }
 
 function SchemaFields({
@@ -133,6 +135,7 @@ function SchemaFields({
   disabled,
   values,
   controlledValues,
+  suppressAutoFocus,
 }: SchemaFieldsProps) {
   // Find the first text input field name for autofocus
   const firstTextFieldName = Object.entries(schema).find(
@@ -193,9 +196,15 @@ function SchemaFields({
         if (fieldDef.type === "select") {
           const defaultVal = values?.[fieldName] as string | undefined;
           // Initialize controlled value from submitted/default data
-          if (defaultVal !== undefined && !(fieldName in controlledValues.current)) {
+          if (
+            defaultVal !== undefined &&
+            !(fieldName in controlledValues.current)
+          ) {
             controlledValues.current[fieldName] = defaultVal;
-          } else if (!(fieldName in controlledValues.current) && fieldDef.options?.length) {
+          } else if (
+            !(fieldName in controlledValues.current) &&
+            fieldDef.options?.length
+          ) {
             controlledValues.current[fieldName] = fieldDef.options[0].value;
           }
 
@@ -234,7 +243,7 @@ function SchemaFields({
             disabled={disabled}
             defaultValue={values?.[fieldName] as string | undefined}
             placeholder={fieldDef.placeholder || ""}
-            autoFocus={isFirstTextInput}
+            autoFocus={isFirstTextInput && !suppressAutoFocus}
           />
         );
       })}

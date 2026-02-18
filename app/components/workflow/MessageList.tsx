@@ -14,6 +14,7 @@ interface MessageListProps {
     value: string | Record<string, unknown>,
   ) => Promise<void>;
   onSubmitConfirm: (eventName: string, approved: boolean) => Promise<void>;
+  suppressAutoFocus?: boolean;
 }
 
 /**
@@ -65,6 +66,7 @@ export function MessageList({
   workflowId,
   onSubmitInput,
   onSubmitConfirm,
+  suppressAutoFocus,
 }: MessageListProps) {
   const pairedMessages = pairMessages(messages);
 
@@ -93,6 +95,7 @@ export function MessageList({
                 workflowId={workflowId}
                 onSubmit={onSubmitInput}
                 submittedValue={submittedValue}
+                suppressAutoFocus={suppressAutoFocus}
               />
             );
 

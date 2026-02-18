@@ -14,7 +14,6 @@ export function meta({ params }: Route.MetaArgs) {
   ];
 }
 
-
 export default function Workflow() {
   const { workflowName, runId } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
