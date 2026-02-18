@@ -7,3 +7,4 @@ build
 *.tsbuildinfo
 .mcp.json
 settings.local.json
+.dev.vars
