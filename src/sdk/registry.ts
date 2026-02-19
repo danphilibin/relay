@@ -1,4 +1,5 @@
 import type { RelayHandler } from "./cf-workflow";
+import type { InputSchema } from "./input";
 import {
   type WorkflowMeta,
   type WorkflowParams,
@@ -14,6 +15,7 @@ export type WorkflowDefinition = {
   slug: string;
   title: string;
   handler: RelayHandler;
+  input?: InputSchema;
 };
 
 const workflows: Map<string, WorkflowDefinition> = new Map();
@@ -28,13 +30,17 @@ export function slugify(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function registerWorkflow(title: string, handler: RelayHandler): void {
+export function registerWorkflow(
+  title: string,
+  handler: RelayHandler,
+  input?: InputSchema,
+): void {
   const slug = slugify(title);
-  workflows.set(slug, { slug, title, handler });
+  workflows.set(slug, { slug, title, handler, input });
 }
 
-export function getWorkflow(slug: string): RelayHandler | undefined {
-  return workflows.get(slug)?.handler;
+export function getWorkflow(slug: string): WorkflowDefinition | undefined {
+  return workflows.get(slug);
 }
 
 export function getWorkflowList(): { slug: string; title: string }[] {
