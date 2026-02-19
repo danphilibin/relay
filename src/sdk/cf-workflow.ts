@@ -5,6 +5,7 @@ import {
 } from "cloudflare:workers";
 import {
   type InputSchema,
+  type InferInputResult,
   type ButtonDef,
   type InputOptions,
   type RelayInputFn,
@@ -55,17 +56,23 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
 
 /**
  * Factory function for creating and registering workflow handlers.
- * Provides full type inference for step, input, output, and loading.
+ * When `input` is provided, the handler receives typed `data` with the collected values.
  */
-export function createWorkflow({
-  name,
-  handler,
-}: {
+export function createWorkflow<T extends InputSchema>(config: {
+  name: string;
+  input: T;
+  handler: (ctx: RelayContext & { data: InferInputResult<T> }) => Promise<void>;
+}): void;
+export function createWorkflow(config: {
   name: string;
   handler: RelayHandler;
-}): RelayHandler {
-  registerWorkflow(name, handler);
-  return handler;
+}): void;
+export function createWorkflow(config: {
+  name: string;
+  input?: InputSchema;
+  handler: (...args: any[]) => Promise<void>;
+}): void {
+  registerWorkflow(config.name, config.handler as RelayHandler, config.input);
 }
 
 /**
@@ -86,21 +93,46 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
     this.stream = this.env.RELAY_DURABLE_OBJECT.getByName(event.instanceId);
 
-    const { name } = event.payload;
-    const handler = getWorkflow(name);
+    const { name, data: prefilled } = event.payload;
+    const definition = getWorkflow(name);
 
-    if (!handler) {
+    if (!definition) {
       await this.output(`Error: Unknown workflow: ${name}`);
       throw new Error(`Unknown workflow: ${name}`);
     }
 
-    await handler({
+    // Collect upfront input if schema is defined
+    let data: Record<string, unknown> | undefined;
+    if (definition.input) {
+      if (prefilled) {
+        data = prefilled;
+      } else {
+        // Emit input_request and wait for response
+        const eventName = this.stepName("input");
+
+        await step.do(`${eventName}-request`, async () => {
+          await this.sendMessage(
+            createInputRequest(eventName, definition.title, definition.input),
+          );
+        });
+
+        const response = await step.waitForEvent(eventName, {
+          type: eventName,
+          timeout: "5 minutes",
+        });
+
+        data = response.payload as Record<string, unknown>;
+      }
+    }
+
+    await definition.handler({
       step,
       input: this.input,
       output: this.output,
       loading: this.loading,
       confirm: this.confirm,
-    });
+      ...(data !== undefined && { data }),
+    } as RelayContext);
 
     // Signal that the workflow has completed
     await step.do("relay-workflow-complete", async () => {

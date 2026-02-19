@@ -2,21 +2,19 @@ import { createWorkflow } from "@/sdk";
 
 export const newsletterSignup = createWorkflow({
   name: "Newsletter Signup",
-  handler: async ({ step, input, output, loading }) => {
-    const name = await input("What is your name?");
-
-    const { email, newsletter } = await input("Enter more info", {
-      email: { type: "text", label: "Email address" },
-      newsletter: { type: "checkbox", label: "Subscribe to updates?" },
-    });
-
-    if (newsletter) {
+  input: {
+    name: { type: "text", label: "Your name" },
+    email: { type: "text", label: "Email address" },
+    newsletter: { type: "checkbox", label: "Subscribe to updates?" },
+  },
+  handler: async ({ step, data, output, loading }) => {
+    if (data.newsletter) {
       await loading("Subscribing to newsletter...", async ({ complete }) => {
         await step.sleep("subscribe-delay", "2 seconds");
         complete("Subscribed to newsletter!");
       });
     }
 
-    await output(`Thanks, ${name}! Check ${email} for next steps.`);
+    await output(`Thanks, ${data.name}! Check ${data.email} for next steps.`);
   },
 });

@@ -11,6 +11,7 @@ export type WorkflowMeta = {
 
 export const WorkflowParamsSchema = z.object({
   name: z.string(),
+  data: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type WorkflowParams = z.infer<typeof WorkflowParamsSchema>;
