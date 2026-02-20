@@ -6,6 +6,7 @@ import { z } from "zod";
 const TextFieldSchema = z.object({
   type: z.literal("text"),
   label: z.string(),
+  description: z.string().optional(),
   placeholder: z.string().optional(),
   required: z.boolean().optional(),
 });
@@ -13,12 +14,14 @@ const TextFieldSchema = z.object({
 const CheckboxFieldSchema = z.object({
   type: z.literal("checkbox"),
   label: z.string(),
+  description: z.string().optional(),
   required: z.boolean().optional(),
 });
 
 const NumberFieldSchema = z.object({
   type: z.literal("number"),
   label: z.string(),
+  description: z.string().optional(),
   placeholder: z.string().optional(),
   required: z.boolean().optional(),
 });
@@ -26,6 +29,7 @@ const NumberFieldSchema = z.object({
 const SelectFieldSchema = z.object({
   type: z.literal("select"),
   label: z.string(),
+  description: z.string().optional(),
   options: z.array(z.object({ value: z.string(), label: z.string() })),
   required: z.boolean().optional(),
 });

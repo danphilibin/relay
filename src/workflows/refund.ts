@@ -2,6 +2,7 @@ import { createWorkflow } from "@/sdk";
 
 export const refund = createWorkflow({
   name: "Process Refund",
+  description: "Look up an order, select items, and process a refund with policy validation and approval gates.",
   handler: async ({ input, output, confirm }) => {
     // Step 1: Look up order
     const { orderId } = await input("Enter order information", {

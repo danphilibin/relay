@@ -2,6 +2,7 @@ import { createWorkflow } from "@/sdk";
 
 export const newsletterSignup = createWorkflow({
   name: "Newsletter Signup",
+  description: "Collect user info and subscribe them to the newsletter.",
   input: {
     name: { type: "text", label: "Your name" },
     email: { type: "text", label: "Email address" },

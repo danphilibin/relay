@@ -7,6 +7,7 @@ import { z } from "zod";
 export type WorkflowMeta = {
   slug: string;
   title: string;
+  description?: string;
 };
 
 export const WorkflowParamsSchema = z.object({

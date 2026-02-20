@@ -60,19 +60,22 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
  */
 export function createWorkflow<T extends InputSchema>(config: {
   name: string;
+  description?: string;
   input: T;
   handler: (ctx: RelayContext & { data: InferInputResult<T> }) => Promise<void>;
 }): void;
 export function createWorkflow(config: {
   name: string;
+  description?: string;
   handler: RelayHandler;
 }): void;
 export function createWorkflow(config: {
   name: string;
+  description?: string;
   input?: InputSchema;
   handler: (...args: any[]) => Promise<void>;
 }): void {
-  registerWorkflow(config.name, config.handler as RelayHandler, config.input);
+  registerWorkflow(config.name, config.handler as RelayHandler, config.input, config.description);
 }
 
 /**

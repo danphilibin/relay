@@ -14,6 +14,7 @@ export { WorkflowParamsSchema, StartWorkflowParamsSchema };
 export type WorkflowDefinition = {
   slug: string;
   title: string;
+  description?: string;
   handler: RelayHandler;
   input?: InputSchema;
 };
@@ -34,20 +35,22 @@ export function registerWorkflow(
   title: string,
   handler: RelayHandler,
   input?: InputSchema,
+  description?: string,
 ): void {
   const slug = slugify(title);
-  workflows.set(slug, { slug, title, handler, input });
+  workflows.set(slug, { slug, title, description, handler, input });
 }
 
 export function getWorkflow(slug: string): WorkflowDefinition | undefined {
   return workflows.get(slug);
 }
 
-export function getWorkflowList(): { slug: string; title: string }[] {
+export function getWorkflowList(): { slug: string; title: string; description?: string }[] {
   return Array.from(workflows.values())
-    .map(({ slug, title }) => ({
+    .map(({ slug, title, description }) => ({
       slug,
       title,
+      description,
     }))
     .sort((a, b) => a.title.localeCompare(b.title));
 }
