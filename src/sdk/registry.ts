@@ -1,15 +1,10 @@
 import type { RelayHandler } from "./cf-workflow";
-import type { InputSchema } from "./input";
+import type { InputSchema } from "@/isomorphic/input";
 import {
   type WorkflowMeta,
   type WorkflowParams,
-  type StartWorkflowParams,
   WorkflowParamsSchema,
-  StartWorkflowParamsSchema,
-} from "./registry-types";
-
-export type { WorkflowMeta, WorkflowParams, StartWorkflowParams };
-export { WorkflowParamsSchema, StartWorkflowParamsSchema };
+} from "@/isomorphic/registry-types";
 
 export type WorkflowDefinition = {
   slug: string;

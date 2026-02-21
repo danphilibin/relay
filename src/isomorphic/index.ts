@@ -1,6 +1,6 @@
 /**
- * Client-safe SDK exports for browser use.
- * This file must NOT import anything that depends on cloudflare:workers.
+ * Isomorphic SDK exports — safe for both browser and backend use.
+ * Nothing in this folder imports cloudflare:workers or other backend-only modules.
  */
 
 export {
@@ -9,14 +9,18 @@ export {
   type InputRequestMessage,
   type InputReceivedMessage,
   type LoadingMessage,
+  type ConfirmRequestMessage,
+  type ConfirmReceivedMessage,
+  type WorkflowCompleteMessage,
+  type CallResponseResult,
+  type CallResponseStatus,
+  type InteractionPoint,
   StreamMessageSchema,
   parseStreamMessage,
 } from "./messages";
 
 export type { InputSchema, NormalizedButton } from "./input";
 
-// Re-export types and schemas that are safe for the client
-// (these don't depend on cloudflare:workers)
 export {
   WorkflowParamsSchema,
   type WorkflowParams,

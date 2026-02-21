@@ -13,16 +13,19 @@ export {
   parseStreamMessage,
   createConfirmReceived,
   createWorkflowComplete,
-} from "./messages";
+} from "@/isomorphic/messages";
 
-export type { InputSchema, NormalizedButton } from "./input";
+export type { InputSchema, NormalizedButton } from "@/isomorphic/input";
 
 export {
   getWorkflowList,
   registerWorkflow,
+} from "./registry";
+
+export {
   type WorkflowParams,
   type StartWorkflowParams,
-} from "./registry";
+} from "@/isomorphic/registry-types";
 
 export type WorkflowStatus =
   | "idle"

@@ -9,7 +9,7 @@ import {
   type ButtonDef,
   type InputOptions,
   type RelayInputFn,
-} from "./input";
+} from "@/isomorphic/input";
 import {
   createInputRequest,
   createLoadingMessage,
@@ -17,8 +17,9 @@ import {
   createConfirmRequest,
   createWorkflowComplete,
   type StreamMessage,
-} from "./messages";
-import { getWorkflow, registerWorkflow, type WorkflowParams } from "./registry";
+} from "@/isomorphic/messages";
+import { getWorkflow, registerWorkflow } from "./registry";
+import type { WorkflowParams } from "@/isomorphic/registry-types";
 
 /**
  * Context passed to the loading callback

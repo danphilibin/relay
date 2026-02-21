@@ -1,4 +1,4 @@
-import { type StreamMessage } from "@/sdk/client";
+import { type StreamMessage } from "@/isomorphic";
 import { LogMessage } from "./LogMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";

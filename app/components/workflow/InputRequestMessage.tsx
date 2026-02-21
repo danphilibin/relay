@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { type InputSchema, type NormalizedButton } from "@/sdk/client";
+import { type InputSchema, type NormalizedButton } from "@/isomorphic";
 import { Button } from "@cloudflare/kumo/components/button";
 import { Input } from "@cloudflare/kumo/components/input";
 import { Checkbox } from "@cloudflare/kumo/components/checkbox";

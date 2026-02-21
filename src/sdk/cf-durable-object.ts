@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { type StreamMessage } from "./messages";
+import { type StreamMessage } from "@/isomorphic/messages";
 
 /**
  * Durable Object that stores and streams messages for a workflow run.

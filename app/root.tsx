@@ -8,7 +8,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { useEffect, useState } from "react";
-import type { WorkflowMeta } from "@/sdk/client";
+import type { WorkflowMeta } from "@/isomorphic";
 import type { Route } from "./+types/root";
 import "./app.css";
 

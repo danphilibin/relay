@@ -7,7 +7,7 @@ import {
   parseStreamMessage,
   type StartWorkflowParams,
   type WorkflowParams,
-} from "@/sdk/client";
+} from "@/isomorphic";
 
 interface UseWorkflowStreamOptions {
   workflowName: string;

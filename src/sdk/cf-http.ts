@@ -1,16 +1,14 @@
+import { getWorkflowList, getWorkflow, slugify } from "./registry";
 import {
-  getWorkflowList,
-  getWorkflow,
-  slugify,
   WorkflowParamsSchema,
   type StartWorkflowParams,
-} from "./registry";
+} from "@/isomorphic/registry-types";
 import {
   type StreamMessage,
   type CallResponseResult,
   type InteractionPoint,
   interactionStatus,
-} from "./messages";
+} from "@/isomorphic/messages";
 
 /**
  * Consume an NDJSON stream from the DO, collecting messages until we hit
