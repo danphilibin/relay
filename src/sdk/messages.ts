@@ -146,3 +146,38 @@ export function createWorkflowComplete(id: string): WorkflowCompleteMessage {
 export function parseStreamMessage(data: unknown): StreamMessage {
   return StreamMessageSchema.parse(data);
 }
+
+/**
+ * Derive the call-response status from an interaction point message.
+ */
+export type CallResponseStatus =
+  | "awaiting_input"
+  | "awaiting_confirm"
+  | "complete";
+
+export function interactionStatus(
+  interaction: InteractionPoint,
+): CallResponseStatus {
+  if (!interaction) return "complete";
+  if (interaction.type === "input_request") return "awaiting_input";
+  return "awaiting_confirm";
+}
+
+/**
+ * The interaction point in a call-response result — either an input/confirm
+ * request the agent needs to respond to, or null if the workflow is complete.
+ */
+export type InteractionPoint =
+  | InputRequestMessage
+  | ConfirmRequestMessage
+  | null;
+
+/**
+ * Response shape for the call-response API.
+ */
+export type CallResponseResult = {
+  run_id: string;
+  status: CallResponseStatus;
+  messages: StreamMessage[];
+  interaction: InteractionPoint;
+};
