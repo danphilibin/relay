@@ -91,18 +91,17 @@ export function normalizeButtons(buttons?: ButtonDef[]): NormalizedButton[] {
   );
 }
 
+type FieldTypeMap = {
+  text: string;
+  number: number;
+  checkbox: boolean;
+  select: string;
+};
+
 /**
  * Maps a single field definition to its result type
  */
-type InferFieldType<T extends InputFieldDefinition> = T["type"] extends "text"
-  ? string
-  : T["type"] extends "checkbox"
-    ? boolean
-    : T["type"] extends "number"
-      ? number
-      : T["type"] extends "select"
-        ? string
-        : never;
+type InferFieldType<T extends InputFieldDefinition> = FieldTypeMap[T["type"]];
 
 /**
  * Infers the result type from an input schema
