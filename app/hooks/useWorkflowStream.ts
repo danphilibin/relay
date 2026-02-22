@@ -72,7 +72,7 @@ export function useWorkflowStream({
           setMessages([
             {
               id: "error",
-              type: "log",
+              type: "output",
               text: `Error: ${(error as Error).message}`,
             },
           ]);

@@ -5,7 +5,7 @@
 
 export {
   type StreamMessage,
-  type LogMessage,
+  type OutputMessage,
   type InputRequestMessage,
   type InputReceivedMessage,
   type LoadingMessage,

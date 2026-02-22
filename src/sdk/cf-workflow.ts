@@ -13,7 +13,7 @@ import {
 import {
   createInputRequest,
   createLoadingMessage,
-  createLogMessage,
+  createOutputMessage,
   createConfirmRequest,
   createWorkflowComplete,
   type StreamMessage,
@@ -194,7 +194,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     const eventName = this.stepName("output");
 
     await this.step.do(eventName, async () => {
-      await this.sendMessage(createLogMessage(eventName, text));
+      await this.sendMessage(createOutputMessage(eventName, text));
     });
   };
 

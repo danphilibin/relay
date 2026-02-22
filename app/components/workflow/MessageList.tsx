@@ -1,5 +1,5 @@
 import { type StreamMessage } from "@/isomorphic";
-import { LogMessage } from "./LogMessage";
+import { OutputMessage } from "./OutputMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
@@ -81,8 +81,8 @@ export function MessageList({
     <div className="space-y-4">
       {pairedMessages.map(({ message, submittedValue, confirmedValue }) => {
         switch (message.type) {
-          case "log":
-            return <LogMessage key={message.id} text={message.text} />;
+          case "output":
+            return <OutputMessage key={message.id} text={message.text} />;
 
           case "input_request":
             return (

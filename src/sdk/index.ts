@@ -2,7 +2,7 @@ export { createWorkflow } from "./cf-workflow";
 
 export {
   type StreamMessage,
-  type LogMessage,
+  type OutputMessage,
   type InputRequestMessage,
   type InputReceivedMessage,
   type LoadingMessage,

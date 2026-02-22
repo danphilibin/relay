@@ -9,9 +9,9 @@ import {
 /**
  * Stream message schemas
  */
-export const LogMessageSchema = z.object({
+export const OutputMessageSchema = z.object({
   id: z.string(),
-  type: z.literal("log"),
+  type: z.literal("output"),
   text: z.string(),
 });
 
@@ -59,7 +59,7 @@ export const WorkflowCompleteMessageSchema = z.object({
 });
 
 export const StreamMessageSchema = z.discriminatedUnion("type", [
-  LogMessageSchema,
+  OutputMessageSchema,
   InputRequestMessageSchema,
   InputReceivedMessageSchema,
   LoadingMessageSchema,
@@ -68,7 +68,7 @@ export const StreamMessageSchema = z.discriminatedUnion("type", [
   WorkflowCompleteMessageSchema,
 ]);
 
-export type LogMessage = z.infer<typeof LogMessageSchema>;
+export type OutputMessage = z.infer<typeof OutputMessageSchema>;
 export type InputRequestMessage = z.infer<typeof InputRequestMessageSchema>;
 export type InputReceivedMessage = z.infer<typeof InputReceivedMessageSchema>;
 export type LoadingMessage = z.infer<typeof LoadingMessageSchema>;
@@ -84,8 +84,8 @@ export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 /**
  * Factory functions for creating messages
  */
-export function createLogMessage(id: string, text: string): LogMessage {
-  return { id, type: "log", text };
+export function createOutputMessage(id: string, text: string): OutputMessage {
+  return { id, type: "output", text };
 }
 
 export function createInputRequest(
