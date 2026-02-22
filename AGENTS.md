@@ -2,7 +2,7 @@
 
 Instructions for AI coding agents working with this codebase.
 
-## Source Code Reference
+## Source code reference
 
 Source code for dependencies is available in `opensrc/` for deeper understanding of implementation details.
 
@@ -10,7 +10,7 @@ See `opensrc/sources.json` for the list of available packages and their versions
 
 Use this source code when you need to understand how a package works internally, not just its types/interface.
 
-### Fetching Additional Source Code
+### Fetching additional source code
 
 To fetch source code for a package or repository you need to understand, run:
 
@@ -21,7 +21,11 @@ npx opensrc crates:<package>    # Rust crate (e.g., npx opensrc crates:serde)
 npx opensrc <owner>/<repo>      # GitHub repo (e.g., npx opensrc vercel/ai)
 ```
 
-## Browser Automation
+## Progress log
+
+After completing any piece of work (feature, refactor, bug fix), update `progress.md` with a new entry summarizing what was done. Use the commit range as the heading (e.g. `## Feature name (abc1234 - def5678)`). This is an append-only log — never edit existing entries.
+
+## Browser automation
 
 Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
 

@@ -55,3 +55,19 @@ Added completion message when workflows finish, giving users clear feedback that
 ## Kumo Component Library (e9ab255 - fec7819)
 
 Integrated Kumo component library for UI elements. Added suppressAutoFocus option for better input control.
+
+## Upfront Input Schema (416e009 - b67f13c)
+
+Added upfront input schema support to `createWorkflow()`, allowing workflows to declare their input schema before execution begins. Added description fields to workflows and inputs for better discoverability.
+
+## Agent Mode (1d0bf48 - 4bd73bb)
+
+Added agent mode to the HTTP handler with MCP server support. Workflows can now be triggered and interacted with programmatically via an agent interface. Added remote config support.
+
+## Isomorphic Code Organization (e533ea4 - a81e1bd)
+
+Moved shared code (messages, input types, registry types) from `src/sdk/` into `src/isomorphic/` to create a clear filesystem boundary between frontend-safe code and backend-only Cloudflare Worker code.
+
+## Field Registry Refactor (9c9d8c6 - 5709e79)
+
+Refactored `InputRequestMessage` to use a field registry pattern. Per-field-type rendering is now in `SchemaFieldComponents.tsx` with a `FIELD_REGISTRY` map. Adding a new field type only requires one registry entry. Cleaned up `InferFieldType` utility.
