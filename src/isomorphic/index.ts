@@ -6,6 +6,7 @@
 export {
   type StreamMessage,
   type OutputMessage,
+  type OutputBlockMessage,
   type InputRequestMessage,
   type InputReceivedMessage,
   type LoadingMessage,
@@ -20,6 +21,12 @@ export {
 } from "./messages";
 
 export type { InputSchema, NormalizedButton } from "./input";
+
+export {
+  type OutputBlock,
+  type OutputButtonDef,
+  outputBlockToText,
+} from "./output";
 
 export {
   WorkflowParamsSchema,
