@@ -14,10 +14,12 @@ import {
   createInputRequest,
   createLoadingMessage,
   createOutputMessage,
+  createOutputBlockMessage,
   createConfirmRequest,
   createWorkflowComplete,
   type StreamMessage,
 } from "@/isomorphic/messages";
+import type { OutputButtonDef } from "@/isomorphic/output";
 import { getWorkflow, registerWorkflow } from "./registry";
 import type { WorkflowParams } from "@/isomorphic/registry-types";
 
@@ -42,13 +44,27 @@ export type RelayLoadingFn = (
 export type RelayConfirmFn = (message: string) => Promise<boolean>;
 
 /**
+ * Rich output object with methods for each output type.
+ * `output` is a plain object — no callable magic.
+ */
+export interface RelayOutput {
+  text(text: string): Promise<void>;
+  markdown(content: string): Promise<void>;
+  table(data: { columns: string[]; rows: string[][] }): Promise<void>;
+  code(content: string, opts?: { language?: string }): Promise<void>;
+  image(opts: { src: string; alt?: string }): Promise<void>;
+  link(opts: { url: string; title?: string; description?: string }): Promise<void>;
+  buttons(buttons: OutputButtonDef[]): Promise<void>;
+}
+
+/**
  * Context passed to workflow handlers.
  * Use `input`, `output`, `loading`, and `confirm` to interact with the user.
  */
 export type RelayContext = {
   step: WorkflowStep;
   input: RelayInputFn;
-  output: RelayWorkflow["output"];
+  output: RelayOutput;
   loading: RelayLoadingFn;
   confirm: RelayConfirmFn;
 };
@@ -106,7 +122,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     const definition = getWorkflow(name);
 
     if (!definition) {
-      await this.output(`Error: Unknown workflow: ${name}`);
+      await this.output.text(`Error: Unknown workflow: ${name}`);
       throw new Error(`Unknown workflow: ${name}`);
     }
 
@@ -184,18 +200,92 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   }
 
   /**
-   * Output a message to the workflow stream.
+   * Send a step-wrapped message to the stream.
    */
-  output = async (text: string): Promise<void> => {
+  private sendOutputStep = async (message: StreamMessage): Promise<void> => {
     if (!this.step) {
       throw new Error("Relay not initialized. Call initRelay() first.");
     }
 
-    const eventName = this.stepName("output");
+    const eventName = message.id;
 
     await this.step.do(eventName, async () => {
-      await this.sendMessage(createOutputMessage(eventName, text));
+      await this.sendMessage(message);
     });
+  };
+
+  /**
+   * Rich output object with methods for each output type.
+   */
+  output: RelayOutput = {
+    text: async (text: string): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputMessage(this.stepName("output"), text),
+      );
+    },
+    markdown: async (content: string): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputBlockMessage(this.stepName("output"), {
+          type: "markdown",
+          content,
+        }),
+      );
+    },
+    table: async (data: {
+      columns: string[];
+      rows: string[][];
+    }): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputBlockMessage(this.stepName("output"), {
+          type: "table",
+          columns: data.columns,
+          rows: data.rows,
+        }),
+      );
+    },
+    code: async (
+      content: string,
+      opts?: { language?: string },
+    ): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputBlockMessage(this.stepName("output"), {
+          type: "code",
+          content,
+          ...(opts?.language && { language: opts.language }),
+        }),
+      );
+    },
+    image: async (opts: { src: string; alt?: string }): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputBlockMessage(this.stepName("output"), {
+          type: "image",
+          src: opts.src,
+          ...(opts.alt && { alt: opts.alt }),
+        }),
+      );
+    },
+    link: async (opts: {
+      url: string;
+      title?: string;
+      description?: string;
+    }): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputBlockMessage(this.stepName("output"), {
+          type: "link",
+          url: opts.url,
+          ...(opts.title && { title: opts.title }),
+          ...(opts.description && { description: opts.description }),
+        }),
+      );
+    },
+    buttons: async (buttons: OutputButtonDef[]): Promise<void> => {
+      await this.sendOutputStep(
+        createOutputBlockMessage(this.stepName("output"), {
+          type: "buttons",
+          buttons,
+        }),
+      );
+    },
   };
 
   /**

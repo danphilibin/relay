@@ -1,4 +1,4 @@
-export { createWorkflow } from "./cf-workflow";
+export { createWorkflow, type RelayOutput } from "./cf-workflow";
 
 export {
   type StreamMessage,
