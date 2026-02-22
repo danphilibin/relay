@@ -44,6 +44,17 @@ export const fetchHackernews = createWorkflow({
       stories.push(story);
     }
 
+    // Display stories as a table
+    await output.table({
+      columns: ["#", "Title", "Score", "Author"],
+      rows: stories.map((s, i) => [
+        String(i + 1),
+        s.title,
+        String(s.score),
+        s.by,
+      ]),
+    });
+
     // Let user pick a story
     const { story: selectedStoryId } = await input("Pick a story to explore:", {
       story: {
@@ -62,15 +73,19 @@ export const fetchHackernews = createWorkflow({
       return;
     }
 
-    await output.text(`📰 ${selectedStory.title}`);
-    await output.text(`By ${selectedStory.by} · ${selectedStory.score} points`);
+    await output.markdown(
+      `## 📰 ${selectedStory.title}\n\nBy **${selectedStory.by}** · ${selectedStory.score} points`,
+    );
 
     if (selectedStory.url) {
-      await output.text(`🔗 ${selectedStory.url}`);
+      await output.link({
+        url: selectedStory.url,
+        title: selectedStory.title,
+      });
     }
 
     if (selectedStory.text) {
-      await output.text(`📝 ${selectedStory.text}`);
+      await output.markdown(selectedStory.text);
     }
 
     // Fetch and display top comments
@@ -100,8 +115,8 @@ export const fetchHackernews = createWorkflow({
             .replace(/&amp;/g, "&")
             .replace(/&lt;/g, "<")
             .replace(/&gt;/g, ">");
-          await output.text(
-            `— ${comment.by}: ${cleanText.slice(0, 200)}${cleanText.length > 200 ? "..." : ""}`,
+          await output.markdown(
+            `**${comment.by}:** ${cleanText.slice(0, 200)}${cleanText.length > 200 ? "..." : ""}`,
           );
         }
       }

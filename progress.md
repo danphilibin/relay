@@ -71,3 +71,8 @@ Moved shared code (messages, input types, registry types) from `src/sdk/` into `
 ## Field Registry Refactor (9c9d8c6 - 5709e79)
 
 Refactored `InputRequestMessage` to use a field registry pattern. Per-field-type rendering is now in `SchemaFieldComponents.tsx` with a `FIELD_REGISTRY` map. Adding a new field type only requires one registry entry. Cleaned up `InferFieldType` utility.
+
+
+## Rich Output: Hacker News Demo (4cf8266+)
+
+Updated `fetch-hacker-news.ts` workflow to use rich output methods from the new `RelayOutput` API. Story list now uses `output.table()`, story URLs use `output.link()`, story details and comments use `output.markdown()`. Status messages remain as `output.text()`. Workflow logic unchanged.
