@@ -1,4 +1,4 @@
-import { type StreamMessage } from "@/isomorphic";
+import { type StreamMessage, outputBlockToText } from "@/isomorphic";
 import { OutputMessage } from "./OutputMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
@@ -83,6 +83,9 @@ export function MessageList({
         switch (message.type) {
           case "output":
             return <OutputMessage key={message.id} text={message.text} />;
+
+          case "output_block":
+            return <OutputMessage key={message.id} text={outputBlockToText(message.block)} />;
 
           case "input_request":
             return (

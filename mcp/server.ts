@@ -15,6 +15,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { outputBlockToText } from "../src/isomorphic/output";
 
 const RELAY_API_URL = process.env.RELAY_API_URL || "http://localhost:8787";
 
@@ -108,10 +109,12 @@ function inputSchemaToZod(
 function formatResult(result: CallResponseResult): string {
   const lines: string[] = [];
 
-  // Include log messages as context
+  // Include output messages as context
   for (const msg of result.messages) {
-    if (msg.type === "log") {
+    if (msg.type === "output") {
       lines.push(msg.text);
+    } else if (msg.type === "output_block") {
+      lines.push(outputBlockToText(msg.block));
     }
   }
 
