@@ -5,6 +5,7 @@ import {
   InputSchemaSchema,
   normalizeButtons,
 } from "./input";
+import { type OutputBlock, OutputBlockSchema } from "./output";
 
 /**
  * Stream message schemas
@@ -12,7 +13,7 @@ import {
 export const OutputMessageSchema = z.object({
   id: z.string(),
   type: z.literal("output"),
-  text: z.string(),
+  block: OutputBlockSchema,
 });
 
 const NormalizedButtonSchema = z.object({
@@ -84,8 +85,11 @@ export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 /**
  * Factory functions for creating messages
  */
-export function createOutputMessage(id: string, text: string): OutputMessage {
-  return { id, type: "output", text };
+export function createOutputMessage(
+  id: string,
+  block: OutputBlock,
+): OutputMessage {
+  return { id, type: "output", block };
 }
 
 export function createInputRequest(

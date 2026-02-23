@@ -71,3 +71,7 @@ Moved shared code (messages, input types, registry types) from `src/sdk/` into `
 ## Field Registry Refactor (9c9d8c6 - 5709e79)
 
 Refactored `InputRequestMessage` to use a field registry pattern. Per-field-type rendering is now in `SchemaFieldComponents.tsx` with a `FIELD_REGISTRY` map. Adding a new field type only requires one registry entry. Cleaned up `InferFieldType` utility.
+
+## Rich Output Blocks (e9f381e - e9f381e)
+
+Replaced plain-text `output(text)` with typed rich output blocks. Added isomorphic output schemas for `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`; switched stream wire format to a single `output` message carrying a discriminated `block`; migrated SDK ergonomics to `output.<type>()`; updated existing workflows to use `output.text(...)`; and added client-side plain-text fallback rendering for all block types while preserving rich payloads for future component rendering.
