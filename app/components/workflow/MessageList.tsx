@@ -1,8 +1,8 @@
 import { type StreamMessage } from "@/isomorphic";
-import { LogMessage } from "./LogMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
+import { OutputMessage } from "./OutputMessage";
 import { ConnectionState } from "../../routes/workflow";
 import { useDelayedWaitingIndicator } from "../../hooks/useDelayedWaitingIndicator";
 
@@ -82,9 +82,7 @@ export function MessageList({
       {pairedMessages.map(({ message, submittedValue, confirmedValue }) => {
         switch (message.type) {
           case "output":
-            return (
-              <LogMessage key={message.id} text={renderOutputBlock(message)} />
-            );
+            return <OutputMessage key={message.id} block={message.block} />;
 
           case "input_request":
             return (
@@ -130,35 +128,4 @@ export function MessageList({
       )}
     </div>
   );
-}
-
-function renderOutputBlock(message: Extract<StreamMessage, { type: "output" }>) {
-  const { block } = message;
-  switch (block.type) {
-    case "output.text":
-      return block.text;
-    case "output.markdown":
-      return block.content;
-    case "output.table": {
-      const rows = block.data;
-      if (!rows.length) return block.title ? `${block.title}\n(no rows)` : "(no rows)";
-      const columns = Object.keys(rows[0]);
-      const header = `| ${columns.join(" | ")} |`;
-      const separator = `| ${columns.map(() => "---").join(" | ")} |`;
-      const body = rows
-        .map((row) => `| ${columns.map((col) => row[col] ?? "").join(" | ")} |`)
-        .join("\n");
-      return [block.title, header, separator, body].filter(Boolean).join("\n");
-    }
-    case "output.code":
-      return `\`\`\`${block.language ?? ""}\n${block.code}\n\`\`\``;
-    case "output.image":
-      return block.alt ? `Image: ${block.alt} (${block.src})` : `Image: ${block.src}`;
-    case "output.link":
-      return [block.title, block.description, block.url].filter(Boolean).join("\n");
-    case "output.buttons":
-      return block.buttons
-        .map((button) => `${button.label}${button.url ? `: ${button.url}` : ""}`)
-        .join("\n");
-  }
 }

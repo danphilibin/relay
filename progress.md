@@ -75,3 +75,7 @@ Refactored `InputRequestMessage` to use a field registry pattern. Per-field-type
 ## Rich Output Blocks (e9f381e - e9f381e)
 
 Replaced plain-text `output(text)` with typed rich output blocks. Added isomorphic output schemas for `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`; switched stream wire format to a single `output` message carrying a discriminated `block`; migrated SDK ergonomics to `output.<type>()`; updated existing workflows to use `output.text(...)`; and added client-side plain-text fallback rendering for all block types while preserving rich payloads for future component rendering.
+
+## Frontend Rich Output Components (4d265a4 - uncommitted)
+
+Implemented frontend rendering for structured output blocks by replacing the plain-text fallback path in `MessageList` with a dedicated `OutputMessage` component. Added minimal, schema-aligned UI handling for `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`, using verified Kumo components (`Table`, `CodeBlock`, `Button`, `LinkButton`) where appropriate and preserving existing styling patterns.

@@ -17,6 +17,8 @@ Core workflow:
 3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
 4. Re-snapshot after page changes
 
+<!-- opensrc:start -->
+
 ## Source Code Reference
 
 Source code for dependencies is available in `opensrc/` for deeper understanding of implementation details.
