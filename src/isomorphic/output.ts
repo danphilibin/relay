@@ -5,6 +5,11 @@ import { z } from "zod";
  * Mirrors the pattern in input.ts — Zod discriminated union of block types.
  */
 
+const TextBlockSchema = z.object({
+  type: z.literal("text"),
+  content: z.string(),
+});
+
 const MarkdownBlockSchema = z.object({
   type: z.literal("markdown"),
   content: z.string(),
@@ -13,7 +18,7 @@ const MarkdownBlockSchema = z.object({
 const TableBlockSchema = z.object({
   type: z.literal("table"),
   columns: z.array(z.string()),
-  rows: z.array(z.array(z.string())),
+  data: z.array(z.array(z.string())),
 });
 
 const CodeBlockSchema = z.object({
@@ -47,6 +52,7 @@ const ButtonsBlockSchema = z.object({
 });
 
 export const OutputBlockSchema = z.discriminatedUnion("type", [
+  TextBlockSchema,
   MarkdownBlockSchema,
   TableBlockSchema,
   CodeBlockSchema,
@@ -65,13 +71,16 @@ export type OutputButtonDef = z.infer<typeof OutputButtonDefSchema>;
  */
 export function outputBlockToText(block: OutputBlock): string {
   switch (block.type) {
+    case "text":
+      return block.content;
+
     case "markdown":
       return block.content;
 
     case "table": {
       const header = block.columns.join(" | ");
       const separator = block.columns.map(() => "---").join(" | ");
-      const rows = block.rows
+      const rows = block.data
         .map((row) => row.join(" | "))
         .join("\n");
       return `${header}\n${separator}\n${rows}`;

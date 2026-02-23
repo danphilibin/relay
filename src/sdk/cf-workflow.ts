@@ -14,7 +14,6 @@ import {
   createInputRequest,
   createLoadingMessage,
   createOutputMessage,
-  createOutputBlockMessage,
   createConfirmRequest,
   createWorkflowComplete,
   type StreamMessage,
@@ -50,7 +49,7 @@ export type RelayConfirmFn = (message: string) => Promise<boolean>;
 export interface RelayOutput {
   text(text: string): Promise<void>;
   markdown(content: string): Promise<void>;
-  table(data: { columns: string[]; rows: string[][] }): Promise<void>;
+  table(data: { columns: string[]; data: string[][] }): Promise<void>;
   code(content: string, opts?: { language?: string }): Promise<void>;
   image(opts: { src: string; alt?: string }): Promise<void>;
   link(opts: { url: string; title?: string; description?: string }): Promise<void>;
@@ -220,12 +219,15 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   output: RelayOutput = {
     text: async (text: string): Promise<void> => {
       await this.sendOutputStep(
-        createOutputMessage(this.stepName("output"), text),
+        createOutputMessage(this.stepName("output"), {
+          type: "text",
+          content: text,
+        }),
       );
     },
     markdown: async (content: string): Promise<void> => {
       await this.sendOutputStep(
-        createOutputBlockMessage(this.stepName("output"), {
+        createOutputMessage(this.stepName("output"), {
           type: "markdown",
           content,
         }),
@@ -233,13 +235,13 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     },
     table: async (data: {
       columns: string[];
-      rows: string[][];
+      data: string[][];
     }): Promise<void> => {
       await this.sendOutputStep(
-        createOutputBlockMessage(this.stepName("output"), {
+        createOutputMessage(this.stepName("output"), {
           type: "table",
           columns: data.columns,
-          rows: data.rows,
+          data: data.data,
         }),
       );
     },
@@ -248,7 +250,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       opts?: { language?: string },
     ): Promise<void> => {
       await this.sendOutputStep(
-        createOutputBlockMessage(this.stepName("output"), {
+        createOutputMessage(this.stepName("output"), {
           type: "code",
           content,
           ...(opts?.language && { language: opts.language }),
@@ -257,7 +259,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     },
     image: async (opts: { src: string; alt?: string }): Promise<void> => {
       await this.sendOutputStep(
-        createOutputBlockMessage(this.stepName("output"), {
+        createOutputMessage(this.stepName("output"), {
           type: "image",
           src: opts.src,
           ...(opts.alt && { alt: opts.alt }),
@@ -270,7 +272,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       description?: string;
     }): Promise<void> => {
       await this.sendOutputStep(
-        createOutputBlockMessage(this.stepName("output"), {
+        createOutputMessage(this.stepName("output"), {
           type: "link",
           url: opts.url,
           ...(opts.title && { title: opts.title }),
@@ -280,7 +282,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     },
     buttons: async (buttons: OutputButtonDef[]): Promise<void> => {
       await this.sendOutputStep(
-        createOutputBlockMessage(this.stepName("output"), {
+        createOutputMessage(this.stepName("output"), {
           type: "buttons",
           buttons,
         }),

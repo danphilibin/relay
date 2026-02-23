@@ -6,7 +6,6 @@
 export {
   type StreamMessage,
   type OutputMessage,
-  type OutputBlockMessage,
   type InputRequestMessage,
   type InputReceivedMessage,
   type LoadingMessage,

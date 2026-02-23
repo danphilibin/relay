@@ -47,7 +47,7 @@ export const fetchHackernews = createWorkflow({
     // Display stories as a table
     await output.table({
       columns: ["#", "Title", "Score", "Author"],
-      rows: stories.map((s, i) => [
+      data: stories.map((s, i) => [
         String(i + 1),
         s.title,
         String(s.score),

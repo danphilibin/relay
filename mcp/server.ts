@@ -112,8 +112,6 @@ function formatResult(result: CallResponseResult): string {
   // Include output messages as context
   for (const msg of result.messages) {
     if (msg.type === "output") {
-      lines.push(msg.text);
-    } else if (msg.type === "output_block") {
       lines.push(outputBlockToText(msg.block));
     }
   }

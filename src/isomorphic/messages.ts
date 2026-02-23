@@ -13,7 +13,7 @@ import { type OutputBlock, OutputBlockSchema } from "./output";
 export const OutputMessageSchema = z.object({
   id: z.string(),
   type: z.literal("output"),
-  text: z.string(),
+  block: OutputBlockSchema,
 });
 
 const NormalizedButtonSchema = z.object({
@@ -59,15 +59,8 @@ export const WorkflowCompleteMessageSchema = z.object({
   type: z.literal("workflow_complete"),
 });
 
-export const OutputBlockMessageSchema = z.object({
-  id: z.string(),
-  type: z.literal("output_block"),
-  block: OutputBlockSchema,
-});
-
 export const StreamMessageSchema = z.discriminatedUnion("type", [
   OutputMessageSchema,
-  OutputBlockMessageSchema,
   InputRequestMessageSchema,
   InputReceivedMessageSchema,
   LoadingMessageSchema,
@@ -77,7 +70,6 @@ export const StreamMessageSchema = z.discriminatedUnion("type", [
 ]);
 
 export type OutputMessage = z.infer<typeof OutputMessageSchema>;
-export type OutputBlockMessage = z.infer<typeof OutputBlockMessageSchema>;
 export type InputRequestMessage = z.infer<typeof InputRequestMessageSchema>;
 export type InputReceivedMessage = z.infer<typeof InputReceivedMessageSchema>;
 export type LoadingMessage = z.infer<typeof LoadingMessageSchema>;
@@ -93,8 +85,11 @@ export type StreamMessage = z.infer<typeof StreamMessageSchema>;
 /**
  * Factory functions for creating messages
  */
-export function createOutputMessage(id: string, text: string): OutputMessage {
-  return { id, type: "output", text };
+export function createOutputMessage(
+  id: string,
+  block: OutputBlock,
+): OutputMessage {
+  return { id, type: "output", block };
 }
 
 export function createInputRequest(
@@ -143,13 +138,6 @@ export function createConfirmReceived(
   approved: boolean,
 ): ConfirmReceivedMessage {
   return { id, type: "confirm_received", approved };
-}
-
-export function createOutputBlockMessage(
-  id: string,
-  block: OutputBlock,
-): OutputBlockMessage {
-  return { id, type: "output_block", block };
 }
 
 export function createWorkflowComplete(id: string): WorkflowCompleteMessage {

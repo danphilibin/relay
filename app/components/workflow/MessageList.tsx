@@ -1,5 +1,5 @@
-import { type StreamMessage, outputBlockToText } from "@/isomorphic";
-import { OutputMessage } from "./OutputMessage";
+import { type StreamMessage } from "@/isomorphic";
+import { OutputBlock } from "./OutputBlock";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
@@ -82,10 +82,7 @@ export function MessageList({
       {pairedMessages.map(({ message, submittedValue, confirmedValue }) => {
         switch (message.type) {
           case "output":
-            return <OutputMessage key={message.id} text={message.text} />;
-
-          case "output_block":
-            return <OutputMessage key={message.id} text={outputBlockToText(message.block)} />;
+            return <OutputBlock key={message.id} block={message.block} />;
 
           case "input_request":
             return (
