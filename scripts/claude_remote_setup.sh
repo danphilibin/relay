@@ -7,6 +7,7 @@ fi
 
 pnpm i
 pnpm cf-typegen
+pnpm build
 
 npm install -g agent-browser
 agent-browser install
