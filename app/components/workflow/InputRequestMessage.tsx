@@ -60,12 +60,9 @@ export function InputRequestMessage({
     initFieldValues(schema, submittedValue),
   );
 
-  const handleFieldChange = useCallback(
-    (fieldName: string, value: unknown) => {
-      setFieldValues((prev) => ({ ...prev, [fieldName]: value }));
-    },
-    [],
-  );
+  const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
+    setFieldValues((prev) => ({ ...prev, [fieldName]: value }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -20,10 +20,7 @@ export { formatCallResponseForMcp } from "@/isomorphic/mcp-translation";
 export type { InputSchema, NormalizedButton } from "@/isomorphic/input";
 export type { OutputBlock, OutputButtonDef } from "@/isomorphic/output";
 
-export {
-  getWorkflowList,
-  registerWorkflow,
-} from "./registry";
+export { getWorkflowList, registerWorkflow } from "./registry";
 
 export {
   type WorkflowParams,

@@ -40,7 +40,9 @@ export function OutputMessage({ block }: OutputMessageProps) {
             <div className="text-sm font-medium text-[#ddd]">{block.title}</div>
           )}
           {rows.length === 0 ? (
-            <div className="text-base leading-relaxed text-[#888]">(no rows)</div>
+            <div className="text-base leading-relaxed text-[#888]">
+              (no rows)
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -55,7 +57,9 @@ export function OutputMessage({ block }: OutputMessageProps) {
                   {rows.map((row, rowIndex) => (
                     <Table.Row key={rowIndex}>
                       {columns.map((column) => (
-                        <Table.Cell key={column}>{row[column] ?? ""}</Table.Cell>
+                        <Table.Cell key={column}>
+                          {row[column] ?? ""}
+                        </Table.Cell>
                       ))}
                     </Table.Row>
                   ))}
@@ -82,7 +86,9 @@ export function OutputMessage({ block }: OutputMessageProps) {
     case "output.link":
       return (
         <div className="space-y-1">
-          {block.title && <div className="text-sm font-medium text-[#ddd]">{block.title}</div>}
+          {block.title && (
+            <div className="text-sm font-medium text-[#ddd]">{block.title}</div>
+          )}
           {block.description && (
             <div className="text-base leading-relaxed text-[#888]">
               {block.description}
@@ -128,7 +134,9 @@ export function OutputMessage({ block }: OutputMessageProps) {
   }
 }
 
-function mapCodeLang(language?: string): "ts" | "tsx" | "jsonc" | "bash" | "css" {
+function mapCodeLang(
+  language?: string,
+): "ts" | "tsx" | "jsonc" | "bash" | "css" {
   if (language === "tsx") return "tsx";
   if (language === "jsonc") return "jsonc";
   if (language === "bash") return "bash";

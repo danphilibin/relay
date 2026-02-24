@@ -14,7 +14,10 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { InputFieldDefinition, InputSchema } from "../src/isomorphic/input";
+import type {
+  InputFieldDefinition,
+  InputSchema,
+} from "../src/isomorphic/input";
 import type { CallResponseResult } from "../src/isomorphic/messages";
 import { formatCallResponseForMcp } from "../src/isomorphic/mcp-translation";
 import { z } from "zod";
@@ -133,7 +136,9 @@ server.tool(
   },
   async ({ run_id, event, data }) => {
     const result = await respondToWorkflow(run_id, event, data);
-    return { content: [{ type: "text", text: formatCallResponseForMcp(result) }] };
+    return {
+      content: [{ type: "text", text: formatCallResponseForMcp(result) }],
+    };
   },
 );
 

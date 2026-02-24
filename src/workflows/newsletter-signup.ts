@@ -16,6 +16,8 @@ export const newsletterSignup = createWorkflow({
       });
     }
 
-    await output.text(`Thanks, ${data.name}! Check ${data.email} for next steps.`);
+    await output.text(
+      `Thanks, ${data.name}! Check ${data.email} for next steps.`,
+    );
   },
 });
