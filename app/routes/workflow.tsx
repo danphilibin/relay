@@ -6,6 +6,7 @@ import type { Route } from "./+types/workflow";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
 import { MessageList } from "../components/workflow/MessageList";
 import { LoadingMessage } from "../components/workflow/LoadingMessage";
+import { DevConsole } from "../components/workflow/DevConsole";
 
 export function meta({ params }: Route.MetaArgs) {
   return [
@@ -38,47 +39,50 @@ export default function Workflow() {
   }, [messages]);
 
   return (
-    <div className="flex-1 flex h-full w-full flex-col">
-      <div className="w-full border-b border-[#222] px-8 h-16 flex items-center justify-between">
-        <h1 className="text-base font-semibold text-[#fafafa]">
-          {formatWorkflowName(workflowName)}
-        </h1>
-        <div className="flex items-center gap-2">
-          <LinkButton
-            href={`https://github.com/danphilibin/streaming-workflows/tree/main/src/workflows/${workflowName}.ts`}
-            variant="secondary"
-            icon={GithubLogo}
-            external
-          >
-            View Source
-          </LinkButton>
-          <Button variant="primary" onClick={startNewRun}>
-            New Run
-          </Button>
+    <div className="flex-1 flex h-full w-full">
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="w-full border-b border-[#222] px-8 h-16 flex items-center justify-between">
+          <h1 className="text-base font-semibold text-[#fafafa]">
+            {formatWorkflowName(workflowName)}
+          </h1>
+          <div className="flex items-center gap-2">
+            <LinkButton
+              href={`https://github.com/danphilibin/streaming-workflows/tree/main/src/workflows/${workflowName}.ts`}
+              variant="secondary"
+              icon={GithubLogo}
+              external
+            >
+              View Source
+            </LinkButton>
+            <Button variant="primary" onClick={startNewRun}>
+              New Run
+            </Button>
+          </div>
+        </div>
+        <div ref={containerRef} className="flex-1 overflow-y-auto">
+          <div className="max-w-[640px] p-8 space-y-4">
+            {status === "connecting" && (
+              <LoadingMessage text="Connecting..." complete={false} />
+            )}
+
+            {status === "streaming" && messages.length === 0 && (
+              <ConnectionState message="Waiting for workflow..." />
+            )}
+
+            <MessageList
+              messages={messages}
+              workflowId={currentRunId}
+              onSubmitInput={submitInput}
+              onSubmitConfirm={submitConfirm}
+            />
+
+            {status === "complete" && messages.length === 0 && (
+              <div className="text-base text-[#666]">No messages received.</div>
+            )}
+          </div>
         </div>
       </div>
-      <div ref={containerRef} className="flex-1 overflow-y-auto">
-        <div className="max-w-[640px] p-8 space-y-4">
-          {status === "connecting" && (
-            <LoadingMessage text="Connecting..." complete={false} />
-          )}
-
-          {status === "streaming" && messages.length === 0 && (
-            <ConnectionState message="Waiting for workflow..." />
-          )}
-
-          <MessageList
-            messages={messages}
-            workflowId={currentRunId}
-            onSubmitInput={submitInput}
-            onSubmitConfirm={submitConfirm}
-          />
-
-          {status === "complete" && messages.length === 0 && (
-            <div className="text-base text-[#666]">No messages received.</div>
-          )}
-        </div>
-      </div>
+      <DevConsole status={status} runId={currentRunId} messages={messages} />
     </div>
   );
 }
