@@ -21,4 +21,7 @@ export default defineConfig(({ command }) => ({
     reportCompressedSize: false,
   },
   logLevel: command === "build" ? "warn" : "info",
+  test: {
+    exclude: ["**/node_modules/**", "**/dist/**", "**/opensrc/**"],
+  },
 }));
