@@ -4,7 +4,13 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ command }) => ({
-  plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+  plugins: [
+    tailwindcss(),
+    reactRouter(),
+    tsconfigPaths({
+      skip: (dir) => dir.includes("opensrc"),
+    }),
+  ],
   server: {
     proxy: {
       "/stream": "http://localhost:8787",
