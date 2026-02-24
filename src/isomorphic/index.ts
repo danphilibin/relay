@@ -20,6 +20,7 @@ export {
 } from "./messages";
 
 export type { InputSchema, NormalizedButton } from "./input";
+export type { OutputBlock, OutputButtonDef } from "./output";
 
 export {
   WorkflowParamsSchema,

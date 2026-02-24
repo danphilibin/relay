@@ -14,3 +14,4 @@ import "@/workflows/newsletter-signup";
 import "@/workflows/survey";
 import "@/workflows/approval-test";
 import "@/workflows/refund";
+import "@/workflows/rich-output-demo";

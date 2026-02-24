@@ -18,6 +18,7 @@ import {
   createWorkflowComplete,
   type StreamMessage,
 } from "@/isomorphic/messages";
+import type { OutputBlock, OutputButtonDef } from "@/isomorphic/output";
 import { getWorkflow, registerWorkflow } from "./registry";
 import type { WorkflowParams } from "@/isomorphic/registry-types";
 
@@ -41,6 +42,23 @@ export type RelayLoadingFn = (
  */
 export type RelayConfirmFn = (message: string) => Promise<boolean>;
 
+export type RelayOutput = {
+  text: (text: string) => Promise<void>;
+  markdown: (content: string) => Promise<void>;
+  table: (table: {
+    title?: string;
+    data: Array<Record<string, string>>;
+  }) => Promise<void>;
+  code: (content: { code: string; language?: string }) => Promise<void>;
+  image: (opts: { src: string; alt?: string }) => Promise<void>;
+  link: (opts: {
+    url: string;
+    title?: string;
+    description?: string;
+  }) => Promise<void>;
+  buttons: (buttons: OutputButtonDef[]) => Promise<void>;
+};
+
 /**
  * Context passed to workflow handlers.
  * Use `input`, `output`, `loading`, and `confirm` to interact with the user.
@@ -48,7 +66,7 @@ export type RelayConfirmFn = (message: string) => Promise<boolean>;
 export type RelayContext = {
   step: WorkflowStep;
   input: RelayInputFn;
-  output: RelayWorkflow["output"];
+  output: RelayOutput;
   loading: RelayLoadingFn;
   confirm: RelayConfirmFn;
 };
@@ -106,7 +124,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     const definition = getWorkflow(name);
 
     if (!definition) {
-      await this.output(`Error: Unknown workflow: ${name}`);
+      await this.output.text(`Error: Unknown workflow: ${name}`);
       throw new Error(`Unknown workflow: ${name}`);
     }
 
@@ -183,10 +201,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     return { schema, options, buttons };
   }
 
-  /**
-   * Output a message to the workflow stream.
-   */
-  output = async (text: string): Promise<void> => {
+  private async sendOutput(block: OutputBlock): Promise<void> {
     if (!this.step) {
       throw new Error("Relay not initialized. Call initRelay() first.");
     }
@@ -194,8 +209,35 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     const eventName = this.stepName("output");
 
     await this.step.do(eventName, async () => {
-      await this.sendMessage(createOutputMessage(eventName, text));
+      await this.sendMessage(createOutputMessage(eventName, block));
     });
+  }
+
+  /**
+   * Output rich blocks to the workflow stream.
+   */
+  output: RelayOutput = {
+    text: async (text: string) => {
+      await this.sendOutput({ type: "output.text", text });
+    },
+    markdown: async (content: string) => {
+      await this.sendOutput({ type: "output.markdown", content });
+    },
+    table: async ({ title, data }) => {
+      await this.sendOutput({ type: "output.table", title, data });
+    },
+    code: async ({ code, language }) => {
+      await this.sendOutput({ type: "output.code", code, language });
+    },
+    image: async ({ src, alt }) => {
+      await this.sendOutput({ type: "output.image", src, alt });
+    },
+    link: async ({ url, title, description }) => {
+      await this.sendOutput({ type: "output.link", url, title, description });
+    },
+    buttons: async (buttons) => {
+      await this.sendOutput({ type: "output.buttons", buttons });
+    },
   };
 
   /**

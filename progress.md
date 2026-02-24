@@ -71,3 +71,15 @@ Moved shared code (messages, input types, registry types) from `src/sdk/` into `
 ## Field Registry Refactor (9c9d8c6 - 5709e79)
 
 Refactored `InputRequestMessage` to use a field registry pattern. Per-field-type rendering is now in `SchemaFieldComponents.tsx` with a `FIELD_REGISTRY` map. Adding a new field type only requires one registry entry. Cleaned up `InferFieldType` utility.
+
+## Rich Output Blocks (e9f381e - e9f381e)
+
+Replaced plain-text `output(text)` with typed rich output blocks. Added isomorphic output schemas for `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`; switched stream wire format to a single `output` message carrying a discriminated `block`; migrated SDK ergonomics to `output.<type>()`; updated existing workflows to use `output.text(...)`; and added client-side plain-text fallback rendering for all block types while preserving rich payloads for future component rendering.
+
+## Frontend Rich Output Components (4d265a4 - uncommitted)
+
+Implemented frontend rendering for structured output blocks by replacing the plain-text fallback path in `MessageList` with a dedicated `OutputMessage` component. Added minimal, schema-aligned UI handling for `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`, using verified Kumo components (`Table`, `CodeBlock`, `Button`, `LinkButton`) where appropriate and preserving existing styling patterns.
+
+## Rich Output Demo Workflow (6ae5195 - da2a9a8)
+
+Added a new `Rich Output Demo` workflow to showcase all new rich output APIs end-to-end in one run. The workflow emits `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`, and is registered in `src/index.ts` for immediate visibility in the UI.

@@ -16,6 +16,7 @@ export {
 } from "@/isomorphic/messages";
 
 export type { InputSchema, NormalizedButton } from "@/isomorphic/input";
+export type { OutputBlock, OutputButtonDef } from "@/isomorphic/output";
 
 export {
   getWorkflowList,

@@ -1,8 +1,8 @@
 import { type StreamMessage } from "@/isomorphic";
-import { OutputMessage } from "./OutputMessage";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
+import { OutputMessage } from "./OutputMessage";
 import { ConnectionState } from "../../routes/workflow";
 import { useDelayedWaitingIndicator } from "../../hooks/useDelayedWaitingIndicator";
 
@@ -82,7 +82,7 @@ export function MessageList({
       {pairedMessages.map(({ message, submittedValue, confirmedValue }) => {
         switch (message.type) {
           case "output":
-            return <OutputMessage key={message.id} text={message.text} />;
+            return <OutputMessage key={message.id} block={message.block} />;
 
           case "input_request":
             return (
