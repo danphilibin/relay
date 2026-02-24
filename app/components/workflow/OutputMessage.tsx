@@ -45,7 +45,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="text-sm border border-[#222] rounded-md">
                 <Table.Header>
                   <Table.Row>
                     {columns.map((column) => (
@@ -79,7 +79,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
         <img
           src={block.src}
           alt={block.alt ?? ""}
-          className="max-w-full h-auto rounded-md border border-[#222]"
+          className="max-w-[600px] h-auto"
         />
       );
 

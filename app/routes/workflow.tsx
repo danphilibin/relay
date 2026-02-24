@@ -60,7 +60,7 @@ export default function Workflow() {
           </div>
         </div>
         <div ref={containerRef} className="flex-1 overflow-y-auto">
-          <div className="max-w-[640px] p-8 space-y-4">
+          <div className="p-8 space-y-4">
             {status === "connecting" && (
               <LoadingMessage text="Connecting..." complete={false} />
             )}
