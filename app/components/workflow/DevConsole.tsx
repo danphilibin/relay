@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CaretDown, CaretRight, X, Terminal } from "@phosphor-icons/react";
+import { CaretDown, CaretRight, Terminal } from "@phosphor-icons/react";
 import type { StreamMessage, WorkflowStatus } from "@/isomorphic";
 
 interface DevConsoleProps {
@@ -11,7 +11,7 @@ interface DevConsoleProps {
 export function DevConsole({ status, runId, messages }: DevConsoleProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
 
   const toggleMessage = (index: number) => {
@@ -42,7 +42,10 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
         className="fixed right-4 bottom-4 p-2 bg-[#1a1a1a] border border-[#333] rounded-lg hover:bg-[#222] transition-colors z-50"
         title={isVisible ? "Hide Dev Console" : "Show Dev Console"}
       >
-        <Terminal size={20} className={isVisible ? "text-[#9ec1ff]" : "text-[#888]"} />
+        <Terminal
+          size={20}
+          className={isVisible ? "text-[#9ec1ff]" : "text-[#888]"}
+        />
       </button>
 
       {/* Panel */}
@@ -54,7 +57,7 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
             <span className="text-xs font-medium text-[#888]">Dev Console</span>
           </div>
 
-      {/* Metadata */}
+          {/* Metadata */}
           <div className="px-3 py-2 border-b border-[#222] space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wider text-[#555]">
@@ -85,7 +88,9 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
               }
               className="text-[10px] text-[#666] hover:text-[#888] transition-colors"
             >
-              {expandedMessages.size === messages.length ? "Collapse" : "Expand"}{" "}
+              {expandedMessages.size === messages.length
+                ? "Collapse"
+                : "Expand"}{" "}
               all
             </button>
           </div>
@@ -97,7 +102,7 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
                 No messages yet
               </div>
             ) : (
-              <div className="divide-y divide-[#1a1a1a]">
+              <div>
                 {messages.map((message, index) => (
                   <MessageRow
                     key={`${message.id}-${index}`}
@@ -156,7 +161,7 @@ function MessageRow({
   };
 
   return (
-    <div className="hover:bg-[#111] transition-colors">
+    <div className="border-t border-[#1a1a1a] first:border-t-0 hover:bg-[#111] transition-colors">
       <button
         onClick={onToggle}
         className="w-full px-3 py-1.5 flex items-center gap-2 text-left"
