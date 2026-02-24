@@ -4,6 +4,7 @@ import type {
   InteractionPoint,
   StreamMessage,
 } from "./messages";
+import type { OutputBlock } from "./output";
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled message type: ${JSON.stringify(value)}`);
@@ -20,10 +21,7 @@ function isCurrentInteraction(
   );
 }
 
-function formatInputField(
-  key: string,
-  field: InputFieldDefinition,
-): string {
+function formatInputField(key: string, field: InputFieldDefinition): string {
   const description = field.description ?? field.label;
   const base = `- ${key} (${field.type}): ${description}`;
 
@@ -33,6 +31,27 @@ function formatInputField(
   }
 
   return base;
+}
+
+function formatOutputBlock(block: OutputBlock): string {
+  switch (block.type) {
+    case "output.text":
+      return block.text;
+    case "output.markdown":
+      return block.content;
+    case "output.table":
+      return block.title ? `[Table: ${block.title}]` : "[Table]";
+    case "output.code":
+      return `[Code: ${block.language ?? "plain"}] ${block.code}`;
+    case "output.image":
+      return `[Image: ${block.alt ?? block.src}]`;
+    case "output.link":
+      return `[Link: ${block.title ?? block.url}]`;
+    case "output.buttons":
+      return `[Buttons: ${block.buttons.map((b) => b.label).join(", ")}]`;
+    default:
+      return "[Output]";
+  }
 }
 
 function formatStreamMessage(
@@ -45,7 +64,7 @@ function formatStreamMessage(
 
   switch (message.type) {
     case "output":
-      return message.text;
+      return formatOutputBlock(message.block);
     case "input_request":
       return `[Input requested] ${message.prompt}`;
     case "input_received":

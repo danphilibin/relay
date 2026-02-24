@@ -10,7 +10,7 @@
     {
       "id": "relay-output-5",
       "type": "output",
-      "text": "Refund issued."
+      "block": { "type": "output.text", "text": "Refund issued." }
     },
     {
       "id": "relay-workflow-complete",

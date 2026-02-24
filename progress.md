@@ -87,3 +87,7 @@ Added a new `Rich Output Demo` workflow to showcase all new rich output APIs end
 ## MCP Translation Contract Tests (757b141 - 757b141)
 
 Introduced a shared SDK -> MCP translation module (`formatCallResponseForMcp`) with exhaustive handling for all `StreamMessage` variants (`output`, `input_request`, `input_received`, `loading`, `confirm_request`, `confirm_received`, `workflow_complete`). Refactored `mcp/server.ts` to consume this shared translator and typed input schema contracts. Added testing infrastructure with Vitest (`pnpm test`) and fixture-based golden tests that verify full call-response translation behavior across awaiting-input, awaiting-confirm, and complete states.
+
+## MCP translation fixtures (fe184bf)
+
+Updated mcp-translation test fixtures to use new output `block` format (`output.text`, etc.) instead of deprecated `text` property. All three golden tests pass.

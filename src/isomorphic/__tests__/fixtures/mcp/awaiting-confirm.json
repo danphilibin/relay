@@ -13,7 +13,7 @@
     {
       "id": "relay-output-3",
       "type": "output",
-      "text": "Submitted details."
+      "block": { "type": "output.text", "text": "Submitted details." }
     },
     {
       "id": "relay-confirm-4",

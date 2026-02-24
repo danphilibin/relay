@@ -5,7 +5,7 @@
     {
       "id": "relay-output-0",
       "type": "output",
-      "text": "Hello from workflow"
+      "block": { "type": "output.text", "text": "Hello from workflow" }
     },
     {
       "id": "relay-loading-1",
