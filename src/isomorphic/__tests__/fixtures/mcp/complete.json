@@ -1,0 +1,21 @@
+{
+  "run_id": "run-complete-1",
+  "status": "complete",
+  "messages": [
+    {
+      "id": "relay-confirm-4",
+      "type": "confirm_received",
+      "approved": true
+    },
+    {
+      "id": "relay-output-5",
+      "type": "output",
+      "text": "Refund issued."
+    },
+    {
+      "id": "relay-workflow-complete",
+      "type": "workflow_complete"
+    }
+  ],
+  "interaction": null
+}

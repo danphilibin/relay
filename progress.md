@@ -83,3 +83,7 @@ Implemented frontend rendering for structured output blocks by replacing the pla
 ## Rich Output Demo Workflow (6ae5195 - da2a9a8)
 
 Added a new `Rich Output Demo` workflow to showcase all new rich output APIs end-to-end in one run. The workflow emits `output.text`, `output.markdown`, `output.table`, `output.code`, `output.image`, `output.link`, and `output.buttons`, and is registered in `src/index.ts` for immediate visibility in the UI.
+
+## MCP Translation Contract Tests (757b141 - 757b141)
+
+Introduced a shared SDK -> MCP translation module (`formatCallResponseForMcp`) with exhaustive handling for all `StreamMessage` variants (`output`, `input_request`, `input_received`, `loading`, `confirm_request`, `confirm_received`, `workflow_complete`). Refactored `mcp/server.ts` to consume this shared translator and typed input schema contracts. Added testing infrastructure with Vitest (`pnpm test`) and fixture-based golden tests that verify full call-response translation behavior across awaiting-input, awaiting-confirm, and complete states.

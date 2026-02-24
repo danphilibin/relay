@@ -15,6 +15,8 @@ export {
   createWorkflowComplete,
 } from "@/isomorphic/messages";
 
+export { formatCallResponseForMcp } from "@/isomorphic/mcp-translation";
+
 export type { InputSchema, NormalizedButton } from "@/isomorphic/input";
 export type { OutputBlock, OutputButtonDef } from "@/isomorphic/output";
 

@@ -14,6 +14,9 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { InputFieldDefinition, InputSchema } from "../src/isomorphic/input";
+import type { CallResponseResult } from "../src/isomorphic/messages";
+import { formatCallResponseForMcp } from "../src/isomorphic/mcp-translation";
 import { z } from "zod";
 
 const RELAY_API_URL = process.env.RELAY_API_URL || "http://localhost:8787";
@@ -24,23 +27,12 @@ type WorkflowInfo = {
   slug: string;
   title: string;
   description?: string;
-  input?: Record<
-    string,
-    {
-      type: string;
-      label: string;
-      description?: string;
-      options?: { value: string; label: string }[];
-    }
-  >;
+  input?: InputSchema;
 };
 
-type CallResponseResult = {
-  run_id: string;
-  status: "awaiting_input" | "awaiting_confirm" | "complete";
-  messages: any[];
-  interaction: any | null;
-};
+function assertNever(value: never): never {
+  throw new Error(`Unhandled input field type: ${JSON.stringify(value)}`);
+}
 
 async function fetchWorkflows(): Promise<WorkflowInfo[]> {
   const res = await fetch(`${RELAY_API_URL}/workflows`);
@@ -81,7 +73,10 @@ function inputSchemaToZod(
   if (!input) return {};
 
   const shape: Record<string, z.ZodType> = {};
-  for (const [key, field] of Object.entries(input)) {
+  for (const [key, field] of Object.entries(input) as [
+    string,
+    InputFieldDefinition,
+  ][]) {
     const desc = field.description || field.label;
     switch (field.type) {
       case "text":
@@ -95,55 +90,19 @@ function inputSchemaToZod(
         break;
       case "select":
         shape[key] = z
-          .enum(field.options!.map((o) => o.value) as [string, ...string[]])
+          .enum(
+            field.options.map((option) => option.value) as [
+              string,
+              ...string[],
+            ],
+          )
           .describe(desc);
         break;
+      default:
+        assertNever(field);
     }
   }
   return shape;
-}
-
-// ── Format result for LLM consumption ────────────────────────────
-
-function formatResult(result: CallResponseResult): string {
-  const lines: string[] = [];
-
-  // Include log messages as context
-  for (const msg of result.messages) {
-    if (msg.type === "log") {
-      lines.push(msg.text);
-    }
-  }
-
-  if (result.status === "complete") {
-    lines.push("\n[Workflow complete]");
-  } else if (result.interaction) {
-    lines.push(`\n[Workflow paused — ${result.status}]`);
-    lines.push(`Run ID: ${result.run_id}`);
-    lines.push(`Event: ${result.interaction.id}`);
-
-    if (result.interaction.type === "input_request") {
-      lines.push(`Prompt: ${result.interaction.prompt}`);
-      if (result.interaction.schema) {
-        lines.push("Fields:");
-        for (const [key, field] of Object.entries(
-          result.interaction.schema,
-        ) as [string, any][]) {
-          let fieldDesc = `  - ${key} (${field.type}): ${field.description || field.label}`;
-          if (field.options) {
-            fieldDesc += ` [options: ${field.options.map((o: any) => o.value).join(", ")}]`;
-          }
-          lines.push(fieldDesc);
-        }
-      }
-    } else if (result.interaction.type === "confirm_request") {
-      lines.push(`Confirm: ${result.interaction.message}`);
-    }
-
-    lines.push("\nUse relay_respond to continue this workflow.");
-  }
-
-  return lines.join("\n");
 }
 
 // ── MCP server setup ─────────────────────────────────────────────
@@ -174,7 +133,7 @@ server.tool(
   },
   async ({ run_id, event, data }) => {
     const result = await respondToWorkflow(run_id, event, data);
-    return { content: [{ type: "text", text: formatResult(result) }] };
+    return { content: [{ type: "text", text: formatCallResponseForMcp(result) }] };
   },
 );
 
@@ -195,7 +154,9 @@ async function registerWorkflowTools() {
       async (params: Record<string, unknown>) => {
         const data = Object.keys(zodSchema).length > 0 ? params : undefined;
         const result = await startWorkflow(workflow.slug, data);
-        return { content: [{ type: "text", text: formatResult(result) }] };
+        return {
+          content: [{ type: "text", text: formatCallResponseForMcp(result) }],
+        };
       },
     );
   }

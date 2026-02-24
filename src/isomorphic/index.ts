@@ -19,6 +19,8 @@ export {
   parseStreamMessage,
 } from "./messages";
 
+export { formatCallResponseForMcp } from "./mcp-translation";
+
 export type { InputSchema, NormalizedButton } from "./input";
 export type { OutputBlock, OutputButtonDef } from "./output";
 

@@ -1,0 +1,29 @@
+{
+  "run_id": "run-confirm-1",
+  "status": "awaiting_confirm",
+  "messages": [
+    {
+      "id": "relay-input-2",
+      "type": "input_received",
+      "value": {
+        "email": "user@example.com",
+        "plan": "pro"
+      }
+    },
+    {
+      "id": "relay-output-3",
+      "type": "output",
+      "text": "Submitted details."
+    },
+    {
+      "id": "relay-confirm-4",
+      "type": "confirm_request",
+      "message": "Approve refund of $42?"
+    }
+  ],
+  "interaction": {
+    "id": "relay-confirm-4",
+    "type": "confirm_request",
+    "message": "Approve refund of $42?"
+  }
+}

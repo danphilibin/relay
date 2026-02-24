@@ -10,6 +10,7 @@
     "dev:react": "react-router dev",
     "build": "react-router build",
     "typecheck": "pnpm run cf-typegen && react-router typegen && tsc",
+    "test": "vitest run",
     "format": "prettier --write --log-level warn .",
     "cf-typegen": "wrangler types"
   },
@@ -36,6 +37,7 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
     "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.18",
     "wrangler": "^4.56.0"
   }
 }

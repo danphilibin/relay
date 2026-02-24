@@ -1,0 +1,9 @@
+[Input received] {"email":"user@example.com","plan":"pro"}
+Submitted details.
+
+[Workflow paused - awaiting_confirm]
+Run ID: run-confirm-1
+Event: relay-confirm-4
+Confirm: Approve refund of $42?
+
+Use relay_respond to continue this workflow.

@@ -1,0 +1,14 @@
+Hello from workflow
+[Loading] Fetching customer record...
+[Loading complete] Customer record loaded.
+
+[Workflow paused - awaiting_input]
+Run ID: run-start-1
+Event: relay-input-2
+Prompt: Enter customer details
+Fields:
+- email (text): Customer email
+- plan (select): Subscription plan [options: free, pro]
+Buttons: Continue, Cancel
+
+Use relay_respond to continue this workflow.

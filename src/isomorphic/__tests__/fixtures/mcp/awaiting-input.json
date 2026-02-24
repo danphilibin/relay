@@ -1,0 +1,73 @@
+{
+  "run_id": "run-start-1",
+  "status": "awaiting_input",
+  "messages": [
+    {
+      "id": "relay-output-0",
+      "type": "output",
+      "text": "Hello from workflow"
+    },
+    {
+      "id": "relay-loading-1",
+      "type": "loading",
+      "text": "Fetching customer record...",
+      "complete": false
+    },
+    {
+      "id": "relay-loading-1",
+      "type": "loading",
+      "text": "Customer record loaded.",
+      "complete": true
+    },
+    {
+      "id": "relay-input-2",
+      "type": "input_request",
+      "prompt": "Enter customer details",
+      "schema": {
+        "email": {
+          "type": "text",
+          "label": "Email",
+          "description": "Customer email"
+        },
+        "plan": {
+          "type": "select",
+          "label": "Plan",
+          "description": "Subscription plan",
+          "options": [
+            { "value": "free", "label": "Free" },
+            { "value": "pro", "label": "Pro" }
+          ]
+        }
+      },
+      "buttons": [
+        { "label": "Continue", "intent": "primary" },
+        { "label": "Cancel", "intent": "danger" }
+      ]
+    }
+  ],
+  "interaction": {
+    "id": "relay-input-2",
+    "type": "input_request",
+    "prompt": "Enter customer details",
+    "schema": {
+      "email": {
+        "type": "text",
+        "label": "Email",
+        "description": "Customer email"
+      },
+      "plan": {
+        "type": "select",
+        "label": "Plan",
+        "description": "Subscription plan",
+        "options": [
+          { "value": "free", "label": "Free" },
+          { "value": "pro", "label": "Pro" }
+        ]
+      }
+    },
+    "buttons": [
+      { "label": "Continue", "intent": "primary" },
+      { "label": "Cancel", "intent": "danger" }
+    ]
+  }
+}
