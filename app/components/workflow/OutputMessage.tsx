@@ -2,6 +2,7 @@ import { type OutputBlock } from "@/isomorphic";
 import { Button, LinkButton } from "@cloudflare/kumo/components/button";
 import { CodeBlock } from "@cloudflare/kumo/components/code";
 import { Table } from "@cloudflare/kumo/components/table";
+import { Streamdown } from "streamdown";
 
 interface OutputMessageProps {
   block: OutputBlock;
@@ -24,11 +25,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
       );
 
     case "output.markdown":
-      return (
-        <div className="text-base leading-relaxed text-[#888] whitespace-pre-wrap">
-          {block.content}
-        </div>
-      );
+      return <Streamdown mode="static">{block.content}</Streamdown>;
 
     case "output.table": {
       const rows = block.data;

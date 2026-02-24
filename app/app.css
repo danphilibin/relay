@@ -1,4 +1,5 @@
 @source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
+@source "../node_modules/streamdown/dist/*.js";
 @import "@cloudflare/kumo/styles/tailwind";
 @import "tailwindcss" source(".");
 
