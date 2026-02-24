@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "pnpm i && pnpm typecheck",
+    "setup": "pnpm i && pnpm cf-typegen && pnpm build",
     "run": "pnpm dev"
   }
 }
