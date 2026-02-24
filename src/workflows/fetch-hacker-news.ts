@@ -18,6 +18,16 @@ type Comment = {
   time: number;
 };
 
+function cleanHtml(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
 export const fetchHackernews = createWorkflow({
   name: "Fetch Hacker News",
   handler: async ({ step, input, output }) => {
@@ -62,24 +72,34 @@ export const fetchHackernews = createWorkflow({
       return;
     }
 
-    await output.text(`📰 ${selectedStory.title}`);
-    await output.text(`By ${selectedStory.by} · ${selectedStory.score} points`);
+    // Story header with markdown
+    await output.markdown(
+      `## ${selectedStory.title}\n\n**${selectedStory.by}** · ${selectedStory.score} points · ${selectedStory.descendants ?? 0} comments`,
+    );
 
+    // Story link
     if (selectedStory.url) {
-      await output.text(`🔗 ${selectedStory.url}`);
+      await output.link({
+        url: selectedStory.url,
+        title: "Read Article",
+        description: new URL(selectedStory.url).hostname,
+      });
     }
 
+    // Story text (for Ask HN, Show HN, etc.)
     if (selectedStory.text) {
-      await output.text(`📝 ${selectedStory.text}`);
+      await output.markdown(cleanHtml(selectedStory.text));
     }
 
     // Fetch and display top comments
     if (selectedStory.kids && selectedStory.kids.length > 0) {
-      await output.text(
-        `💬 Top comments (${selectedStory.descendants ?? 0} total):`,
+      await output.markdown(
+        `### Comments (${selectedStory.descendants ?? 0} total)`,
       );
 
-      const commentIds = selectedStory.kids.slice(0, 3);
+      const commentIds = selectedStory.kids.slice(0, 5);
+      const comments: Comment[] = [];
+
       for (const commentId of commentIds) {
         const comment = await step.do(
           `fetch comment ${commentId}`,
@@ -90,25 +110,38 @@ export const fetchHackernews = createWorkflow({
             return res.json<Comment>();
           },
         );
-
-        if (comment && comment.text) {
-          // Strip HTML tags for cleaner display
-          const cleanText = comment.text
-            .replace(/<[^>]*>/g, "")
-            .replace(/&quot;/g, '"')
-            .replace(/&#x27;/g, "'")
-            .replace(/&amp;/g, "&")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">");
-          await output.text(
-            `— ${comment.by}: ${cleanText.slice(0, 200)}${cleanText.length > 200 ? "..." : ""}`,
-          );
+        if (comment?.text) {
+          comments.push(comment);
         }
+      }
+
+      // Display comments as markdown blockquotes
+      for (const comment of comments) {
+        const cleanText = cleanHtml(comment.text);
+        const truncated =
+          cleanText.length > 300 ? cleanText.slice(0, 297) + "..." : cleanText;
+        await output.markdown(`> **${comment.by}**\n>\n> ${truncated}`);
       }
     } else {
       await output.text("No comments yet on this story.");
     }
 
-    await output.text("✨ Done!");
+    // Action buttons
+    await output.buttons([
+      {
+        label: "View on Hacker News",
+        url: `https://news.ycombinator.com/item?id=${selectedStory.id}`,
+        intent: "primary",
+      },
+      ...(selectedStory.url
+        ? [
+            {
+              label: "Open Article",
+              url: selectedStory.url,
+              intent: "secondary" as const,
+            },
+          ]
+        : []),
+    ]);
   },
 });
