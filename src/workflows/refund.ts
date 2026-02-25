@@ -28,10 +28,11 @@ export const refund = createWorkflow({
     );
 
     await output.markdown(
-      `Order ${order.id}\n` +
-        `Customer: ${order.customer} (${order.email})\n` +
-        `Placed: ${daysSincePurchase} days ago\n` +
-        `Items: ${order.items.map((i) => `${i.name} - $${i.price}`).join(", ")}`,
+      `## Order ${order.id}\n\n` +
+        `**Customer:** ${order.customer} (${order.email})  \n` +
+        `**Placed:** ${daysSincePurchase} days ago\n\n` +
+        `**Items:**\n` +
+        order.items.map((i) => `- ${i.name} — **$${i.price}**`).join("\n"),
     );
 
     // Step 2: Select items to refund
@@ -85,16 +86,17 @@ export const refund = createWorkflow({
     });
 
     await output.markdown(
-      `Refund summary:\n` +
-        `Items: ${selectedItems.map((i) => i.name).join(", ")}\n` +
-        `Total: $${refundTotal.toFixed(2)}\n` +
-        `Reason: ${reason}${reasonDetail ? ` - ${reasonDetail}` : ""}`,
+      `## Refund Summary\n\n` +
+        `**Items:**\n` +
+        selectedItems.map((i) => `- ${i.name}`).join("\n") +
+        `\n\n**Total:** $${refundTotal.toFixed(2)}  \n` +
+        `**Reason:** ${reason}${reasonDetail ? ` — ${reasonDetail}` : ""}`,
     );
 
     // Step 4: Policy validation
     if (daysSincePurchase > 90) {
       await output.markdown(
-        "Refund rejected: Order is outside the 90-day refund window.",
+        "⚠️ **Refund rejected:** Order is outside the 90-day refund window.",
       );
       return;
     }
@@ -104,10 +106,10 @@ export const refund = createWorkflow({
         `Refund requires manager approval: Order is ${daysSincePurchase} days old (outside 30-day window).`,
       );
       if (!approved) {
-        await output.markdown("Refund rejected by manager.");
+        await output.markdown("❌ **Refund rejected** by manager.");
         return;
       }
-      await output.markdown("Manager approval received.");
+      await output.markdown("✅ **Manager approval** received.");
     }
 
     if (refundTotal > 500) {
@@ -115,10 +117,10 @@ export const refund = createWorkflow({
         `Refund requires escalation: Amount ($${refundTotal.toFixed(2)}) exceeds $500 threshold.`,
       );
       if (!approved) {
-        await output.markdown("Refund rejected during escalation.");
+        await output.markdown("❌ **Refund rejected** during escalation.");
         return;
       }
-      await output.markdown("Escalation approved.");
+      await output.markdown("✅ **Escalation** approved.");
     }
 
     // Step 5: Process refund
@@ -126,11 +128,11 @@ export const refund = createWorkflow({
     const processorRef = `STRIPE-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
 
     await output.markdown(
-      `Refund processed successfully!\n\n` +
-        `Refund ID: ${refundId}\n` +
-        `Amount: $${refundTotal.toFixed(2)}\n` +
-        `Processor Reference: ${processorRef}\n` +
-        `Confirmation email sent to ${order.email}`,
+      `## ✅ Refund Processed Successfully!\n\n` +
+        `**Refund ID:** \`${refundId}\`  \n` +
+        `**Amount:** $${refundTotal.toFixed(2)}  \n` +
+        `**Processor Reference:** \`${processorRef}\`  \n` +
+        `**Confirmation email** sent to ${order.email}`,
     );
   },
 });
