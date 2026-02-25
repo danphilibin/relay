@@ -9,7 +9,7 @@ interface DevConsoleProps {
 }
 
 export function DevConsole({ status, runId, messages }: DevConsoleProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(
     new Set(),
   );
