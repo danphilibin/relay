@@ -101,13 +101,18 @@ export function InputRequestMessage({
     }
   }
 
+  const schemaKeys = Object.keys(schema);
+  const isSimpleInput = schemaKeys.length === 1 && schemaKeys[0] === "input";
+
   return (
     <form
       className="my-4 p-5 rounded-xl border bg-[#111] border-[#222]"
       onSubmit={handleSubmit}
     >
       <div className="flex flex-col gap-4">
-        <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
+        {!isSimpleInput && (
+          <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
+        )}
 
         {Object.entries(schema).map(([fieldName, fieldDef]) => {
           const entry = FIELD_REGISTRY[fieldDef.type];
