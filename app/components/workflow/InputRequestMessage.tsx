@@ -111,7 +111,7 @@ export function InputRequestMessage({
     >
       <div className="flex flex-col gap-4">
         {!isSimpleInput && (
-          <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
+          <span className="text-lg font-medium text-[#fafafa]">{prompt}</span>
         )}
 
         {Object.entries(schema).map(([fieldName, fieldDef]) => {
