@@ -17,13 +17,6 @@ const intentToVariant: Record<string, "primary" | "secondary" | "destructive"> =
 
 export function OutputMessage({ block }: OutputMessageProps) {
   switch (block.type) {
-    case "output.text":
-      return (
-        <div className="text-base leading-relaxed text-[#888] whitespace-pre-wrap">
-          {block.text}
-        </div>
-      );
-
     case "output.markdown":
       return <Streamdown mode="static">{block.content}</Streamdown>;
 

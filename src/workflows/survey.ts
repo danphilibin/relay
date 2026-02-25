@@ -5,7 +5,7 @@ export const survey = createWorkflow({
   handler: async ({ input, output }) => {
     // Simple prompt → string
     const name = await input("What's your name?");
-    await output.text(`Hey ${name}!`);
+    await output.markdown(`Hey ${name}!`);
 
     // Prompt with buttons → { value, $choice }
     const { $choice } = await input("Want to continue?", {
@@ -13,7 +13,7 @@ export const survey = createWorkflow({
     });
 
     if ($choice === "No thanks") {
-      await output.text("No worries, come back anytime!");
+      await output.markdown("No worries, come back anytime!");
       return;
     }
 
@@ -31,7 +31,7 @@ export const survey = createWorkflow({
       },
     });
 
-    await output.text(
+    await output.markdown(
       `Got it — you're a ${profile.role} with ${profile.experience} experience.`,
     );
 
@@ -50,9 +50,9 @@ export const survey = createWorkflow({
     );
 
     if (feedback.$choice === "Skip") {
-      await output.text("Thanks for participating!");
+      await output.markdown("Thanks for participating!");
     } else {
-      await output.text(`Thanks for the feedback: "${feedback.comments}"`);
+      await output.markdown(`Thanks for the feedback: "${feedback.comments}"`);
     }
   },
 });

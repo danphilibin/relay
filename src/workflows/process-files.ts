@@ -3,8 +3,8 @@ import { createWorkflow } from "@/sdk";
 export const processFiles = createWorkflow({
   name: "Process Files",
   handler: async ({ step, output }) => {
-    await output.text("Workflow started");
-    await output.text("Fetching files from API...");
+    await output.markdown("Workflow started");
+    await output.markdown("Fetching files from API...");
 
     const files = await step.do("fetch files", async () => {
       return [
@@ -19,19 +19,19 @@ export const processFiles = createWorkflow({
       ];
     });
 
-    await output.text(`Found ${files.length} files`);
+    await output.markdown(`Found ${files.length} files`);
     await step.sleep("pause", "3 seconds");
-    await output.text("Starting file processing...");
+    await output.markdown("Starting file processing...");
 
     for (let i = 0; i < files.length; i++) {
       await step.do(`process file ${i}`, async () => {
         // Simulate processing time
         await new Promise((resolve) => setTimeout(resolve, 500));
       });
-      await output.text(`Processing ${files[i]}...`);
-      await output.text(`✓ Completed ${files[i]}`);
+      await output.markdown(`Processing ${files[i]}...`);
+      await output.markdown(`✓ Completed ${files[i]}`);
     }
 
-    await output.text("Workflow completed successfully!");
+    await output.markdown("Workflow completed successfully!");
   },
 });

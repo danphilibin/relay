@@ -43,7 +43,6 @@ export type RelayLoadingFn = (
 export type RelayConfirmFn = (message: string) => Promise<boolean>;
 
 export type RelayOutput = {
-  text: (text: string) => Promise<void>;
   markdown: (content: string) => Promise<void>;
   table: (table: {
     title?: string;
@@ -124,7 +123,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     const definition = getWorkflow(name);
 
     if (!definition) {
-      await this.output.text(`Error: Unknown workflow: ${name}`);
+      await this.output.markdown(`Error: Unknown workflow: ${name}`);
       throw new Error(`Unknown workflow: ${name}`);
     }
 
@@ -217,9 +216,6 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
    * Output rich blocks to the workflow stream.
    */
   output: RelayOutput = {
-    text: async (text: string) => {
-      await this.sendOutput({ type: "output.text", text });
-    },
     markdown: async (content: string) => {
       await this.sendOutput({ type: "output.markdown", content });
     },

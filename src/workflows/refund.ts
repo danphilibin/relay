@@ -27,7 +27,7 @@ export const refund = createWorkflow({
       (Date.now() - order.createdAt.getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    await output.text(
+    await output.markdown(
       `Order ${order.id}\n` +
         `Customer: ${order.customer} (${order.email})\n` +
         `Placed: ${daysSincePurchase} days ago\n` +
@@ -56,7 +56,7 @@ export const refund = createWorkflow({
     });
 
     if (selectedItems.length === 0) {
-      await output.text("No items selected. Refund cancelled.");
+      await output.markdown("No items selected. Refund cancelled.");
       return;
     }
 
@@ -84,7 +84,7 @@ export const refund = createWorkflow({
       },
     });
 
-    await output.text(
+    await output.markdown(
       `Refund summary:\n` +
         `Items: ${selectedItems.map((i) => i.name).join(", ")}\n` +
         `Total: $${refundTotal.toFixed(2)}\n` +
@@ -93,7 +93,7 @@ export const refund = createWorkflow({
 
     // Step 4: Policy validation
     if (daysSincePurchase > 90) {
-      await output.text(
+      await output.markdown(
         "Refund rejected: Order is outside the 90-day refund window.",
       );
       return;
@@ -104,10 +104,10 @@ export const refund = createWorkflow({
         `Refund requires manager approval: Order is ${daysSincePurchase} days old (outside 30-day window).`,
       );
       if (!approved) {
-        await output.text("Refund rejected by manager.");
+        await output.markdown("Refund rejected by manager.");
         return;
       }
-      await output.text("Manager approval received.");
+      await output.markdown("Manager approval received.");
     }
 
     if (refundTotal > 500) {
@@ -115,17 +115,17 @@ export const refund = createWorkflow({
         `Refund requires escalation: Amount ($${refundTotal.toFixed(2)}) exceeds $500 threshold.`,
       );
       if (!approved) {
-        await output.text("Refund rejected during escalation.");
+        await output.markdown("Refund rejected during escalation.");
         return;
       }
-      await output.text("Escalation approved.");
+      await output.markdown("Escalation approved.");
     }
 
     // Step 5: Process refund
     const refundId = `REF-${Date.now()}`;
     const processorRef = `STRIPE-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
 
-    await output.text(
+    await output.markdown(
       `Refund processed successfully!\n\n` +
         `Refund ID: ${refundId}\n` +
         `Amount: $${refundTotal.toFixed(2)}\n` +

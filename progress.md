@@ -95,3 +95,7 @@ Updated mcp-translation test fixtures to use new output `block` format (`output.
 ## Simple input label deduplication (065cdac)
 
 Fixed duplicate label rendering for simple `await input("prompt")` calls. The SDK normalizes simple prompts into a schema with `{ input: { label: prompt } }`, causing both the form title and field label to show the same text. Added client-side detection: when schema has exactly one field named `input`, the group title is hidden, showing only the field label.
+
+## Markdown-only output path (uncommitted)
+
+Simplified the rich output prototype to a single text output API by removing `output.text` from shared schemas and the SDK surface and standardizing on `output.markdown` everywhere. Updated frontend rendering, MCP translation fixtures, error fallback messages, and all existing workflows (including Rich Output Demo) to emit markdown-only output blocks.

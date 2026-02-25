@@ -31,7 +31,7 @@ function cleanHtml(text: string): string {
 export const fetchHackernews = createWorkflow({
   name: "Fetch Hacker News",
   handler: async ({ step, input, output }) => {
-    await output.text("Fetching top Hacker News stories...");
+    await output.markdown("Fetching top Hacker News stories...");
 
     // Fetch top story IDs
     const topStoryIds = await step.do("fetch top stories", async () => {
@@ -68,7 +68,7 @@ export const fetchHackernews = createWorkflow({
 
     const selectedStory = stories.find((s) => String(s.id) === selectedStoryId);
     if (!selectedStory) {
-      await output.text("Story not found!");
+      await output.markdown("Story not found!");
       return;
     }
 
@@ -123,7 +123,7 @@ export const fetchHackernews = createWorkflow({
         await output.markdown(`> **${comment.by}**\n>\n> ${truncated}`);
       }
     } else {
-      await output.text("No comments yet on this story.");
+      await output.markdown("No comments yet on this story.");
     }
 
     // Action buttons

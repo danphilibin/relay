@@ -8,11 +8,6 @@ export const OutputButtonDefSchema = z.object({
   intent: OutputIntentSchema.optional(),
 });
 
-export const OutputTextBlockSchema = z.object({
-  type: z.literal("output.text"),
-  text: z.string(),
-});
-
 export const OutputMarkdownBlockSchema = z.object({
   type: z.literal("output.markdown"),
   content: z.string(),
@@ -49,7 +44,6 @@ export const OutputButtonsBlockSchema = z.object({
 });
 
 export const OutputBlockSchema = z.discriminatedUnion("type", [
-  OutputTextBlockSchema,
   OutputMarkdownBlockSchema,
   OutputTableBlockSchema,
   OutputCodeBlockSchema,
@@ -60,7 +54,6 @@ export const OutputBlockSchema = z.discriminatedUnion("type", [
 
 export type OutputIntent = z.infer<typeof OutputIntentSchema>;
 export type OutputButtonDef = z.infer<typeof OutputButtonDefSchema>;
-export type OutputTextBlock = z.infer<typeof OutputTextBlockSchema>;
 export type OutputMarkdownBlock = z.infer<typeof OutputMarkdownBlockSchema>;
 export type OutputTableBlock = z.infer<typeof OutputTableBlockSchema>;
 export type OutputCodeBlock = z.infer<typeof OutputCodeBlockSchema>;

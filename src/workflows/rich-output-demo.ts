@@ -4,10 +4,10 @@ export const richOutputDemo = createWorkflow({
   name: "Rich Output Demo",
   description: "Demonstrates all rich output block types.",
   handler: async ({ output }) => {
-    await output.text("Rich output demo started.");
+    await output.markdown("Rich output demo started.");
 
     await output.markdown(
-      "# Rich Output Demo\nThis message is sent as `output.markdown`.",
+      "# Rich Output Demo\nAll text output is sent as `output.markdown`.",
     );
 
     await output.table({
@@ -52,6 +52,6 @@ export const richOutputDemo = createWorkflow({
       },
     ]);
 
-    await output.text("Rich output demo complete.");
+    await output.markdown("Rich output demo complete.");
   },
 });

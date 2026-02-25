@@ -35,8 +35,6 @@ function formatInputField(key: string, field: InputFieldDefinition): string {
 
 function formatOutputBlock(block: OutputBlock): string {
   switch (block.type) {
-    case "output.text":
-      return block.text;
     case "output.markdown":
       return block.content;
     case "output.table":

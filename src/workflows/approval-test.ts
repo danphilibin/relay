@@ -7,7 +7,7 @@ export const approvalTest = createWorkflow({
       amount: { type: "number", label: "Amount ($)" },
     });
 
-    await output.text(`Processing refund for $${amount.amount}...`);
+    await output.markdown(`Processing refund for $${amount.amount}...`);
 
     // Require approval for amounts over $100
     if (amount.amount > 100) {
@@ -16,13 +16,13 @@ export const approvalTest = createWorkflow({
       );
 
       if (!approved) {
-        await output.text(`Refund rejected.`);
+        await output.markdown(`Refund rejected.`);
         return;
       }
 
-      await output.text("Refund approved!");
+      await output.markdown("Refund approved!");
     }
 
-    await output.text(`Refund of $${amount.amount} processed successfully.`);
+    await output.markdown(`Refund of $${amount.amount} processed successfully.`);
   },
 });

@@ -74,8 +74,8 @@ export function useWorkflowStream({
               id: "error",
               type: "output",
               block: {
-                type: "output.text",
-                text: `Error: ${(error as Error).message}`,
+                type: "output.markdown",
+                content: `Error: ${(error as Error).message}`,
               },
             },
           ]);
