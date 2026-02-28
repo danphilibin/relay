@@ -1,0 +1,20 @@
+{
+  "overrides": [
+    {
+      "files": ["app/**/*.ts", "app/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/*"],
+                "message": "Imports from src/ must go through @relayjs in app/."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

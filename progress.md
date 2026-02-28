@@ -107,3 +107,9 @@ Simplified the rich output prototype to a single text output API by removing `ou
 - Added `@relayjs` path alias in `tsconfig.json` and introduced `tsconfig.app-boundary.json` to typecheck the app with only the SDK client alias available.
 - Wired boundary verification into `typecheck` via `pnpm run typecheck:boundary`.
 - Adjusted `useWorkflowStream` run-init typing/narrowing so the boundary-specific typecheck passes.
+
+## Replace app boundary tsconfig with oxlint import boundary (cf6e2a6 - cf6e2a6)
+
+- Added `.oxlintrc.json` override for `app/**/*.ts(x)` with `no-restricted-imports` to block `@/*` imports and require SDK access via `@relayjs`.
+- Removed `tsconfig.app-boundary.json` and removed `typecheck:boundary` wiring from `package.json`.
+- Verified boundary setup via `oxlint --print-config app/root.tsx`, and re-ran `pnpm run lint` and `pnpm exec tsc --noEmit`.
