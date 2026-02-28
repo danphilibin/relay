@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "relay-web",
+  "compatibility_date": "2025-12-21",
+  "pages_build_output_dir": "build/client",
+}
