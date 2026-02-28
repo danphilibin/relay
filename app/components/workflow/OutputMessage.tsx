@@ -1,4 +1,4 @@
-import { type OutputBlock } from "@/isomorphic";
+import { type OutputBlock } from "@relayjs";
 import { Button, LinkButton } from "@cloudflare/kumo/components/button";
 import { CodeBlock } from "@cloudflare/kumo/components/code";
 import { Table } from "@cloudflare/kumo/components/table";

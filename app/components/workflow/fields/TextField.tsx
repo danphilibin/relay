@@ -1,5 +1,5 @@
 import { Input } from "@cloudflare/kumo/components/input";
-import type { InputFieldDefinition } from "@/isomorphic/input";
+import type { InputFieldDefinition } from "@relayjs";
 import type { FieldProps } from "../SchemaFieldComponents";
 
 export function TextField({

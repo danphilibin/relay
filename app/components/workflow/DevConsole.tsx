@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CaretDown, CaretRight, Terminal } from "@phosphor-icons/react";
-import type { StreamMessage, WorkflowStatus } from "@/isomorphic";
+import type { StreamMessage, WorkflowStatus } from "@relayjs";
 
 interface DevConsoleProps {
   status: WorkflowStatus;

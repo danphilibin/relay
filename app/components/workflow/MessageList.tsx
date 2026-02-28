@@ -1,4 +1,4 @@
-import { type StreamMessage } from "@/isomorphic";
+import { type StreamMessage } from "@relayjs";
 import { InputRequestMessage } from "./InputRequestMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";

@@ -1,4 +1,4 @@
-import type { InputFieldDefinition } from "@/isomorphic/input";
+import type { InputFieldDefinition } from "@relayjs";
 import { TextField } from "./fields/TextField";
 import { NumberField } from "./fields/NumberField";
 import { CheckboxField } from "./fields/CheckboxField";

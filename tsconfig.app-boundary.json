@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "paths": {
+      "@relayjs": ["./src/sdk/client.ts"]
+    }
+  },
+  "include": ["app/**/*", ".react-router/types/**/*"]
+}

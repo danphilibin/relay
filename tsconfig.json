@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
+      "@relayjs": ["./src/sdk/client.ts"],
       "@/*": ["./src/*"]
     },
     "types": ["vite/client", "./worker-configuration.d.ts"]

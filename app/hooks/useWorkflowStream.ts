@@ -7,7 +7,7 @@ import {
   parseStreamMessage,
   type StartWorkflowParams,
   type WorkflowParams,
-} from "@/isomorphic";
+} from "@relayjs";
 
 interface UseWorkflowStreamOptions {
   workflowName: string;
@@ -59,10 +59,14 @@ export function useWorkflowStream({
             body: JSON.stringify(body),
             signal: abortController.signal,
           });
-          const data = await response.json<StartWorkflowParams>();
+          const data = (await response.json()) as StartWorkflowParams;
           activeRunId = data.id;
           setCurrentRunId(activeRunId);
           navigate(`/${workflowName}/${activeRunId}`, { replace: true });
+        }
+
+        if (!activeRunId) {
+          throw new Error("Failed to initialize workflow run");
         }
 
         await connectToStream(activeRunId, abortController.signal);

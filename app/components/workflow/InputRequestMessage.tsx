@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { type InputSchema, type NormalizedButton } from "@/isomorphic";
+import { type InputSchema, type NormalizedButton } from "@relayjs";
 import { Button } from "@cloudflare/kumo/components/button";
 import { FIELD_REGISTRY } from "./SchemaFieldComponents";
 
