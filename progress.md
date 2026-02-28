@@ -101,6 +101,7 @@ Fixed duplicate label rendering for simple `await input("prompt")` calls. The SD
 Simplified the rich output prototype to a single text output API by removing `output.text` from shared schemas and the SDK surface and standardizing on `output.markdown` everywhere. Updated frontend rendering, MCP translation fixtures, error fallback messages, and all existing workflows (including Rich Output Demo) to emit markdown-only output blocks.
 
 ## Enforce SDK client boundary in-place (aca07e6 - aca07e6)
+
 - Added `src/sdk/client.ts` as the explicit client-safe surface for future `relayjs` usage, re-exporting browser-safe types/utilities from `src/isomorphic`.
 - Updated all `app/` imports that referenced `src/isomorphic` internals to import from `@relayjs` instead.
 - Added `@relayjs` path alias in `tsconfig.json` and introduced `tsconfig.app-boundary.json` to typecheck the app with only the SDK client alias available.

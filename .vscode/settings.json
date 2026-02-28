@@ -1,11 +1,11 @@
 {
-	"files.associations": {
-		"wrangler.json": "jsonc"
-	},
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "oxc.oxc-vscode",
-	"editor.codeActionsOnSave": {
-		"source.fixAll": "explicit",
-		"source.removeUnusedImports": "always"
-	}
+  "files.associations": {
+    "wrangler.json": "jsonc"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.removeUnusedImports": "always"
+  }
 }
