@@ -17,15 +17,27 @@ export {
   type InteractionPoint,
   StreamMessageSchema,
   parseStreamMessage,
-  formatCallResponseForMcp,
+} from "../isomorphic/messages";
+
+export { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
+
+export {
   type WorkflowParams,
   type StartWorkflowParams,
   type WorkflowMeta,
-  type WorkflowStatus,
-  type InputSchema,
-  type NormalizedButton,
-  type OutputBlock,
-  type OutputButtonDef,
-} from "../isomorphic";
+} from "../isomorphic/registry-types";
 
-export type { InputFieldDefinition } from "../isomorphic/input";
+export type WorkflowStatus =
+  | "idle"
+  | "connecting"
+  | "streaming"
+  | "complete"
+  | "error";
+
+export type {
+  InputSchema,
+  InputFieldDefinition,
+  NormalizedButton,
+} from "../isomorphic/input";
+
+export type { OutputBlock, OutputButtonDef } from "../isomorphic/output";

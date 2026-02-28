@@ -125,3 +125,11 @@ Made the React Router frontend API target configurable so `app/` no longer assum
 - Added Playwright scripts in `package.json`: `test:e2e`, `test:e2e:ui`, and `test:e2e:install`.
 - Added Playwright artifact ignores in `.gitignore` (`playwright-report`, `test-results`).
 - This entry consolidates the prior incremental Playwright/smoke-to-e2e progress notes.
+
+## Canonical SDK client boundary (uncommitted)
+
+Made `src/sdk/client.ts` the single canonical client-facing SDK contract and removed duplicate barrel indirection through `src/isomorphic/index.ts`. `client.ts` now exports directly from `isomorphic` module files (`messages`, `mcp-translation`, `registry-types`, `input`, `output`), and `src/isomorphic/index.ts` was deleted to eliminate redundant public surfaces and enforce the SDK import boundary more strictly.
+
+## Explicit isomorphic import ban in app boundary (uncommitted)
+
+Tightened the app-side SDK boundary linting by adding an explicit `no-restricted-imports` rule for `@/isomorphic` and `@/isomorphic/*` in `.oxlintrc.json`. This documents intent directly alongside the broader `@/*` restriction and ensures app code must consume shared contracts through `@relayjs`.

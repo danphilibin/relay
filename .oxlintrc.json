@@ -8,6 +8,10 @@
           {
             "patterns": [
               {
+                "group": ["@/isomorphic", "@/isomorphic/*"],
+                "message": "Do not import isomorphic internals in app/. Use @relayjs instead."
+              },
+              {
                 "group": ["@/*"],
                 "message": "Imports from src/ must go through @relayjs in app/."
               }
