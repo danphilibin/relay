@@ -31,7 +31,7 @@ export class RelayDurableObject extends DurableObject {
       for (const controller of this.controllers) {
         try {
           controller.enqueue(encoded);
-        } catch (e) {
+        } catch {
           // Controller might be closed, ignore
         }
       }
@@ -41,12 +41,13 @@ export class RelayDurableObject extends DurableObject {
 
     // GET /stream - return a ReadableStream
     if (request.method === "GET" && url.pathname === "/stream") {
-      const self = this;
+      let streamController: ReadableStreamDefaultController<Uint8Array>;
       const stream = new ReadableStream({
-        async start(controller) {
+        start: async (controller) => {
+          streamController = controller;
           // Read historical messages from durable storage
           const messages =
-            (await self.ctx.storage.get<StreamMessage[]>("messages")) || [];
+            (await this.ctx.storage.get<StreamMessage[]>("messages")) || [];
 
           // Send all historical messages
           for (const message of messages) {
@@ -57,13 +58,13 @@ export class RelayDurableObject extends DurableObject {
           }
 
           // Add to active controllers for future messages
-          self.controllers.push(controller);
+          this.controllers.push(controller);
         },
-        cancel() {
+        cancel: () => {
           // Remove from active controllers when client disconnects
-          const index = self.controllers.indexOf(this as any);
+          const index = this.controllers.indexOf(streamController);
           if (index > -1) {
-            self.controllers.splice(index, 1);
+            this.controllers.splice(index, 1);
           }
         },
       });
