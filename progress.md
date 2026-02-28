@@ -133,3 +133,13 @@ Made `src/sdk/client.ts` the single canonical client-facing SDK contract and rem
 ## Explicit isomorphic import ban in app boundary (uncommitted)
 
 Tightened the app-side SDK boundary linting by adding an explicit `no-restricted-imports` rule for `@/isomorphic` and `@/isomorphic/*` in `.oxlintrc.json`. This documents intent directly alongside the broader `@/*` restriction and ensures app code must consume shared contracts through `@relayjs`.
+
+## Workspace migration: two-package split (uncommitted)
+
+Converted the monorepo into a pnpm workspace with three independently deployable packages:
+
+- **`packages/sdk`** (`relay-sdk`) — The Cloudflare Relay SDK. Contains all isomorphic types (`messages`, `input`, `output`, `registry-types`, `mcp-translation`) and CF-specific code (`RelayWorkflow`, `RelayDurableObject`, `httpHandler`, registry, `createWorkflow`). Exports two entry points: `relay-sdk` (server, includes CF classes) and `relay-sdk/client` (browser-safe types only).
+- **`packages/web`** (`relay-web`) — The React SPA. Moved from `app/` with its own Vite + React Router config. Imports shared types via `relay-sdk/client`. Builds independently.
+- **`apps/examples`** (`relay-examples`) — Example Cloudflare Worker. Moved from `src/workflows/` + `src/index.ts`. Imports `createWorkflow`, `RelayWorkflow`, `RelayDurableObject`, and `httpHandler` from `relay-sdk`. Has its own `wrangler.jsonc`.
+
+Root contains only workspace config (`pnpm-workspace.yaml`), scripts, MCP server, e2e tests, and dev tooling. No deployable code. All tsconfig path aliases crossing package boundaries replaced with proper workspace deps. `@relayjs` alias removed in favor of `relay-sdk/client` package import. oxlint rules updated for new paths.

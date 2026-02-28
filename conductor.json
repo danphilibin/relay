@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "pnpm i && pnpm cf-typegen && pnpm build",
+    "setup": "pnpm i && pnpm --filter relay-examples cf-typegen && pnpm --filter relay-web build",
     "run": "pnpm dev"
   }
 }

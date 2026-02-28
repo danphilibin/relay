@@ -1,19 +1,15 @@
 {
   "overrides": [
     {
-      "files": ["app/**/*.ts", "app/**/*.tsx"],
+      "files": ["packages/web/app/**/*.ts", "packages/web/app/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["@/isomorphic", "@/isomorphic/*"],
-                "message": "Do not import isomorphic internals in app/. Use @relayjs instead."
-              },
-              {
-                "group": ["@/*"],
-                "message": "Imports from src/ must go through @relayjs in app/."
+                "group": ["relay-sdk"],
+                "message": "Use relay-sdk/client in the web app — the main export requires Cloudflare Workers."
               }
             ]
           }

@@ -1,52 +1,32 @@
 {
-  "name": "durable-workflow-prototype",
+  "name": "relay-workspace",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "pnpm run build && wrangler deploy",
     "dev": "concurrently \"pnpm:dev:*\" --names \"worker,react\" --prefix-colors \"blue,magenta\"",
-    "dev:worker": "wrangler dev --port 8787",
-    "dev:react": "react-router dev",
-    "build": "react-router build",
-    "typecheck": "pnpm run cf-typegen && react-router typegen && tsc",
-    "test": "vitest run",
+    "dev:worker": "pnpm --filter relay-examples dev",
+    "dev:react": "pnpm --filter relay-web dev",
+    "build": "pnpm --filter relay-web build && pnpm --filter relay-examples deploy",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter relay-sdk test",
     "test:e2e": "playwright test tests/*.e2e.spec.ts",
     "test:e2e:ui": "playwright test tests/*.e2e.spec.ts --ui",
     "test:e2e:install": "playwright install chromium",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "cf-typegen": "wrangler types"
+    "lint:fix": "oxlint --fix"
   },
   "dependencies": {
-    "@cloudflare/kumo": "1.5.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@phosphor-icons/react": "^2.1.10",
-    "isbot": "^5.1.31",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "react-router": "7.10.1",
-    "streamdown": "^2.3.0",
+    "relay-sdk": "workspace:*",
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.13.7",
     "@playwright/test": "^1.57.0",
-    "@react-router/dev": "7.10.1",
-    "@tailwindcss/vite": "^4.1.13",
-    "@types/node": "^22",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
     "concurrently": "^9.2.1",
     "oxfmt": "^0.35.0",
-    "oxlint": "^1.50.0",
-    "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.18",
-    "wrangler": "^4.56.0"
+    "oxlint": "^1.50.0"
   }
 }

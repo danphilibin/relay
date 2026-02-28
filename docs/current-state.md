@@ -14,34 +14,43 @@ There is also a **call-response API** for agents (MCP, CLI, etc.) that starts wo
 
 ## Project structure
 
+The repo is a **pnpm workspace** with two packages and one example app:
+
 ```
 workflows-starter/
-├── src/                    # Cloudflare Worker (server)
-│   ├── index.ts
-│   ├── isomorphic/         # Shared types/logic (no cloudflare:workers imports)
-│   │   └── __tests__/      # Unit tests for isomorphic code
-│   ├── sdk/                # Cloudflare-specific SDK implementation
-│   └── workflows/          # Example workflow definitions
-├── app/                    # React frontend (SPA)
-│   ├── components/
-│   │   └── workflow/
-│   │       └── fields/     # Individual form field components
-│   ├── hooks/
-│   ├── lib/
-│   └── routes/
-├── mcp/                    # MCP server (exposes workflows as tools)
-├── tests/                  # End-to-end tests (Playwright)
-├── conductor.json          # Setup/run scripts for the conductor
-├── wrangler.jsonc
-├── vite.config.ts
-└── package.json
+├── packages/
+│   ├── sdk/              → relay-sdk (Cloudflare Relay SDK)
+│   │   └── src/
+│   │       ├── isomorphic/   # Shared types/logic (no cloudflare:workers imports)
+│   │       │   └── __tests__/ # Unit tests for isomorphic code
+│   │       └── sdk/          # Cloudflare-specific SDK implementation
+│   └── web/              → relay-web (React SPA, independently deployable)
+│       ├── app/
+│       │   ├── components/workflow/
+│       │   │   └── fields/   # Individual form field components
+│       │   ├── hooks/
+│       │   ├── lib/
+│       │   └── routes/
+│       ├── vite.config.ts
+│       └── react-router.config.ts
+├── apps/
+│   └── examples/         → Example Cloudflare Worker
+│       ├── src/
+│       │   ├── index.ts      # Worker entrypoint (re-exports CF classes)
+│       │   └── workflows/    # Example workflow definitions
+│       └── wrangler.jsonc
+├── mcp/                  # MCP server (exposes workflows as tools)
+├── tests/                # End-to-end tests (Playwright)
+├── pnpm-workspace.yaml
+├── conductor.json
+└── package.json          # Workspace scripts only — no deployable code
 ```
 
 ---
 
 ## Tech stack
 
-- **pnpm** — package manager
+- **pnpm workspaces** — monorepo management
 - **Cloudflare Workers** — runtime
 - **Cloudflare Workflows** — durable step-based execution (replay-safe)
 - **Cloudflare Durable Objects** — per-run message persistence + streaming
@@ -54,9 +63,17 @@ workflows-starter/
 
 ---
 
-## Source layout
+## Package boundaries
 
-### `src/isomorphic/`
+### `packages/sdk` → `relay-sdk`
+
+Everything needed to build a Relay-powered Cloudflare Worker.
+
+**Main export (`relay-sdk`):** Server-side — `createWorkflow`, `RelayWorkflow`, `RelayDurableObject`, `httpHandler`, registry functions, all isomorphic types.
+
+**Client export (`relay-sdk/client`):** Browser-safe — message types, schemas, `parseStreamMessage`, `formatCallResponseForMcp`, registry types. No `cloudflare:workers` dependency.
+
+#### `src/isomorphic/`
 
 Code shared between server and client — no `cloudflare:workers` imports. Contains:
 
@@ -66,7 +83,7 @@ Code shared between server and client — no `cloudflare:workers` imports. Conta
 - **`registry-types.ts`** — Workflow registry types safe for client import
 - **`mcp-translation.ts`** — Formats `CallResponseResult` as human-readable text for MCP agents
 
-### `src/sdk/`
+#### `src/sdk/`
 
 Cloudflare-specific SDK. Contains:
 
@@ -76,18 +93,25 @@ Cloudflare-specific SDK. Contains:
 - **`registry.ts`** — Workflow registry (global Map, populated by `createWorkflow()`)
 - **`client.ts`** — Re-exports only isomorphic types (for client import)
 - **`index.ts`** — Full SDK exports (server-side)
+- **`env.d.ts`** — `Env` interface declaring expected Cloudflare bindings
 
-### `src/workflows/`
+### `packages/web` → `relay-web`
+
+The React frontend SPA. Independently deployable to Cloudflare Pages (or equivalent). Configured with a runtime API URL — no hardcoded host.
+
+Dependencies: `relay-sdk` (via `relay-sdk/client` for shared message/input/output types).
+
+### `apps/examples` → `relay-examples`
+
+The example Cloudflare Worker. Demonstrates the real-life deployment shape: a user's worker app that imports from `relay-sdk`, defines workflows, and deploys independently from `relay-web`.
 
 Seven example workflows: ask-name, approval-test, fetch-hacker-news, newsletter-signup, rich-output-demo, refund, survey.
 
-### `mcp/server.ts`
+Dependencies: `relay-sdk`.
 
-Standalone MCP server. Reads the workflow list from the API, registers each workflow as a tool (with its input schema mapped to Zod), and exposes a generic `relay_respond` tool for mid-run interactions.
+### Root
 
-```bash
-RELAY_API_URL=http://localhost:8787 npx tsx mcp/server.ts
-```
+Workspace config and scripts only. No deployable code. Contains the MCP server (`mcp/`), e2e tests (`tests/`), and shared dev tooling config.
 
 ---
 
@@ -124,30 +148,53 @@ createWorkflow({
 
 ### Handler context (`RelayContext`)
 
-| Property | Type / Signature | What it does |
-|---|---|---|
-| `output.markdown(content)` | `(content: string) => Promise<void>` | Sends a markdown block to the stream |
-| `output.table({ title?, data })` | `=> Promise<void>` | Sends a data table |
-| `output.code({ code, language? })` | `=> Promise<void>` | Sends a code block |
-| `output.image({ src, alt? })` | `=> Promise<void>` | Sends an image |
-| `output.link({ url, title?, description? })` | `=> Promise<void>` | Sends a link card |
-| `output.buttons(buttons)` | `=> Promise<void>` | Sends action buttons |
-| `input(prompt)` | `(prompt: string) => Promise<string>` | Shows a text input, waits for response |
-| `input(prompt, schema)` | `=> Promise<InferInputResult<T>>` | Shows a multi-field form, waits |
-| `input(prompt, { buttons })` | `=> Promise<{ value, $choice }>` | Text input with custom buttons |
-| `input(prompt, schema, { buttons })` | `=> Promise<InferInputResult<T> & { $choice }>` | Form with custom buttons |
-| `loading(msg, callback)` | `(msg: string, cb: (ctx) => Promise<void>) => Promise<void>` | Shows spinner during async work |
-| `confirm(msg)` | `(msg: string) => Promise<boolean>` | Approve/reject dialog |
-| `step` | `WorkflowStep` | Raw Cloudflare step (`step.do()`, `step.sleep()`, etc.) |
-| `data` | `InferInputResult<T>` | Typed upfront input (only when input schema provided) |
+| Property                                     | Type / Signature                                             | What it does                                            |
+| -------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
+| `output.markdown(content)`                   | `(content: string) => Promise<void>`                         | Sends a markdown block to the stream                    |
+| `output.table({ title?, data })`             | `=> Promise<void>`                                           | Sends a data table                                      |
+| `output.code({ code, language? })`           | `=> Promise<void>`                                           | Sends a code block                                      |
+| `output.image({ src, alt? })`                | `=> Promise<void>`                                           | Sends an image                                          |
+| `output.link({ url, title?, description? })` | `=> Promise<void>`                                           | Sends a link card                                       |
+| `output.buttons(buttons)`                    | `=> Promise<void>`                                           | Sends action buttons                                    |
+| `input(prompt)`                              | `(prompt: string) => Promise<string>`                        | Shows a text input, waits for response                  |
+| `input(prompt, schema)`                      | `=> Promise<InferInputResult<T>>`                            | Shows a multi-field form, waits                         |
+| `input(prompt, { buttons })`                 | `=> Promise<{ value, $choice }>`                             | Text input with custom buttons                          |
+| `input(prompt, schema, { buttons })`         | `=> Promise<InferInputResult<T> & { $choice }>`              | Form with custom buttons                                |
+| `loading(msg, callback)`                     | `(msg: string, cb: (ctx) => Promise<void>) => Promise<void>` | Shows spinner during async work                         |
+| `confirm(msg)`                               | `(msg: string) => Promise<boolean>`                          | Approve/reject dialog                                   |
+| `step`                                       | `WorkflowStep`                                               | Raw Cloudflare step (`step.do()`, `step.sleep()`, etc.) |
+| `data`                                       | `InferInputResult<T>`                                        | Typed upfront input (only when input schema provided)   |
 
 ### InputSchema field types
 
 ```ts
-type TextFieldDef     = { type: "text";     label: string; description?: string; placeholder?: string; required?: boolean }
-type NumberFieldDef   = { type: "number";   label: string; description?: string; placeholder?: string; required?: boolean }
-type CheckboxFieldDef = { type: "checkbox"; label: string; description?: string; required?: boolean }
-type SelectFieldDef   = { type: "select";   label: string; description?: string; options: { value: string; label: string }[]; required?: boolean }
+type TextFieldDef = {
+  type: "text";
+  label: string;
+  description?: string;
+  placeholder?: string;
+  required?: boolean;
+};
+type NumberFieldDef = {
+  type: "number";
+  label: string;
+  description?: string;
+  placeholder?: string;
+  required?: boolean;
+};
+type CheckboxFieldDef = {
+  type: "checkbox";
+  label: string;
+  description?: string;
+  required?: boolean;
+};
+type SelectFieldDef = {
+  type: "select";
+  label: string;
+  description?: string;
+  options: { value: string; label: string }[];
+  required?: boolean;
+};
 ```
 
 Type inference: text → string, number → number, checkbox → boolean, select → string.
@@ -156,7 +203,7 @@ Type inference: text → string, number → number, checkbox → boolean, select
 
 ## How the server works
 
-### Classes exported from `src/index.ts`
+### Classes exported from `relay-sdk`
 
 1. **`RelayWorkflow`** (`WorkflowEntrypoint`) — the Cloudflare Workflow class. On `run()`, looks up the workflow by name from the registry, gets a Durable Object stub by instance ID, and executes the handler. All SDK primitives (`output`, `input`, `loading`, `confirm`) call `step.do()` to send messages to the DO, making them replay-safe.
 
@@ -168,21 +215,22 @@ Type inference: text → string, number → number, checkbox → boolean, select
 
 #### Interactive API (browser clients)
 
-| Method | Path | Action |
-|---|---|---|
-| `GET` | `/workflows` | Returns workflow metadata list from registry |
-| `POST` | `/workflows` | Creates a new workflow instance, returns `{ id, name }` |
-| `GET` | `/workflows/:id/stream` | Proxies to the DO's NDJSON stream |
+| Method | Path                         | Action                                                  |
+| ------ | ---------------------------- | ------------------------------------------------------- |
+| `GET`  | `/workflows`                 | Returns workflow metadata list from registry            |
+| `POST` | `/workflows`                 | Creates a new workflow instance, returns `{ id, name }` |
+| `GET`  | `/workflows/:id/stream`      | Proxies to the DO's NDJSON stream                       |
 | `POST` | `/workflows/:id/event/:name` | Submits user response (input value or confirm decision) |
 
 #### Call-response API (agents)
 
-| Method | Path | Action |
-|---|---|---|
-| `POST` | `/api/run` | Starts a workflow, blocks until first interaction point, returns `CallResponseResult` |
+| Method | Path                   | Action                                                                                |
+| ------ | ---------------------- | ------------------------------------------------------------------------------------- |
+| `POST` | `/api/run`             | Starts a workflow, blocks until first interaction point, returns `CallResponseResult` |
 | `POST` | `/api/run/:id/respond` | Submits a response, blocks until next interaction point, returns `CallResponseResult` |
 
 `CallResponseResult` shape:
+
 ```ts
 {
   run_id: string;
@@ -265,9 +313,9 @@ Buttons: `{ label: string; url?: string; intent?: "primary" | "secondary" | "dan
 pnpm dev   # Runs wrangler (port 8787) + Vite (port 5173) concurrently
 ```
 
-Vite proxies `/workflows` and `/api` to `localhost:8787`. React Router runs in SPA mode (no SSR). TypeScript path alias `@/*` maps to `src/*`. Client imports shared types via `@/sdk/client` which re-exports only types from `src/isomorphic/` (no `cloudflare:workers` dependency).
+Vite proxies `/workflows` and `/api` to `localhost:8787`. React Router runs in SPA mode (no SSR). The web app imports shared types via `relay-sdk/client` (no `cloudflare:workers` dependency).
 
-API base URL is configurable via `window.RELAY_API_URL` or `VITE_API_URL` env var (handled in `app/lib/api.ts`).
+API base URL is configurable via `window.RELAY_API_URL` or `VITE_API_URL` env var (handled in `packages/web/app/lib/api.ts`).
 
 ---
 

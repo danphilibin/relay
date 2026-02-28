@@ -17,9 +17,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type {
   InputFieldDefinition,
   InputSchema,
-} from "../src/isomorphic/input";
-import type { CallResponseResult } from "../src/isomorphic/messages";
-import { formatCallResponseForMcp } from "../src/isomorphic/mcp-translation";
+  CallResponseResult,
+} from "relay-sdk/client";
+import { formatCallResponseForMcp } from "relay-sdk/client";
 import { z } from "zod";
 
 const RELAY_API_URL = process.env.RELAY_API_URL || "http://localhost:8787";

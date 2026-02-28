@@ -1,0 +1,23 @@
+{
+  "name": "relay-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/sdk/index.ts",
+    "./client": "./src/sdk/client.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250224.0",
+    "@types/node": "^22",
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.18"
+  }
+}

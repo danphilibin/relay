@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("ask-name workflow completes after submitting a name", async ({ page }) => {
+test("ask-name workflow completes after submitting a name", async ({
+  page,
+}) => {
   const name = `Playwright User ${Date.now()}`;
 
   await page.goto("/");
@@ -17,7 +19,9 @@ test("ask-name workflow completes after submitting a name", async ({ page }) => 
     await page.goto(`/ask-name/${run.id}`);
   }
 
-  await expect(page.getByText("Hello! I'd like to get to know you.")).toBeVisible();
+  await expect(
+    page.getByText("Hello! I'd like to get to know you."),
+  ).toBeVisible();
 
   await page.getByRole("textbox").first().fill(name);
   await page.getByRole("button", { name: /continue/i }).click();
