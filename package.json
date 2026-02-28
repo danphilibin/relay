@@ -7,7 +7,7 @@
     "dev": "concurrently \"pnpm:dev:*\" --names \"worker,react\" --prefix-colors \"blue,magenta\"",
     "dev:worker": "pnpm --filter relay-examples dev",
     "dev:react": "pnpm --filter relay-web dev",
-    "build": "pnpm --filter relay-web build && pnpm --filter relay-examples deploy",
+    "build": "pnpm --filter relay-web build && pnpm --filter relay-web deploy && pnpm --filter relay-examples deploy",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter relay-sdk test",
     "test:e2e": "playwright test tests/*.e2e.spec.ts",

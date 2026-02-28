@@ -10,6 +10,12 @@ import {
   interactionStatus,
 } from "../isomorphic/messages";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 /**
  * Consume an NDJSON stream from the DO, collecting messages until we hit
  * an unanswered interaction point (input_request, confirm_request, or workflow_complete).
@@ -77,7 +83,28 @@ async function consumeUntilInteraction(
  * - POST /api/run                - start a workflow, block until first interaction
  * - POST /api/run/:id/respond    - submit a response, block until next interaction
  */
+function withCors(response: Response): Response {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    headers.set(key, value);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export const httpHandler = async (req: Request, env: Env) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  const response = await handleRequest(req, env);
+  return withCors(response);
+};
+
+async function handleRequest(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
 
   // ── Call-response API (agents) ─────────────────────────────────
@@ -226,4 +253,4 @@ export const httpHandler = async (req: Request, env: Env) => {
   }
 
   return new Response("Not Found", { status: 404 });
-};
+}
