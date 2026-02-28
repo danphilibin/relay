@@ -11,7 +11,8 @@
     "build": "react-router build",
     "typecheck": "pnpm run cf-typegen && react-router typegen && tsc",
     "test": "vitest run",
-    "format": "prettier --write --log-level warn .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
@@ -33,7 +34,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "concurrently": "^9.2.1",
-    "prettier": "^3.7.4",
+    "oxfmt": "^0.35.0",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",

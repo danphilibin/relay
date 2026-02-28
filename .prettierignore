@@ -1,6 +1,0 @@
-.claude/*
-.wrangler/*
-.env
-node_modules/*
-worker-configuration.d.ts
-pnpm-lock.yaml

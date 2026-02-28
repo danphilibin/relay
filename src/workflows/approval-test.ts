@@ -23,6 +23,8 @@ export const approvalTest = createWorkflow({
       await output.markdown("Refund approved!");
     }
 
-    await output.markdown(`Refund of $${amount.amount} processed successfully.`);
+    await output.markdown(
+      `Refund of $${amount.amount} processed successfully.`,
+    );
   },
 });
