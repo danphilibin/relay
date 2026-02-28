@@ -2,6 +2,12 @@
 
 Instructions for AI coding agents working with this codebase.
 
+## Codebase overview
+
+Read `docs/current-state.md` when you need to understand how the codebase fits together — for example, when a task touches multiple layers, when you're unsure where something lives, or when starting a new feature. It describes the architecture, module layout, SDK primitives, and HTTP API — enough to orient without exploring from scratch.
+
+If your work changes the architecture, adds/removes modules, or updates the SDK interface, update `docs/current-state.md` to reflect the new state before finishing.
+
 ## Progress log
 
 After completing any piece of work (feature, refactor, bug fix), update `progress.md` with a new entry summarizing what was done. Use the commit range as the heading (e.g. `## Feature name (abc1234 - def5678)`). This is an append-only log — never edit existing entries.
