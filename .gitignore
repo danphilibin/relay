@@ -10,3 +10,4 @@ settings.local.json
 .dev.vars
 opensrc/
 .docs
+specs
