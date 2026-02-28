@@ -8,15 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.26.0
-        version: 1.26.0(zod@4.3.5)
       relay-sdk:
         specifier: workspace:*
         version: link:packages/sdk
-      zod:
-        specifier: ^4.3.5
-        version: 4.3.5
     devDependencies:
       '@playwright/test':
         specifier: ^1.57.0
@@ -46,6 +40,9 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.26.0
+        version: 1.26.0(zod@4.3.5)
       zod:
         specifier: ^4.3.5
         version: 4.3.5

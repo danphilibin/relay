@@ -39,7 +39,7 @@ workflows-starter/
 │       │   ├── index.ts      # Worker entrypoint (re-exports CF classes)
 │       │   └── workflows/    # Example workflow definitions
 │       └── wrangler.jsonc
-├── mcp/                  # MCP server (exposes workflows as tools)
+├── mcp/                  # MCP server entrypoint (thin wrapper over relay-sdk/mcp)
 ├── tests/                # End-to-end tests (Playwright)
 ├── pnpm-workspace.yaml
 ├── conductor.json
@@ -73,6 +73,8 @@ Everything needed to build a Relay-powered Cloudflare Worker.
 
 **Client export (`relay-sdk/client`):** Browser-safe — message types, schemas, `parseStreamMessage`, `formatCallResponseForMcp`, registry types. No `cloudflare:workers` dependency.
 
+**MCP export (`relay-sdk/mcp`):** Node.js — `createRelayMcpServer` factory that builds an MCP server exposing all workflows as tools. Handles workflow discovery, InputSchema-to-Zod conversion, and the `relay_respond` tool. Depends on `@modelcontextprotocol/sdk`.
+
 #### `src/isomorphic/`
 
 Code shared between server and client — no `cloudflare:workers` imports. Contains:
@@ -91,6 +93,7 @@ Cloudflare-specific SDK. Contains:
 - **`cf-durable-object.ts`** — `RelayDurableObject` class — stores and streams messages per run
 - **`cf-http.ts`** — HTTP request handler with all routes
 - **`registry.ts`** — Workflow registry (global Map, populated by `createWorkflow()`)
+- **`mcp.ts`** — `createRelayMcpServer` factory — builds an MCP server from the Relay API
 - **`client.ts`** — Re-exports only isomorphic types (for client import)
 - **`index.ts`** — Full SDK exports (server-side)
 - **`env.d.ts`** — `Env` interface declaring expected Cloudflare bindings
@@ -111,7 +114,7 @@ Dependencies: `relay-sdk`.
 
 ### Root
 
-Workspace config and scripts only. No deployable code. Contains the MCP server (`mcp/`), e2e tests (`tests/`), and shared dev tooling config.
+Workspace config and scripts only. No deployable code. Contains a thin MCP server entrypoint (`mcp/`) that delegates to `relay-sdk/mcp`, e2e tests (`tests/`), and shared dev tooling config.
 
 ---
 

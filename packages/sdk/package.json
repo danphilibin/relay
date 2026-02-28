@@ -5,13 +5,15 @@
   "type": "module",
   "exports": {
     ".": "./src/sdk/index.ts",
-    "./client": "./src/sdk/client.ts"
+    "./client": "./src/sdk/client.ts",
+    "./mcp": "./src/sdk/mcp.ts"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {

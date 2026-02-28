@@ -143,3 +143,7 @@ Converted the monorepo into a pnpm workspace with three independently deployable
 - **`apps/examples`** (`relay-examples`) — Example Cloudflare Worker. Moved from `src/workflows/` + `src/index.ts`. Imports `createWorkflow`, `RelayWorkflow`, `RelayDurableObject`, and `httpHandler` from `relay-sdk`. Has its own `wrangler.jsonc`.
 
 Root contains only workspace config (`pnpm-workspace.yaml`), scripts, MCP server, e2e tests, and dev tooling. No deployable code. All tsconfig path aliases crossing package boundaries replaced with proper workspace deps. `@relayjs` alias removed in favor of `relay-sdk/client` package import. oxlint rules updated for new paths.
+
+## Move MCP server into relay-sdk (uncommitted)
+
+Extracted the MCP server logic from the root `mcp/server.ts` into a new `relay-sdk/mcp` export (`packages/sdk/src/sdk/mcp.ts`). The SDK now exposes a `createRelayMcpServer({ apiUrl })` factory that encapsulates workflow discovery, InputSchema-to-Zod conversion, per-workflow tool registration, and the `relay_respond` tool. The root `mcp/server.ts` is now a three-line entrypoint that delegates to the SDK. Moved `@modelcontextprotocol/sdk` from root dependencies into `packages/sdk`; removed `zod` from root (already in SDK).

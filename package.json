@@ -20,9 +20,7 @@
     "lint:fix": "oxlint --fix"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "relay-sdk": "workspace:*",
-    "zod": "^4.3.5"
+    "relay-sdk": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
