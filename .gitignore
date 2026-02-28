@@ -11,3 +11,5 @@ settings.local.json
 opensrc/
 .docs
 specs
+playwright-report
+test-results

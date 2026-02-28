@@ -11,6 +11,9 @@
     "build": "react-router build",
     "typecheck": "pnpm run cf-typegen && react-router typegen && tsc",
     "test": "vitest run",
+    "test:e2e": "playwright test tests/*.e2e.spec.ts",
+    "test:e2e:ui": "playwright test tests/*.e2e.spec.ts --ui",
+    "test:e2e:install": "playwright install chromium",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint",
@@ -30,6 +33,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.13.7",
+    "@playwright/test": "^1.57.0",
     "@react-router/dev": "7.10.1",
     "@tailwindcss/vite": "^4.1.13",
     "@types/node": "^22",

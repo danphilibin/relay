@@ -117,3 +117,11 @@ Simplified the rich output prototype to a single text output API by removing `ou
 ## Runtime API base URL for SPA decoupling (33fd30b - uncommitted)
 
 Made the React Router frontend API target configurable so `app/` no longer assumes same-origin proxying to a local Worker. Added `app/lib/api.ts` with runtime-first resolution (`window.RELAY_API_URL`) and build-time fallback (`VITE_API_URL`), then switched all frontend workflow fetch calls in `app/root.tsx` and `app/hooks/useWorkflowStream.ts` to use the helper. Added `app/global.d.ts` for typed `window.RELAY_API_URL`, documented configuration in `README.md`, and verified a successful standalone frontend build via `VITE_API_URL=http://localhost:9999 pnpm build`.
+
+## Playwright e2e setup and naming consolidation (7f4d316 - uncommitted)
+
+- Added Playwright end-to-end coverage for the Ask Name flow with `tests/ask-name.e2e.spec.ts` (navigate, submit name, assert completion output).
+- Added Playwright configuration in `playwright.config.ts` for local dev startup and Chromium execution.
+- Added Playwright scripts in `package.json`: `test:e2e`, `test:e2e:ui`, and `test:e2e:install`.
+- Added Playwright artifact ignores in `.gitignore` (`playwright-report`, `test-results`).
+- This entry consolidates the prior incremental Playwright/smoke-to-e2e progress notes.
