@@ -113,3 +113,7 @@ Simplified the rich output prototype to a single text output API by removing `ou
 - Added `.oxlintrc.json` override for `app/**/*.ts(x)` with `no-restricted-imports` to block `@/*` imports and require SDK access via `@relayjs`.
 - Removed `tsconfig.app-boundary.json` and removed `typecheck:boundary` wiring from `package.json`.
 - Verified boundary setup via `oxlint --print-config app/root.tsx`, and re-ran `pnpm run lint` and `pnpm exec tsc --noEmit`.
+
+## Runtime API base URL for SPA decoupling (33fd30b - uncommitted)
+
+Made the React Router frontend API target configurable so `app/` no longer assumes same-origin proxying to a local Worker. Added `app/lib/api.ts` with runtime-first resolution (`window.RELAY_API_URL`) and build-time fallback (`VITE_API_URL`), then switched all frontend workflow fetch calls in `app/root.tsx` and `app/hooks/useWorkflowStream.ts` to use the helper. Added `app/global.d.ts` for typed `window.RELAY_API_URL`, documented configuration in `README.md`, and verified a successful standalone frontend build via `VITE_API_URL=http://localhost:9999 pnpm build`.

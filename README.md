@@ -13,6 +13,20 @@ pnpm dev
 
 Open http://localhost:8787 in your browser, select a workflow, and click "Start Workflow".
 
+## Frontend API configuration
+
+The React app can target any API host at runtime/build-time:
+
+- Runtime override: set `window.RELAY_API_URL` before the app boots.
+- Build-time fallback: set `VITE_API_URL` when running `pnpm dev`/`pnpm build`.
+- If neither is set, the app uses relative paths (works with the current Vite proxy in local dev).
+
+Example build against another backend:
+
+```bash
+VITE_API_URL=http://localhost:8787 pnpm build
+```
+
 ## How it works
 
 Workflows are defined with `createWorkflow(name, handler)`. The handler receives a context with `input()`, `output()`, and `loading()` helpers:

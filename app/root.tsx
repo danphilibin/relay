@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import type { WorkflowMeta } from "@relayjs";
 import type { Route } from "./+types/root";
+import { apiPath } from "./lib/api";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -29,7 +30,7 @@ function Sidebar() {
   const [workflows, setWorkflows] = useState<WorkflowMeta[]>([]);
 
   useEffect(() => {
-    fetch("/workflows")
+    fetch(apiPath("workflows"))
       .then((res) => res.json() as Promise<{ workflows: WorkflowMeta[] }>)
       .then((data) => setWorkflows(data.workflows))
       .catch((err) => console.error("Failed to load workflows:", err));
