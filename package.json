@@ -14,6 +14,8 @@
     "test": "vitest run",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
@@ -36,6 +38,7 @@
     "@types/react-dom": "^19.2.3",
     "concurrently": "^9.2.1",
     "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
