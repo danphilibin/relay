@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "wrangler dev --port 8787",
     "deploy": "wrangler deploy",
+    "reset-cf": "wrangler delete relay-tools --force || true && wrangler deploy",
     "typecheck": "wrangler types && tsc",
     "cf-typegen": "wrangler types"
   },

@@ -147,3 +147,14 @@ Root contains only workspace config (`pnpm-workspace.yaml`), scripts, MCP server
 ## Move MCP server into relay-sdk (uncommitted)
 
 Extracted the MCP server logic from the root `mcp/server.ts` into a new `relay-sdk/mcp` export (`packages/sdk/src/sdk/mcp.ts`). The SDK now exposes a `createRelayMcpServer({ apiUrl })` factory that encapsulates workflow discovery, InputSchema-to-Zod conversion, per-workflow tool registration, and the `relay_respond` tool. The root `mcp/server.ts` is now a three-line entrypoint that delegates to the SDK. Moved `@modelcontextprotocol/sdk` from root dependencies into `packages/sdk`; removed `zod` from root (already in SDK).
+
+## Cloudflare McpAgent for remote MCP access (uncommitted)
+
+Added a Cloudflare-native MCP server using the `agents` SDK's `McpAgent` class, enabling remote MCP clients (e.g. Claude web) to connect via Streamable HTTP transport at `/mcp`.
+
+Key changes:
+- **Extracted `workflow-api.ts`** — Pulled `startWorkflowRun`, `respondToWorkflowRun`, and `consumeUntilInteraction` out of `cf-http.ts` into a shared module. Both the HTTP handler and McpAgent now call the same functions.
+- **Created `RelayMcpAgent`** (`cf-mcp-agent.ts`) — A `McpAgent<Env>` Durable Object that registers one tool per workflow plus a `relay_respond` tool in its `init()` method. Uses the shared workflow-api functions directly (no HTTP round-trips).
+- **Exported `inputSchemaToZod`** from `mcp.ts` so the McpAgent can reuse InputSchema-to-Zod conversion.
+- **Updated example app** — Added `RelayMcpAgent` export, `/mcp` route handling via `RelayMcpAgent.serve("/mcp", { binding: "RELAY_MCP_AGENT" })`, and wrangler DO binding + migration.
+- **Added `agents` dependency** to `relay-sdk`.
