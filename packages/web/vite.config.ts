@@ -1,10 +1,12 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ command, mode }) => {
-  if (command === "build" && mode === "production" && !process.env.VITE_RELAY_WORKER_URL) {
+  const env = loadEnv(mode, process.cwd(), "");
+  
+  if (command === "build" && mode === "production" && !env.VITE_RELAY_WORKER_URL) {
     throw new Error(
       "VITE_RELAY_WORKER_URL is required for production builds.\n" +
         "Set it in packages/web/.env or pass it inline:\n" +
