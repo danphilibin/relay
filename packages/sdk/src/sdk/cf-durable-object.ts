@@ -77,6 +77,19 @@ export class RelayDurableObject extends DurableObject {
       });
     }
 
+    // POST /metadata - store workflow metadata (slug)
+    if (request.method === "POST" && url.pathname === "/metadata") {
+      const { slug } = await request.json<{ slug: string }>();
+      await this.ctx.storage.put("slug", slug);
+      return new Response("OK");
+    }
+
+    // GET /metadata - retrieve workflow metadata
+    if (request.method === "GET" && url.pathname === "/metadata") {
+      const slug = await this.ctx.storage.get<string>("slug");
+      return Response.json({ slug: slug ?? null });
+    }
+
     return new Response("Not found", { status: 404 });
   }
 }

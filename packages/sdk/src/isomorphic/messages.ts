@@ -181,6 +181,8 @@ export type InteractionPoint =
  */
 export type CallResponseResult = {
   run_id: string;
+  workflow_slug: string;
+  run_url: string | null;
   status: CallResponseStatus;
   messages: StreamMessage[];
   interaction: InteractionPoint;

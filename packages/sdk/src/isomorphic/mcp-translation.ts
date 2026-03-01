@@ -104,6 +104,11 @@ export function formatCallResponseForMcp(result: CallResponseResult): string {
     }
   }
 
+  if (result.run_url) {
+    lines.push(`View in browser: ${result.run_url}`);
+    lines.push("");
+  }
+
   if (result.status === "complete") {
     const hasWorkflowComplete = result.messages.some(
       (message) => message.type === "workflow_complete",

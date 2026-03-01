@@ -51,7 +51,17 @@ pnpm --filter relay-web build
 pnpm --filter relay-web run deploy
 ```
 
-On first deploy, Wrangler will create a Pages project called `relay-web`.
+On first deploy, Wrangler will create a Pages project called `relay-web`. Note the URL it prints (e.g. `https://relay-web.pages.dev`).
+
+### 4. Set the app URL on the worker
+
+This lets the worker include browser links in MCP responses so agents can link to in-progress runs:
+
+```bash
+npx wrangler --config apps/examples/wrangler.jsonc secret put RELAY_APP_URL
+```
+
+When prompted, enter your frontend URL (e.g. `https://relay-web.pages.dev`).
 
 ### Deploy both at once
 

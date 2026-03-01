@@ -60,6 +60,16 @@ export async function consumeUntilInteraction(
   return { messages, interaction: null };
 }
 
+function buildRunUrl(
+  appUrl: string,
+  slug: string,
+  runId: string,
+): string | null {
+  if (!appUrl) return null;
+  const base = appUrl.replace(/\/$/, "");
+  return `${base}/${slug}/${runId}`;
+}
+
 /**
  * Start a workflow run and block until the first interaction point.
  */
@@ -81,12 +91,22 @@ export async function startWorkflowRun(
 
   // Open stream and consume until first interaction point
   const stub = env.RELAY_DURABLE_OBJECT.getByName(instance.id);
+
+  // Store workflow slug in the DO for later retrieval (e.g. respond calls)
+  await stub.fetch("http://internal/metadata", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slug }),
+  });
+
   const streamResponse = await stub.fetch("http://internal/stream");
   const { messages, interaction } =
     await consumeUntilInteraction(streamResponse);
 
   return {
     run_id: instance.id,
+    workflow_slug: slug,
+    run_url: buildRunUrl(env.RELAY_APP_URL, slug, instance.id),
     status: interactionStatus(interaction),
     messages,
     interaction,
@@ -103,6 +123,10 @@ export async function respondToWorkflowRun(
   data: Record<string, unknown>,
 ): Promise<CallResponseResult> {
   const stub = env.RELAY_DURABLE_OBJECT.getByName(runId);
+
+  // Retrieve the workflow slug stored at run creation
+  const metaResponse = await stub.fetch("http://internal/metadata");
+  const { slug } = (await metaResponse.json()) as { slug: string | null };
 
   // Open stream BEFORE submitting the event so we don't miss messages
   const streamResponse = await stub.fetch("http://internal/stream");
@@ -135,6 +159,8 @@ export async function respondToWorkflowRun(
 
   return {
     run_id: runId,
+    workflow_slug: slug ?? "",
+    run_url: slug ? buildRunUrl(env.RELAY_APP_URL, slug, runId) : null,
     status: interactionStatus(interaction),
     messages,
     interaction,
