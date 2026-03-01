@@ -18,7 +18,11 @@
     "format:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "===== PACKAGES =====": "",
+    "examples": "pnpm --filter relay-examples",
+    "web": "pnpm --filter relay-web",
+    "sdk": "pnpm --filter relay-sdk"
   },
   "dependencies": {
     "relay-sdk": "workspace:*"
