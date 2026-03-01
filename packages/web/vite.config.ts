@@ -3,7 +3,16 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => {
+  if (command === "build" && mode === "production" && !process.env.VITE_RELAY_WORKER_URL) {
+    throw new Error(
+      "VITE_RELAY_WORKER_URL is required for production builds.\n" +
+        "Set it in packages/web/.env or pass it inline:\n" +
+        "  VITE_RELAY_WORKER_URL=https://relay-tools.your-subdomain.workers.dev pnpm --filter relay-web build",
+    );
+  }
+
+  return {
   plugins: [
     tailwindcss(),
     reactRouter(),
@@ -22,4 +31,5 @@ export default defineConfig(({ command }) => ({
     reportCompressedSize: false,
   },
   logLevel: command === "build" ? "warn" : "info",
-}));
+};
+});

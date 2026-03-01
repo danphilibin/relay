@@ -30,12 +30,24 @@ pnpm --filter relay-examples deploy
 
 On first deploy, Wrangler will create a Workers project called `relay-tools`. Note the URL it prints (e.g. `https://relay-tools.your-subdomain.workers.dev`).
 
-### 2. Build and deploy the frontend
+### 2. Configure the frontend
 
-Build the frontend with `VITE_API_URL` pointing at your worker:
+Create a `.env` file in `packages/web/` with your worker URL:
 
 ```bash
-VITE_API_URL=https://relay-tools.your-subdomain.workers.dev pnpm --filter relay-web build
+cp packages/web/.env.example packages/web/.env
+```
+
+Edit `packages/web/.env` and replace `YOUR-SUBDOMAIN` with your Cloudflare subdomain:
+
+```
+VITE_RELAY_WORKER_URL=https://relay-tools.your-subdomain.workers.dev
+```
+
+### 3. Build and deploy the frontend
+
+```bash
+pnpm --filter relay-web build
 pnpm --filter relay-web deploy
 ```
 
@@ -43,10 +55,10 @@ On first deploy, Wrangler will create a Pages project called `relay-web`.
 
 ### Deploy both at once
 
-Once you've deployed each app at least once, you can redeploy everything with:
+Once you've deployed each app at least once and configured `packages/web/.env`, you can redeploy everything with:
 
 ```bash
-VITE_API_URL=https://relay-tools.your-subdomain.workers.dev pnpm build
+pnpm build
 pnpm deploy
 ```
 

@@ -2,6 +2,6 @@ export {};
 
 declare global {
   interface Window {
-    RELAY_API_URL?: string;
+    RELAY_WORKER_URL?: string;
   }
 }

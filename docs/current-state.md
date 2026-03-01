@@ -318,7 +318,7 @@ pnpm dev   # Runs wrangler (port 8787) + Vite (port 5173) concurrently
 
 Vite proxies `/workflows` and `/api` to `localhost:8787`. React Router runs in SPA mode (no SSR). The web app imports shared types via `relay-sdk/client` (no `cloudflare:workers` dependency).
 
-API base URL is configurable via `window.RELAY_API_URL` or `VITE_API_URL` env var (handled in `packages/web/app/lib/api.ts`).
+API base URL is configurable via `window.RELAY_WORKER_URL` or `VITE_RELAY_WORKER_URL` env var (handled in `packages/web/app/lib/api.ts`).
 
 ---
 

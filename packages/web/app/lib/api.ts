@@ -1,8 +1,8 @@
 const runtimeApiUrl =
-  typeof window !== "undefined" ? window.RELAY_API_URL : undefined;
+  typeof window !== "undefined" ? window.RELAY_WORKER_URL : undefined;
 
 const configuredApiUrl =
-  runtimeApiUrl?.trim() || import.meta.env.VITE_API_URL?.trim() || "";
+  runtimeApiUrl?.trim() || import.meta.env.VITE_RELAY_WORKER_URL?.trim() || "";
 
 const normalizedApiBase = configuredApiUrl.replace(/\/+$/, "");
 
