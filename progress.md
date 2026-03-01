@@ -153,8 +153,13 @@ Extracted the MCP server logic from the root `mcp/server.ts` into a new `relay-s
 Added a Cloudflare-native MCP server using the `agents` SDK's `McpAgent` class, enabling remote MCP clients (e.g. Claude web) to connect via Streamable HTTP transport at `/mcp`.
 
 Key changes:
+
 - **Extracted `workflow-api.ts`** — Pulled `startWorkflowRun`, `respondToWorkflowRun`, and `consumeUntilInteraction` out of `cf-http.ts` into a shared module. Both the HTTP handler and McpAgent now call the same functions.
 - **Created `RelayMcpAgent`** (`cf-mcp-agent.ts`) — A `McpAgent<Env>` Durable Object that registers one tool per workflow plus a `relay_respond` tool in its `init()` method. Uses the shared workflow-api functions directly (no HTTP round-trips).
 - **Exported `inputSchemaToZod`** from `mcp.ts` so the McpAgent can reuse InputSchema-to-Zod conversion.
 - **Updated example app** — Added `RelayMcpAgent` export, `/mcp` route handling via `RelayMcpAgent.serve("/mcp", { binding: "RELAY_MCP_AGENT" })`, and wrangler DO binding + migration.
 - **Added `agents` dependency** to `relay-sdk`.
+
+## Lefthook pre-commit hooks (b821ba0)
+
+Added lefthook to run oxfmt (format) and oxlint (lint) automatically on staged files during git commit. Formatting fixes are auto-staged via `stage_fixed`. A `prepare` script in root `package.json` ensures hooks install automatically on `pnpm install`. Configuration lives in `lefthook.yml` at the repo root.
