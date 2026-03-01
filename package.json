@@ -8,7 +8,7 @@
     "dev:worker": "pnpm --filter relay-examples dev",
     "dev:react": "pnpm --filter relay-web dev",
     "build": "pnpm -r build",
-    "deploy": "pnpm --filter relay-web run deploy && pnpm --filter relay-examples run deploy",
+    "deploy:all": "pnpm --filter relay-web run deploy && pnpm --filter relay-examples run deploy",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter relay-sdk test",
     "test:e2e": "playwright test tests/*.e2e.spec.ts",

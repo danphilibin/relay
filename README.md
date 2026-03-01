@@ -1,6 +1,6 @@
 # Relay
 
-Prototype. Pairs [Cloudflare Workflows](https://developers.cloudflare.com/workflows/) with [Durable Objects](https://developers.cloudflare.com/durable-objects/) to enable interactive backend functions that pause for user input, show progress, and stream UI instructions to the browser.
+Relay is an internal tools framework concept that pairs [Cloudflare Workflows](https://developers.cloudflare.com/workflows/) with [Durable Objects](https://developers.cloudflare.com/durable-objects/) to enable durable, interactive backend functions that pause for input, show progress, and stream UI instructions to browsers and agents.
 
 _A spiritual successor to [Interval](https://docs.intervalkit.com/)_
 
@@ -20,7 +20,7 @@ Open http://localhost:5173 and select a workflow in the sidebar.
 
 ## Deploy to Cloudflare
 
-Both apps deploy independently — the worker to [Cloudflare Workers](https://developers.cloudflare.com/workers/) and the frontend to [Cloudflare Pages](https://developers.cloudflare.com/pages/).
+Relay consists of two apps: a static frontend UI deployed to [Cloudflare Pages](https://developers.cloudflare.com/pages/) that hosts your UI, and a backend app that deploys to [Cloudflare Workers](https://developers.cloudflare.com/workers/) that hosts your tools.
 
 ### 1. Deploy the worker
 
@@ -48,7 +48,7 @@ VITE_RELAY_WORKER_URL=https://relay-tools.your-subdomain.workers.dev
 
 ```bash
 pnpm --filter relay-web build
-pnpm --filter relay-web deploy
+pnpm --filter relay-web run deploy
 ```
 
 On first deploy, Wrangler will create a Pages project called `relay-web`.
@@ -58,8 +58,7 @@ On first deploy, Wrangler will create a Pages project called `relay-web`.
 Once you've deployed each app at least once and configured `packages/web/.env`, you can redeploy everything with:
 
 ```bash
-pnpm build
-pnpm deploy
+pnpm build && pnpm deploy:all
 ```
 
 ## How it works
@@ -67,6 +66,8 @@ pnpm deploy
 Workflows are defined with `createWorkflow()`. The handler receives a context with `input()`, `output()`, `loading()`, and `confirm()` helpers:
 
 ```ts
+import { createWorkflow } from "relay-sdk";
+
 createWorkflow({
   name: "Newsletter Signup",
   handler: async ({ input, output, loading }) => {
