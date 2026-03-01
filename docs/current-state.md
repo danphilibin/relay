@@ -69,7 +69,7 @@ workflows-starter/
 
 Everything needed to build a Relay-powered Cloudflare Worker.
 
-**Main export (`relay-sdk`):** Server-side — `createWorkflow`, `RelayWorkflow`, `RelayDurableObject`, `httpHandler`, registry functions, all isomorphic types.
+**Main export (`relay-sdk`):** Server-side — `createWorkflow`, `RelayWorkflow`, `RelayDurableObject`, `RelayMcpAgent`, `httpHandler`, registry functions, all isomorphic types.
 
 **Client export (`relay-sdk/client`):** Browser-safe — message types, schemas, `parseStreamMessage`, `formatCallResponseForMcp`, registry types. No `cloudflare:workers` dependency.
 
@@ -92,8 +92,10 @@ Cloudflare-specific SDK. Contains:
 - **`cf-workflow.ts`** — `RelayWorkflow` class (`WorkflowEntrypoint`) + `createWorkflow()` factory + `RelayContext` type
 - **`cf-durable-object.ts`** — `RelayDurableObject` class — stores and streams messages per run
 - **`cf-http.ts`** — HTTP request handler with all routes
+- **`cf-mcp-agent.ts`** — `RelayMcpAgent` class — Cloudflare-native MCP server (Durable Object) using `agents` SDK, serves at `/mcp` via Streamable HTTP transport
+- **`workflow-api.ts`** — Core workflow execution functions (`startWorkflowRun`, `respondToWorkflowRun`, `consumeUntilInteraction`) shared between HTTP handler and McpAgent
 - **`registry.ts`** — Workflow registry (global Map, populated by `createWorkflow()`)
-- **`mcp.ts`** — `createRelayMcpServer` factory — builds an MCP server from the Relay API
+- **`mcp.ts`** — `createRelayMcpServer` factory — builds an MCP server from the Relay API (stdio transport, for standalone Node.js process)
 - **`client.ts`** — Re-exports only isomorphic types (for client import)
 - **`index.ts`** — Full SDK exports (server-side)
 - **`env.d.ts`** — `Env` interface declaring expected Cloudflare bindings
@@ -214,7 +216,9 @@ Type inference: text → string, number → number, checkbox → boolean, select
    - `POST /stream` — appends a message, broadcasts to all open connections
    - `GET /stream` — returns an NDJSON `ReadableStream` that replays all historical messages then keeps the connection open for live updates
 
-3. **`httpHandler`** — the Worker fetch handler. Routes:
+3. **`RelayMcpAgent`** (`McpAgent` from `agents/mcp`) — a Durable Object that serves as a Cloudflare-native MCP server. On `init()`, registers one tool per workflow (using the same `startWorkflowRun`/`respondToWorkflowRun` functions as the HTTP handler) plus a `relay_respond` tool. Served via `RelayMcpAgent.serve("/mcp")` which handles Streamable HTTP transport. Remote MCP clients (e.g. Claude web) can connect to `/mcp`.
+
+4. **`httpHandler`** — the Worker fetch handler. Routes:
 
 #### Interactive API (browser clients)
 

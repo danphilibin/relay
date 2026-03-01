@@ -1,8 +1,17 @@
 {
   "references": [
-    { "path": "packages/sdk" },
-    { "path": "packages/web" },
-    { "path": "apps/examples" }
+    {
+      "path": "packages/sdk"
+    },
+    {
+      "path": "packages/web"
+    },
+    {
+      "path": "apps/examples"
+    }
   ],
-  "files": []
+  "files": [],
+  "exclude": [
+    "opensrc"
+  ]
 }

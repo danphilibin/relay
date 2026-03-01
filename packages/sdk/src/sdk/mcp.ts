@@ -78,7 +78,7 @@ function createApiClient(apiUrl: string) {
 
 // ── InputSchema → Zod schema conversion ──────────────────────────
 
-function inputSchemaToZod(
+export function inputSchemaToZod(
   input: WorkflowInfo["input"],
 ): Record<string, z.ZodType> {
   if (!input) return {};

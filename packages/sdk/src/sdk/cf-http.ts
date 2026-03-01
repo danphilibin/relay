@@ -1,74 +1,19 @@
-import { getWorkflowList, getWorkflow, slugify } from "./registry";
+import { getWorkflowList } from "./registry";
 import {
   WorkflowParamsSchema,
   type StartWorkflowParams,
 } from "../isomorphic/registry-types";
 import {
-  type StreamMessage,
-  type CallResponseResult,
-  type InteractionPoint,
-  interactionStatus,
-} from "../isomorphic/messages";
+  startWorkflowRun,
+  respondToWorkflowRun,
+  WorkflowNotFoundError,
+} from "./workflow-api";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
-
-/**
- * Consume an NDJSON stream from the DO, collecting messages until we hit
- * an unanswered interaction point (input_request, confirm_request, or workflow_complete).
- * Optionally skips past messages until `afterId` is found.
- */
-async function consumeUntilInteraction(
-  streamResponse: Response,
-  afterId?: string,
-): Promise<{ messages: StreamMessage[]; interaction: InteractionPoint }> {
-  const reader = streamResponse.body!.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  const messages: StreamMessage[] = [];
-  let pastAfter = !afterId; // if no afterId, start collecting immediately
-
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop()!; // keep incomplete line in buffer
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        const msg = JSON.parse(line) as StreamMessage;
-        messages.push(msg);
-
-        // Skip past already-seen messages
-        if (!pastAfter) {
-          if (msg.id === afterId) pastAfter = true;
-          continue;
-        }
-
-        if (msg.type === "input_request" || msg.type === "confirm_request") {
-          reader.cancel();
-          return { messages, interaction: msg };
-        }
-        if (msg.type === "workflow_complete") {
-          reader.cancel();
-          return { messages, interaction: null };
-        }
-      }
-    }
-  } catch (e) {
-    reader.cancel();
-    throw e;
-  }
-
-  // Stream ended without an interaction point (shouldn't happen in normal flow)
-  return { messages, interaction: null };
-}
 
 /**
  * HTTP handler for the Relay workflow engine.
@@ -115,32 +60,16 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       workflow: string;
       data?: Record<string, unknown>;
     }>();
-    const slug = slugify(body.workflow);
-    const definition = getWorkflow(slug);
 
-    if (!definition) {
-      return Response.json(
-        { error: `Unknown workflow: ${body.workflow}` },
-        { status: 404 },
-      );
+    try {
+      const result = await startWorkflowRun(env, body.workflow, body.data);
+      return Response.json(result);
+    } catch (e) {
+      if (e instanceof WorkflowNotFoundError) {
+        return Response.json({ error: e.message }, { status: 404 });
+      }
+      throw e;
     }
-
-    // Create workflow instance — pass slug as name (used by getWorkflow lookup)
-    const params = { name: slug, data: body.data };
-    const instance = await env.RELAY_WORKFLOW.create({ params });
-
-    // Open stream and consume until first interaction point
-    const stub = env.RELAY_DURABLE_OBJECT.getByName(instance.id);
-    const streamResponse = await stub.fetch("http://internal/stream");
-    const { messages, interaction } =
-      await consumeUntilInteraction(streamResponse);
-
-    return Response.json({
-      run_id: instance.id,
-      status: interactionStatus(interaction),
-      messages,
-      interaction,
-    } satisfies CallResponseResult);
   }
 
   // POST /api/run/:id/respond - submit a response and block until next interaction
@@ -152,47 +81,13 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       data: Record<string, unknown>;
     }>();
 
-    const stub = env.RELAY_DURABLE_OBJECT.getByName(instanceId);
-
-    // Open stream BEFORE submitting the event so we don't miss messages
-    const streamResponse = await stub.fetch("http://internal/stream");
-
-    // Determine message type based on payload shape
-    const isConfirm = typeof body.data.approved === "boolean";
-    const streamMessage = isConfirm
-      ? {
-          type: "confirm_received",
-          id: body.event,
-          approved: body.data.approved,
-        }
-      : { type: "input_received", id: body.event, value: body.data };
-
-    // Record the response in the stream
-    await stub.fetch("http://internal/stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: streamMessage }),
-    });
-
-    // Resume the workflow
-    const instance = await env.RELAY_WORKFLOW.get(instanceId);
-    await instance.sendEvent({
-      type: body.event,
-      payload: isConfirm ? { approved: body.data.approved } : body.data,
-    });
-
-    // Consume stream until next interaction point, skipping past the event we just submitted
-    const { messages, interaction } = await consumeUntilInteraction(
-      streamResponse,
+    const result = await respondToWorkflowRun(
+      env,
+      instanceId,
       body.event,
+      body.data,
     );
-
-    return Response.json({
-      run_id: instanceId,
-      status: interactionStatus(interaction),
-      messages,
-      interaction,
-    } satisfies CallResponseResult);
+    return Response.json(result);
   }
 
   // ── Interactive API (browser clients) ──────────────────────────

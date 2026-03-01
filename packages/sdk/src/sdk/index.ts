@@ -1,6 +1,7 @@
 export { createWorkflow, RelayWorkflow } from "./cf-workflow";
 export { RelayDurableObject } from "./cf-durable-object";
 export { httpHandler } from "./cf-http";
+export { RelayMcpAgent } from "./cf-mcp-agent";
 
 export {
   type StreamMessage,
