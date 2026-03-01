@@ -11,9 +11,6 @@
   "observability": {
     "enabled": true,
   },
-  "vars": {
-    "RELAY_APP_URL": "",
-  },
   "workflows": [
     {
       "name": "relay-workflow-prototype",
