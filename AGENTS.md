@@ -8,10 +8,6 @@ Read `docs/current-state.md` when you need to understand how the codebase fits t
 
 If your work changes the architecture, adds/removes modules, or updates the SDK interface, update `docs/current-state.md` to reflect the new state before finishing.
 
-## Progress log
-
-After completing any piece of work (feature, refactor, bug fix), update `progress.md` with a new entry summarizing what was done. Use the commit range as the heading (e.g. `## Feature name (abc1234 - def5678)`). This is an append-only log — never edit existing entries.
-
 ## Browser automation
 
 Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
