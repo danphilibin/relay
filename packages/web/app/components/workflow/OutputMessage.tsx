@@ -124,6 +124,27 @@ export function OutputMessage({ block }: OutputMessageProps) {
           )}
         </div>
       );
+
+    case "output.metadata":
+      return (
+        <div className="space-y-3">
+          {block.title && (
+            <div className="text-base font-medium text-[#ddd]">
+              {block.title}
+            </div>
+          )}
+          <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+            {Object.entries(block.data).map(([key, value]) => (
+              <div key={key} className="contents">
+                <dt className="text-[#888]">{key}</dt>
+                <dd className="text-[#ddd]">
+                  {value == null ? "–" : String(value)}
+                </dd>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
   }
 }
 

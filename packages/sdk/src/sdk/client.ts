@@ -40,4 +40,8 @@ export type {
   NormalizedButton,
 } from "../isomorphic/input";
 
-export type { OutputBlock, OutputButtonDef } from "../isomorphic/output";
+export type {
+  OutputBlock,
+  OutputButtonDef,
+  OutputMetadataBlock,
+} from "../isomorphic/output";

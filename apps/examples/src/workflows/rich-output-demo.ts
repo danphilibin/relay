@@ -19,6 +19,17 @@ export const richOutputDemo = createWorkflow({
       ],
     });
 
+    await output.metadata({
+      title: "Project Info",
+      data: {
+        Name: "Relay Workflows",
+        Version: "1.0.0",
+        Status: "active",
+        "Open Issues": 3,
+        Deprecated: false,
+      },
+    });
+
     await output.code({
       language: "bash",
       code: "pnpm dev\npnpm build",

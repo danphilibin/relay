@@ -8,7 +8,7 @@ export const refund = createWorkflow({
     const { orderId } = await input("Enter order information", {
       orderId: { type: "text", label: "Order ID" },
     });
-    
+
     // Simulated order lookup
     const order = {
       id: orderId,
@@ -94,11 +94,13 @@ export const refund = createWorkflow({
     // Step 5: Process refund
     const refundId = `REF-${Date.now()}`;
 
-    await output.markdown(
-      `## ✅ Refund Processed Successfully!\n\n` +
-        `**Refund ID:** \`${refundId}\`  \n` +
-        `**Amount:** $${refundTotal.toFixed(2)}  \n` +
-        `**Confirmation email** sent to ${order.email}`,
-    );
+    await output.metadata({
+      title: "Refund Processed",
+      data: {
+        "Refund ID": refundId,
+        Amount: `$${refundTotal.toFixed(2)}`,
+        Email: order.email,
+      },
+    });
   },
 });

@@ -43,6 +43,15 @@ export const OutputButtonsBlockSchema = z.object({
   buttons: z.array(OutputButtonDefSchema),
 });
 
+export const OutputMetadataBlockSchema = z.object({
+  type: z.literal("output.metadata"),
+  title: z.string().optional(),
+  data: z.record(
+    z.string(),
+    z.union([z.string(), z.number(), z.boolean(), z.null()]),
+  ),
+});
+
 export const OutputBlockSchema = z.discriminatedUnion("type", [
   OutputMarkdownBlockSchema,
   OutputTableBlockSchema,
@@ -50,6 +59,7 @@ export const OutputBlockSchema = z.discriminatedUnion("type", [
   OutputImageBlockSchema,
   OutputLinkBlockSchema,
   OutputButtonsBlockSchema,
+  OutputMetadataBlockSchema,
 ]);
 
 export type OutputIntent = z.infer<typeof OutputIntentSchema>;
@@ -60,4 +70,5 @@ export type OutputCodeBlock = z.infer<typeof OutputCodeBlockSchema>;
 export type OutputImageBlock = z.infer<typeof OutputImageBlockSchema>;
 export type OutputLinkBlock = z.infer<typeof OutputLinkBlockSchema>;
 export type OutputButtonsBlock = z.infer<typeof OutputButtonsBlockSchema>;
+export type OutputMetadataBlock = z.infer<typeof OutputMetadataBlockSchema>;
 export type OutputBlock = z.infer<typeof OutputBlockSchema>;

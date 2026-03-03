@@ -56,6 +56,10 @@ export type RelayOutput = {
     description?: string;
   }) => Promise<void>;
   buttons: (buttons: OutputButtonDef[]) => Promise<void>;
+  metadata: (opts: {
+    title?: string;
+    data: Record<string, string | number | boolean | null>;
+  }) => Promise<void>;
 };
 
 /**
@@ -233,6 +237,9 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     },
     buttons: async (buttons) => {
       await this.sendOutput({ type: "output.buttons", buttons });
+    },
+    metadata: async ({ title, data }) => {
+      await this.sendOutput({ type: "output.metadata", title, data });
     },
   };
 
