@@ -1,6 +1,6 @@
 # Current state of the prototype
 
-Last updated: 2026-02-28
+Last updated: 2026-03-02
 
 ---
 
@@ -40,7 +40,8 @@ workflows-starter/
 │       │   └── workflows/    # Example workflow definitions
 │       └── wrangler.jsonc
 ├── mcp/                  # MCP server entrypoint (thin wrapper over relay-sdk/mcp)
-├── tests/                # End-to-end tests (Playwright)
+├── tests/
+│   └── e2e/              # End-to-end tests (Playwright)
 ├── pnpm-workspace.yaml
 ├── conductor.json
 └── package.json          # Workspace scripts only — no deployable code
@@ -116,7 +117,7 @@ Dependencies: `relay-sdk`.
 
 ### Root
 
-Workspace config and scripts only. No deployable code. Contains a thin MCP server entrypoint (`mcp/`) that delegates to `relay-sdk/mcp`, e2e tests (`tests/`), and shared dev tooling config.
+Workspace config and scripts only. No deployable code. Contains a thin MCP server entrypoint (`mcp/`) that delegates to `relay-sdk/mcp`, e2e tests (`tests/e2e/`), and shared dev tooling config.
 
 ---
 
