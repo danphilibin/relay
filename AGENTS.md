@@ -8,6 +8,17 @@ Read `docs/current-state.md` when you need to understand how the codebase fits t
 
 If your work changes the architecture, adds/removes modules, or updates the SDK interface, update `docs/current-state.md` to reflect the new state before finishing.
 
+## Common commands
+
+Generally you should only need to run these commands to verify your work.
+Too much friction is signal that something is likely misconfigured.
+
+- `pnpm format` - Format code using oxfmt
+- `pnpm lint` - Lint code using oxlint
+- `pnpm typecheck` - Typecheck code using tsc
+- `pnpm test` - Run unit tests
+- `pnpm test:e2e` - Run end-to-end tests
+
 ## Browser automation
 
 Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
