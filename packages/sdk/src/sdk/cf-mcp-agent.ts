@@ -24,9 +24,7 @@ export class RelayMcpAgent extends McpAgent<Env> {
           .describe("The run_id from the previous workflow response"),
         event: z
           .string()
-          .describe(
-            "The event name from the interaction (e.g. relay-input-1)",
-          ),
+          .describe("The event name from the interaction (e.g. relay-input-1)"),
         data: z
           .record(z.string(), z.unknown())
           .describe(
@@ -60,15 +58,9 @@ export class RelayMcpAgent extends McpAgent<Env> {
         zodSchema,
         async (params: Record<string, unknown>) => {
           const data = Object.keys(zodSchema).length > 0 ? params : undefined;
-          const result = await startWorkflowRun(
-            this.env,
-            workflow.slug,
-            data,
-          );
+          const result = await startWorkflowRun(this.env, workflow.slug, data);
           return {
-            content: [
-              { type: "text", text: formatCallResponseForMcp(result) },
-            ],
+            content: [{ type: "text", text: formatCallResponseForMcp(result) }],
           };
         },
       );

@@ -11,7 +11,5 @@
     }
   ],
   "files": [],
-  "exclude": [
-    "opensrc"
-  ]
+  "exclude": ["opensrc"]
 }

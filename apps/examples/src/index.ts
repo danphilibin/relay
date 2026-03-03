@@ -12,7 +12,11 @@ export default {
   fetch: (req: Request, env: Env, ctx: ExecutionContext) => {
     const url = new URL(req.url);
     if (url.pathname.startsWith("/mcp")) {
-      return RelayMcpAgent.serve("/mcp", { binding: "RELAY_MCP_AGENT" }).fetch(req, env, ctx);
+      return RelayMcpAgent.serve("/mcp", { binding: "RELAY_MCP_AGENT" }).fetch(
+        req,
+        env,
+        ctx,
+      );
     }
     return httpHandler(req, env);
   },

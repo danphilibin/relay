@@ -5,8 +5,12 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  
-  if (command === "build" && mode === "production" && !env.VITE_RELAY_WORKER_URL) {
+
+  if (
+    command === "build" &&
+    mode === "production" &&
+    !env.VITE_RELAY_WORKER_URL
+  ) {
     throw new Error(
       "VITE_RELAY_WORKER_URL is required for production builds.\n" +
         "Set it in packages/web/.env or pass it inline:\n" +
@@ -15,23 +19,23 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-  plugins: [
-    tailwindcss(),
-    reactRouter(),
-    tsconfigPaths({
-      skip: (dir) => dir.includes("opensrc"),
-    }),
-  ],
-  server: {
-    proxy: {
-      "/api": "http://localhost:8787",
-      "/stream": "http://localhost:8787",
-      "/workflows": "http://localhost:8787",
+    plugins: [
+      tailwindcss(),
+      reactRouter(),
+      tsconfigPaths({
+        skip: (dir) => dir.includes("opensrc"),
+      }),
+    ],
+    server: {
+      proxy: {
+        "/api": "http://localhost:8787",
+        "/stream": "http://localhost:8787",
+        "/workflows": "http://localhost:8787",
+      },
     },
-  },
-  build: {
-    reportCompressedSize: false,
-  },
-  logLevel: command === "build" ? "warn" : "info",
-};
+    build: {
+      reportCompressedSize: false,
+    },
+    logLevel: command === "build" ? "warn" : "info",
+  };
 });

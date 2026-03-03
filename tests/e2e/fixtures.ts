@@ -11,7 +11,9 @@ async function openWorkflow(
   await page.goto(`/${workflowSlug}`);
 }
 
-export const test = base.extend<{ openWorkflow: (slug: string) => Promise<void> }>({
+export const test = base.extend<{
+  openWorkflow: (slug: string) => Promise<void>;
+}>({
   openWorkflow: async ({ page }, use) => {
     await use((slug: string) => openWorkflow(page, slug));
   },

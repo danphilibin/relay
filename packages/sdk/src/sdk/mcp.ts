@@ -12,10 +12,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import type {
-  InputFieldDefinition,
-  InputSchema,
-} from "../isomorphic/input";
+import type { InputFieldDefinition, InputSchema } from "../isomorphic/input";
 import type { CallResponseResult } from "../isomorphic/messages";
 import { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
 
@@ -119,11 +116,7 @@ export function inputSchemaToZod(
 // ── MCP server factory ───────────────────────────────────────────
 
 export function createRelayMcpServer(options: CreateRelayMcpServerOptions) {
-  const {
-    apiUrl,
-    name = "relay",
-    version = "0.1.0",
-  } = options;
+  const { apiUrl, name = "relay", version = "0.1.0" } = options;
 
   const api = createApiClient(apiUrl);
 
@@ -173,9 +166,7 @@ export function createRelayMcpServer(options: CreateRelayMcpServerOptions) {
           const data = Object.keys(zodSchema).length > 0 ? params : undefined;
           const result = await api.startWorkflow(workflow.slug, data);
           return {
-            content: [
-              { type: "text", text: formatCallResponseForMcp(result) },
-            ],
+            content: [{ type: "text", text: formatCallResponseForMcp(result) }],
           };
         },
       );
