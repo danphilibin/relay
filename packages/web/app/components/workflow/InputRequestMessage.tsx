@@ -106,7 +106,7 @@ export function InputRequestMessage({
 
   return (
     <form
-      className="my-4 p-5 rounded-xl border bg-[#111] border-[#222]"
+      className="p-5 rounded-xl border bg-[#111] border-[#222]"
       onSubmit={handleSubmit}
     >
       <div className="flex flex-col gap-4">

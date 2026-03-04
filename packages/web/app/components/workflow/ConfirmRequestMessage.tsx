@@ -35,7 +35,7 @@ export function ConfirmRequestMessage({
     const approved = submittedValue ?? false;
     return (
       <div
-        className={`my-4 p-5 rounded-xl border ${
+        className={`p-5 rounded-xl border ${
           approved
             ? "bg-emerald-950/30 border-emerald-800/50"
             : "bg-red-950/30 border-red-800/50"
@@ -68,7 +68,7 @@ export function ConfirmRequestMessage({
 
   // Active confirmation state
   return (
-    <div className="my-4 p-5 rounded-xl border bg-amber-950/20 border-amber-700/40">
+    <div className="p-5 rounded-xl border bg-amber-950/20 border-amber-700/40">
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3">
           <div className="shrink-0 w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center">
