@@ -6,4 +6,5 @@ interface Env {
   RELAY_WORKFLOW: Workflow;
   RELAY_DURABLE_OBJECT: DurableObjectNamespace;
   RELAY_APP_URL: string;
+  RELAY_MCP_AGENT?: DurableObjectNamespace;
 }

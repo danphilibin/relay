@@ -8,6 +8,7 @@ import {
   respondToWorkflowRun,
   WorkflowNotFoundError,
 } from "./workflow-api";
+import { RelayMcpAgent } from "./cf-mcp-agent";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,7 +41,23 @@ function withCors(response: Response): Response {
   });
 }
 
-export const httpHandler = async (req: Request, env: Env) => {
+export const httpHandler = async (
+  req: Request,
+  env: Env,
+  ctx: ExecutionContext,
+) => {
+  // Auto-route /mcp when RELAY_MCP_AGENT binding is present
+  if (env.RELAY_MCP_AGENT) {
+    const url = new URL(req.url);
+    if (url.pathname.startsWith("/mcp")) {
+      return RelayMcpAgent.serve("/mcp", { binding: "RELAY_MCP_AGENT" }).fetch(
+        req,
+        env,
+        ctx,
+      );
+    }
+  }
+
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
