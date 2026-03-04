@@ -15,6 +15,7 @@ export function TextField({
       type="text"
       name={fieldName}
       label={fieldDef.label}
+      description={fieldDef.description}
       data-1p-ignore
       disabled={disabled}
       defaultValue={defaultValue as string | undefined}

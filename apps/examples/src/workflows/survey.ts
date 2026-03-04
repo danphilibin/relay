@@ -19,10 +19,15 @@ export const survey = createWorkflow({
 
     // Schema → typed object
     const profile = await input("Tell us about yourself", {
-      role: { type: "text", label: "What's your role?" },
+      role: {
+        type: "text",
+        label: "What's your role?",
+        description: "e.g. Engineer, Designer, Product Manager",
+      },
       experience: {
         type: "select",
         label: "Years of experience",
+        description: "In your current role",
         options: [
           { value: "0-2", label: "0-2 years" },
           { value: "3-5", label: "3-5 years" },

@@ -14,6 +14,7 @@ export function NumberField({
       type="number"
       name={fieldName}
       label={fieldDef.label}
+      description={fieldDef.description}
       data-1p-ignore
       disabled={disabled}
       defaultValue={defaultValue as number | undefined}

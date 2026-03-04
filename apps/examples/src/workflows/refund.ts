@@ -6,7 +6,11 @@ export const refund = createWorkflow({
     "Look up an order, select items, and process a refund with policy validation and approval gates.",
   handler: async ({ input, output, confirm }) => {
     const { orderId } = await input("Enter order information", {
-      orderId: { type: "text", label: "Order ID" },
+      orderId: {
+        type: "text",
+        label: "Order ID",
+        description: "Found in the confirmation email, e.g. ORD-12345",
+      },
     });
 
     // Simulated order lookup

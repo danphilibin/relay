@@ -15,6 +15,7 @@ export function SelectField({
   return (
     <Select
       label={def.label}
+      description={def.description}
       hideLabel={false}
       disabled={disabled}
       defaultValue={defaultVal ?? def.options?.[0]?.value}
