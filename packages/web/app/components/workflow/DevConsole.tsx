@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CaretDown, CaretRight, Terminal } from "@phosphor-icons/react";
-import type { StreamMessage, WorkflowStatus } from "relay-sdk/client";
+import type {
+  StreamMessage,
+  WorkflowStatus,
+  CallResponseResult,
+  InteractionPoint,
+} from "relay-sdk/client";
+import { formatCallResponseForMcp } from "relay-sdk/client";
+
+type ConsoleMode = "web" | "mcp";
 
 interface DevConsoleProps {
   status: WorkflowStatus;
@@ -8,11 +16,51 @@ interface DevConsoleProps {
   messages: StreamMessage[];
 }
 
+function deriveInteraction(messages: StreamMessage[]): InteractionPoint {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.type === "input_request" || msg.type === "confirm_request") {
+      // Check if there's a matching response after it
+      const hasResponse = messages
+        .slice(i + 1)
+        .some(
+          (m) =>
+            (m.type === "input_received" || m.type === "confirm_received") &&
+            m.id === msg.id,
+        );
+      if (!hasResponse) return msg;
+    }
+  }
+  return null;
+}
+
 export function DevConsole({ status, runId, messages }: DevConsoleProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [mode, setMode] = useState<ConsoleMode>("web");
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(
     new Set(),
   );
+
+  const mcpResult = useMemo(() => {
+    const interaction = deriveInteraction(messages);
+    const callStatus = interaction
+      ? interaction.type === "input_request"
+        ? "awaiting_input"
+        : "awaiting_confirm"
+      : "complete";
+
+    const result: CallResponseResult = {
+      run_id: runId ?? "",
+      workflow_slug: "",
+      run_url: null,
+      status: callStatus,
+      messages,
+      interaction,
+    };
+
+    const text = formatCallResponseForMcp(result);
+    return { text, chars: text.length, tokens: Math.ceil(text.length / 4) };
+  }, [messages, runId]);
 
   const toggleMessage = (index: number) => {
     setExpandedMessages((prev) => {
@@ -57,6 +105,30 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
             <span className="text-xs font-medium text-[#888]">Dev Console</span>
           </div>
 
+          {/* Mode toggle */}
+          <div className="px-3 py-1.5 border-b border-[#222] flex items-center gap-1">
+            <button
+              onClick={() => setMode("web")}
+              className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                mode === "web"
+                  ? "bg-[#333] text-[#ccc]"
+                  : "text-[#555] hover:text-[#888]"
+              }`}
+            >
+              Web
+            </button>
+            <button
+              onClick={() => setMode("mcp")}
+              className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                mode === "mcp"
+                  ? "bg-[#333] text-[#ccc]"
+                  : "text-[#555] hover:text-[#888]"
+              }`}
+            >
+              MCP
+            </button>
+          </div>
+
           {/* Metadata */}
           <div className="px-3 py-2 border-b border-[#222] space-y-1">
             <div className="flex items-center justify-between">
@@ -73,48 +145,84 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
               </span>
               <StatusBadge status={status} />
             </div>
-          </div>
-
-          {/* Controls */}
-          <div className="px-3 py-1.5 border-b border-[#222] flex items-center justify-between">
-            <span className="text-[10px] text-[#555]">
-              {messages.length} message{messages.length !== 1 ? "s" : ""}
-            </span>
-            <button
-              onClick={
-                expandedMessages.size === messages.length
-                  ? collapseAll
-                  : expandAll
-              }
-              className="text-[10px] text-[#666] hover:text-[#888] transition-colors"
-            >
-              {expandedMessages.size === messages.length
-                ? "Collapse"
-                : "Expand"}{" "}
-              all
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto">
-            {messages.length === 0 ? (
-              <div className="p-3 text-xs text-[#555] text-center">
-                No messages yet
-              </div>
-            ) : (
-              <div>
-                {messages.map((message, index) => (
-                  <MessageRow
-                    key={`${message.id}-${index}`}
-                    message={message}
-                    index={index}
-                    isExpanded={expandedMessages.has(index)}
-                    onToggle={() => toggleMessage(index)}
-                  />
-                ))}
+            {mode === "mcp" && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-wider text-[#555]">
+                  ~Tokens
+                </span>
+                <span className="text-xs font-mono text-cyan-400">
+                  {mcpResult.tokens.toLocaleString()}
+                </span>
               </div>
             )}
           </div>
+
+          {mode === "web" ? (
+            <>
+              {/* Controls */}
+              <div className="px-3 py-1.5 border-b border-[#222] flex items-center justify-between">
+                <span className="text-[10px] text-[#555]">
+                  {messages.length} message{messages.length !== 1 ? "s" : ""}
+                </span>
+                <button
+                  onClick={
+                    expandedMessages.size === messages.length
+                      ? collapseAll
+                      : expandAll
+                  }
+                  className="text-[10px] text-[#666] hover:text-[#888] transition-colors"
+                >
+                  {expandedMessages.size === messages.length
+                    ? "Collapse"
+                    : "Expand"}{" "}
+                  all
+                </button>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto">
+                {messages.length === 0 ? (
+                  <div className="p-3 text-xs text-[#555] text-center">
+                    No messages yet
+                  </div>
+                ) : (
+                  <div>
+                    {messages.map((message, index) => (
+                      <MessageRow
+                        key={`${message.id}-${index}`}
+                        message={message}
+                        index={index}
+                        isExpanded={expandedMessages.has(index)}
+                        onToggle={() => toggleMessage(index)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* MCP stats */}
+              <div className="px-3 py-1.5 border-b border-[#222] flex items-center justify-between">
+                <span className="text-[10px] text-[#555]">
+                  {mcpResult.chars.toLocaleString()} chars
+                </span>
+              </div>
+
+              {/* MCP formatted output */}
+              <div className="flex-1 overflow-y-auto p-3">
+                {mcpResult.text ? (
+                  <pre className="text-[11px] font-mono text-[#999] whitespace-pre-wrap break-words leading-relaxed">
+                    {mcpResult.text}
+                  </pre>
+                ) : (
+                  <div className="text-xs text-[#555] text-center">
+                    No MCP output yet
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </>
