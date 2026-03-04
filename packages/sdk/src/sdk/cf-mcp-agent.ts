@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getWorkflowList } from "./registry";
 import { startWorkflowRun, respondToWorkflowRun } from "./workflow-api";
-import { inputSchemaToZod } from "./mcp";
+import { inputSchemaToZod } from "../isomorphic/input-zod";
 import { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
 
 export class RelayMcpAgent extends McpAgent<Env> {

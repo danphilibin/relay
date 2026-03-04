@@ -12,8 +12,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import type { InputFieldDefinition, InputSchema } from "../isomorphic/input";
+import type { InputSchema } from "../isomorphic/input";
 import type { CallResponseResult } from "../isomorphic/messages";
+import { inputSchemaToZod } from "../isomorphic/input-zod";
 import { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
 
 type WorkflowInfo = {
@@ -31,10 +32,6 @@ export type CreateRelayMcpServerOptions = {
   /** MCP server version (default: "0.1.0") */
   version?: string;
 };
-
-function assertNever(value: never): never {
-  throw new Error(`Unhandled input field type: ${JSON.stringify(value)}`);
-}
 
 // ── Relay API client ─────────────────────────────────────────────
 
@@ -71,46 +68,6 @@ function createApiClient(apiUrl: string) {
   }
 
   return { fetchWorkflows, startWorkflow, respondToWorkflow };
-}
-
-// ── InputSchema → Zod schema conversion ──────────────────────────
-
-export function inputSchemaToZod(
-  input: WorkflowInfo["input"],
-): Record<string, z.ZodType> {
-  if (!input) return {};
-
-  const shape: Record<string, z.ZodType> = {};
-  for (const [key, field] of Object.entries(input) as [
-    string,
-    InputFieldDefinition,
-  ][]) {
-    const desc = field.description || field.label;
-    switch (field.type) {
-      case "text":
-        shape[key] = z.string().describe(desc);
-        break;
-      case "number":
-        shape[key] = z.number().describe(desc);
-        break;
-      case "checkbox":
-        shape[key] = z.boolean().describe(desc);
-        break;
-      case "select":
-        shape[key] = z
-          .enum(
-            field.options.map((option) => option.value) as [
-              string,
-              ...string[],
-            ],
-          )
-          .describe(desc);
-        break;
-      default:
-        assertNever(field);
-    }
-  }
-  return shape;
 }
 
 // ── MCP server factory ───────────────────────────────────────────
