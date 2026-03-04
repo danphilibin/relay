@@ -9,9 +9,9 @@ export function CheckboxField({
   onChange,
 }: FieldProps) {
   return (
-    <div>
+    <div className="flex items-start">
       <Checkbox
-        label={fieldDef.label}
+        label={<span className="text-base">{fieldDef.label}</span>}
         name={fieldName}
         disabled={disabled}
         checked={defaultValue === true ? true : undefined}

@@ -111,7 +111,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
     <main className="flex-1 flex items-center justify-center text-[#666]">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-2">{message}</h1>
+        <h1 className="text-lg font-semibold mb-2">{message}</h1>
         <p>{details}</p>
         {stack && (
           <pre className="mt-4 p-4 bg-[#111] rounded-lg text-left text-sm overflow-x-auto max-w-xl">

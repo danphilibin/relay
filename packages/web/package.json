@@ -10,7 +10,7 @@
     "deploy": "wrangler pages deploy"
   },
   "dependencies": {
-    "@cloudflare/kumo": "1.5.1",
+    "@cloudflare/kumo": "1.9.0",
     "@phosphor-icons/react": "^2.1.10",
     "isbot": "^5.1.31",
     "react": "^19.2.3",

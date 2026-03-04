@@ -30,10 +30,12 @@ export function OutputMessage({ block }: OutputMessageProps) {
       return (
         <div className="space-y-2">
           {block.title && (
-            <div className="text-sm font-medium text-[#ddd]">{block.title}</div>
+            <div className="text-base font-medium text-[#ddd]">
+              {block.title}
+            </div>
           )}
           {rows.length === 0 ? (
-            <div className="text-base leading-relaxed text-[#888]">
+            <div className="text-sm leading-relaxed text-kumo-subtle">
               (no rows)
             </div>
           ) : (
@@ -80,10 +82,12 @@ export function OutputMessage({ block }: OutputMessageProps) {
       return (
         <div className="space-y-1">
           {block.title && (
-            <div className="text-sm font-medium text-[#ddd]">{block.title}</div>
+            <div className="text-base font-medium text-[#ddd]">
+              {block.title}
+            </div>
           )}
           {block.description && (
-            <div className="text-base leading-relaxed text-[#888]">
+            <div className="text-sm leading-relaxed text-kumo-subtle">
               {block.description}
             </div>
           )}
@@ -136,7 +140,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
           <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
             {Object.entries(block.data).map(([key, value]) => (
               <div key={key} className="contents">
-                <dt className="text-[#888]">{key}</dt>
+                <dt className="text-kumo-subtle">{key}</dt>
                 <dd className="text-[#ddd]">
                   {value == null ? "–" : String(value)}
                 </dd>

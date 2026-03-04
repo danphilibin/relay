@@ -54,7 +54,7 @@ export function ConfirmRequestMessage({
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-base text-[#999]">{message}</span>
+            <span className="text-base text-kumo-subtle">{message}</span>
             <span
               className={`text-sm font-medium ${approved ? "text-emerald-400" : "text-red-400"}`}
             >

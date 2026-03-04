@@ -8,7 +8,7 @@ interface LoadingMessageProps {
 
 export function LoadingMessage({ text, complete }: LoadingMessageProps) {
   return (
-    <div className="text-base leading-relaxed text-[#888] flex items-center gap-2">
+    <div className="text-sm leading-relaxed text-kumo-subtle flex items-center gap-2">
       {complete ? (
         <Check size={16} weight="bold" className="text-green-500" />
       ) : (

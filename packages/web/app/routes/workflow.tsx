@@ -77,7 +77,9 @@ export default function Workflow() {
             />
 
             {status === "complete" && messages.length === 0 && (
-              <div className="text-base text-[#666]">No messages received.</div>
+              <div className="text-sm text-kumo-subtle">
+                No messages received.
+              </div>
             )}
           </div>
         </div>
@@ -89,7 +91,7 @@ export default function Workflow() {
 
 export function ConnectionState({ message }: { message: string }) {
   return (
-    <div className="text-base text-[#666] flex items-center gap-2">
+    <div className="text-sm text-kumo-subtle flex items-center gap-2">
       <span className="w-1.5 h-1.5 rounded-full bg-[#666] animate-pulse-dot" />
       {message}
     </div>
