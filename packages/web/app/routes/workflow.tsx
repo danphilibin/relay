@@ -47,7 +47,7 @@ export default function Workflow() {
           </h1>
           <div className="flex items-center gap-2">
             <LinkButton
-              href={`https://github.com/danphilibin/streaming-workflows/tree/main/src/workflows/${workflowName}.ts`}
+              href={`https://github.com/danphilibin/relay/tree/main/apps/examples/src/workflows/${workflowName}.ts`}
               variant="secondary"
               icon={GithubLogo}
               external
