@@ -4,9 +4,9 @@ Instructions for AI coding agents working with this codebase.
 
 ## Codebase overview
 
-Read `docs/current-state.md` when you need to understand how the codebase fits together — for example, when a task touches multiple layers, when you're unsure where something lives, or when starting a new feature. It describes the architecture, module layout, SDK primitives, and HTTP API — enough to orient without exploring from scratch.
+Read `ARCHITECTURE.md` when you need to understand how the codebase fits together — for example, when a task touches multiple layers, when you're unsure where something lives, or when starting a new feature. It describes the architecture, module layout, SDK primitives, and HTTP API — enough to orient without exploring from scratch.
 
-If your work changes the architecture, adds/removes modules, or updates the SDK interface, update `docs/current-state.md` to reflect the new state before finishing.
+If your work changes the architecture, adds/removes modules, or updates the SDK interface, update `ARCHITECTURE.md` to reflect the new state before finishing.
 
 ## Common commands
 
