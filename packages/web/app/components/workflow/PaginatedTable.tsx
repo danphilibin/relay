@@ -11,6 +11,7 @@ import { apiPath } from "../../lib/api";
 
 interface PaginatedTableProps {
   block: OutputTableLoaderBlock;
+  stepId: string;
 }
 
 type LoaderResponse = {
@@ -18,7 +19,7 @@ type LoaderResponse = {
   totalCount?: number;
 };
 
-export function PaginatedTable({ block }: PaginatedTableProps) {
+export function PaginatedTable({ block, stepId }: PaginatedTableProps) {
   const { loader } = block;
   const pageSize = loader.pageSize ?? 20;
 
@@ -38,6 +39,7 @@ export function PaginatedTable({ block }: PaginatedTableProps) {
       const params = new URLSearchParams({
         page: String(p),
         pageSize: String(pageSize),
+        stepId,
       });
       if (q) params.set("query", q);
 
@@ -65,7 +67,7 @@ export function PaginatedTable({ block }: PaginatedTableProps) {
         setLoading(false);
       }
     },
-    [loader.workflow, loader.name, loader.params, pageSize],
+    [loader.workflow, loader.name, loader.params, pageSize, stepId],
   );
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { PaginatedTable } from "./PaginatedTable";
 
 interface OutputMessageProps {
   block: OutputBlock;
+  messageId: string;
 }
 
 const intentToVariant: Record<string, "primary" | "secondary" | "destructive"> =
@@ -16,7 +17,7 @@ const intentToVariant: Record<string, "primary" | "secondary" | "destructive"> =
     danger: "destructive",
   };
 
-export function OutputMessage({ block }: OutputMessageProps) {
+export function OutputMessage({ block, messageId }: OutputMessageProps) {
   switch (block.type) {
     case "output.markdown":
       return <Streamdown mode="static">{block.content}</Streamdown>;
@@ -131,7 +132,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
       );
 
     case "output.table_loader":
-      return <PaginatedTable block={block} />;
+      return <PaginatedTable block={block} stepId={messageId} />;
 
     case "output.metadata":
       return (
