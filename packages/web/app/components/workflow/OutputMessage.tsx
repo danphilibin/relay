@@ -3,6 +3,7 @@ import { Button, LinkButton } from "@cloudflare/kumo/components/button";
 import { CodeBlock } from "@cloudflare/kumo/components/code";
 import { Table } from "@cloudflare/kumo/components/table";
 import { Streamdown } from "streamdown";
+import { PaginatedTable } from "./PaginatedTable";
 
 interface OutputMessageProps {
   block: OutputBlock;
@@ -128,6 +129,9 @@ export function OutputMessage({ block }: OutputMessageProps) {
           )}
         </div>
       );
+
+    case "output.table_loader":
+      return <PaginatedTable block={block} />;
 
     case "output.metadata":
       return (

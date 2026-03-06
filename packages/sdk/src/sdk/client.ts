@@ -49,4 +49,6 @@ export type {
   OutputBlock,
   OutputButtonDef,
   OutputMetadataBlock,
+  OutputTableLoaderBlock,
+  SerializedColumnDef,
 } from "../isomorphic/output";

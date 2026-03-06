@@ -1,4 +1,4 @@
-import { getWorkflowList } from "./registry";
+import { getWorkflow, getWorkflowList } from "./registry";
 import {
   WorkflowParamsSchema,
   type StartWorkflowParams,
@@ -195,6 +195,76 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     });
 
     return Response.json({ success: true });
+  }
+
+  // GET /workflows/:slug/loader/:name - fetch paginated data from a loader
+  const loaderMatch = url.pathname.match(
+    /^\/workflows\/([^/]+)\/loader\/([^/]+)$/,
+  );
+  if (req.method === "GET" && loaderMatch) {
+    const [, workflowSlug, loaderName] = loaderMatch;
+    const definition = getWorkflow(workflowSlug);
+
+    if (!definition) {
+      return Response.json(
+        { error: `Unknown workflow: ${workflowSlug}` },
+        { status: 404 },
+      );
+    }
+
+    const loaderDef = definition.loaders?.[loaderName];
+    if (!loaderDef) {
+      return Response.json(
+        { error: `Unknown loader: ${loaderName}` },
+        { status: 404 },
+      );
+    }
+
+    // Parse pagination params from query string
+    const page = parseInt(url.searchParams.get("page") ?? "0", 10);
+    const pageSize = parseInt(url.searchParams.get("pageSize") ?? "20", 10);
+    const query = url.searchParams.get("query") ?? undefined;
+    const stepId = url.searchParams.get("stepId") ?? undefined;
+
+    // Parse custom params from the descriptor
+    const customParams: Record<string, unknown> = {};
+    if (loaderDef.paramDescriptor) {
+      for (const [key, type] of Object.entries(loaderDef.paramDescriptor)) {
+        const raw = url.searchParams.get(key);
+        if (raw !== null) {
+          if (type === "number") {
+            customParams[key] = parseFloat(raw);
+          } else if (type === "boolean") {
+            customParams[key] = raw === "true";
+          } else {
+            customParams[key] = raw;
+          }
+        }
+      }
+    }
+
+    const result = await loaderDef.fn(
+      { ...customParams, query, page, pageSize },
+      env,
+    );
+
+    // Apply renderCell transforms if present
+    if (stepId) {
+      const renderFns = definition.renderCells.get(stepId);
+      if (renderFns && result.data.length > 0) {
+        result.data = result.data.map((row: any) => {
+          const transformed = { ...row };
+          renderFns.forEach((fn, index) => {
+            if (fn) {
+              transformed[`__render_${index}`] = fn(row);
+            }
+          });
+          return transformed;
+        });
+      }
+    }
+
+    return Response.json(result);
   }
 
   return new Response("Not Found", { status: 404 });

@@ -7,6 +7,12 @@ import {
 import type { OutputButtonDef } from "../isomorphic/output";
 import type { ExecutorStep } from "./cf-executor";
 import { registerWorkflow } from "./registry";
+import {
+  type LoaderDef,
+  type LoaderRefs,
+  type TableOutputStatic,
+  type TableOutputLoader,
+} from "./loader";
 
 /**
  * Context passed to the loading callback
@@ -30,10 +36,9 @@ export type RelayConfirmFn = (message: string) => Promise<boolean>;
 
 export type RelayOutput = {
   markdown: (content: string) => Promise<void>;
-  table: (table: {
-    title?: string;
-    data: Array<Record<string, string>>;
-  }) => Promise<void>;
+  table: <TRow>(
+    opts: TableOutputStatic | TableOutputLoader<TRow>,
+  ) => Promise<void>;
   code: (content: { code: string; language?: string }) => Promise<void>;
   image: (opts: { src: string; alt?: string }) => Promise<void>;
   link: (opts: {
@@ -64,31 +69,50 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
 
 /**
  * Factory function for creating and registering workflow handlers.
- * When `input` is provided, the handler receives typed `data` with the collected values.
+ * Supports loaders for server-side data fetching.
  */
-export function createWorkflow<T extends InputFieldBuilders>(config: {
+export function createWorkflow<
+  T extends InputFieldBuilders,
+  L extends Record<string, LoaderDef<any, any>> = Record<string, never>,
+>(config: {
   name: string;
   description?: string;
   input: T;
+  loaders?: L;
   handler: (
-    ctx: RelayContext & { data: InferBuilderGroupResult<T> },
+    ctx: RelayContext & { data: InferBuilderGroupResult<T>; loaders: LoaderRefs<L> },
   ) => Promise<void>;
 }): void;
-export function createWorkflow(config: {
+export function createWorkflow<
+  L extends Record<string, LoaderDef<any, any>> = Record<string, never>,
+>(config: {
   name: string;
   description?: string;
-  handler: RelayHandler;
+  loaders?: L;
+  handler: (ctx: RelayContext & { loaders: LoaderRefs<L> }) => Promise<void>;
 }): void;
 export function createWorkflow(config: {
   name: string;
   description?: string;
   input?: InputFieldBuilders;
+  loaders?: Record<string, LoaderDef>;
   handler: (...args: any[]) => Promise<void>;
 }): void {
+  // Extract loader definitions for the registry
+  const loaders = config.loaders
+    ? Object.fromEntries(
+        Object.entries(config.loaders).map(([name, def]) => [
+          name,
+          { fn: def.fn, paramDescriptor: def.paramDescriptor },
+        ]),
+      )
+    : undefined;
+
   registerWorkflow(
     config.name,
     config.handler as RelayHandler,
     config.input ? compileInputFields(config.input) : undefined,
     config.description,
+    loaders,
   );
 }
