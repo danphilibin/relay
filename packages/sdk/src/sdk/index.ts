@@ -2,6 +2,7 @@ export { createWorkflow, RelayWorkflow } from "./cf-workflow";
 export { RelayDurableObject } from "./cf-durable-object";
 export { httpHandler } from "./cf-http";
 export { RelayMcpAgent } from "./cf-mcp-agent";
+export { loader } from "./loader";
 
 export {
   type StreamMessage,
@@ -21,7 +22,12 @@ export {
 export { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
 
 export type { InputSchema, NormalizedButton } from "../isomorphic/input";
-export type { OutputBlock, OutputButtonDef } from "../isomorphic/output";
+export type {
+  OutputBlock,
+  OutputButtonDef,
+  OutputTableLoaderBlock,
+  SerializedColumnDef,
+} from "../isomorphic/output";
 
 export { getWorkflowList, registerWorkflow } from "./registry";
 
@@ -29,6 +35,15 @@ export {
   type WorkflowParams,
   type StartWorkflowParams,
 } from "../isomorphic/registry-types";
+
+export type {
+  LoaderDef,
+  LoaderRef,
+  LoaderResult,
+  PaginationParams,
+  ColumnDef,
+  CellValue,
+} from "./loader";
 
 export type WorkflowStatus =
   | "idle"
