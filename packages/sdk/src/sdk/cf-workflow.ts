@@ -30,6 +30,15 @@ import {
 import type { OutputBlock, OutputButtonDef } from "../isomorphic/output";
 import { getWorkflow, registerWorkflow } from "./registry";
 import type { WorkflowParams } from "../isomorphic/registry-types";
+import {
+  type LoaderDef,
+  type LoaderRef,
+  type LoaderRefs,
+  type TableOutputStatic,
+  type TableOutputLoader,
+  isLoaderTable,
+  serializeColumns,
+} from "./loader";
 
 /**
  * Context passed to the loading callback
@@ -53,10 +62,9 @@ export type RelayConfirmFn = (message: string) => Promise<boolean>;
 
 export type RelayOutput = {
   markdown: (content: string) => Promise<void>;
-  table: (table: {
-    title?: string;
-    data: Array<Record<string, string>>;
-  }) => Promise<void>;
+  table: <TRow>(
+    opts: TableOutputStatic | TableOutputLoader<TRow>,
+  ) => Promise<void>;
   code: (content: { code: string; language?: string }) => Promise<void>;
   image: (opts: { src: string; alt?: string }) => Promise<void>;
   link: (opts: {
@@ -87,33 +95,89 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
 
 /**
  * Factory function for creating and registering workflow handlers.
- * When `input` is provided, the handler receives typed `data` with the collected values.
+ * Supports loaders for server-side data fetching.
  */
-export function createWorkflow<T extends InputFieldBuilders>(config: {
+export function createWorkflow<
+  T extends InputFieldBuilders,
+  L extends Record<string, LoaderDef<any, any>> = Record<string, never>,
+>(config: {
   name: string;
   description?: string;
   input: T;
+  loaders?: L;
   handler: (
-    ctx: RelayContext & { data: InferBuilderGroupResult<T> },
+    ctx: RelayContext & { data: InferBuilderGroupResult<T>; loaders: LoaderRefs<L> },
   ) => Promise<void>;
 }): void;
-export function createWorkflow(config: {
+export function createWorkflow<
+  L extends Record<string, LoaderDef<any, any>> = Record<string, never>,
+>(config: {
   name: string;
   description?: string;
-  handler: RelayHandler;
+  loaders?: L;
+  handler: (ctx: RelayContext & { loaders: LoaderRefs<L> }) => Promise<void>;
 }): void;
 export function createWorkflow(config: {
   name: string;
   description?: string;
   input?: InputFieldBuilders;
+  loaders?: Record<string, LoaderDef>;
   handler: (...args: any[]) => Promise<void>;
 }): void {
+  // Extract loader definitions for the registry
+  const loaders = config.loaders
+    ? Object.fromEntries(
+        Object.entries(config.loaders).map(([name, def]) => [
+          name,
+          { fn: def.fn, paramDescriptor: def.paramDescriptor },
+        ]),
+      )
+    : undefined;
+
   registerWorkflow(
     config.name,
     config.handler as RelayHandler,
     config.input ? compileInputFields(config.input) : undefined,
     config.description,
+    loaders,
   );
+}
+
+/**
+ * Build loader refs for the handler context.
+ * No-param loaders become bare LoaderRef objects.
+ * Param loaders become functions that return LoaderRef with bound params.
+ */
+function buildLoaderRefs(
+  workflowSlug: string,
+  loaderDefs?: Record<string, LoaderDef>,
+): Record<string, LoaderRef | ((params: any) => LoaderRef)> {
+  if (!loaderDefs) return {};
+
+  const refs: Record<string, LoaderRef | ((params: any) => LoaderRef)> = {};
+
+  for (const [name, def] of Object.entries(loaderDefs)) {
+    if (def.paramDescriptor && Object.keys(def.paramDescriptor).length > 0) {
+      // Has custom params — return a function
+      refs[name] = (params: Record<string, unknown>) =>
+        ({
+          __brand: "loader_ref" as const,
+          __row: undefined as any,
+          name,
+          params,
+        }) as LoaderRef;
+    } else {
+      // No custom params — return a bare ref
+      refs[name] = {
+        __brand: "loader_ref" as const,
+        __row: undefined as any,
+        name,
+        params: {},
+      } as LoaderRef;
+    }
+  }
+
+  return refs;
 }
 
 /**
@@ -129,6 +193,9 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   // Counter for generating unique step names
   private counter = 0;
 
+  // Current workflow slug (set during run)
+  private workflowSlug = "";
+
   async run(event: WorkflowEvent<WorkflowParams>, step: WorkflowStep) {
     this.step = step;
 
@@ -141,6 +208,8 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       await this.output.markdown(`Error: Unknown workflow: ${name}`);
       throw new Error(`Unknown workflow: ${name}`);
     }
+
+    this.workflowSlug = definition.slug;
 
     // Collect upfront input if schema is defined
     let data: Record<string, unknown> | undefined;
@@ -166,12 +235,19 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       }
     }
 
+    // Build loader refs for the handler context
+    const loaderRefs = buildLoaderRefs(
+      definition.slug,
+      definition.loaders as any,
+    );
+
     await definition.handler({
       step,
       input: this.input,
       output: this.output,
       loading: this.loading,
       confirm: this.confirm,
+      loaders: loaderRefs,
       ...(data !== undefined && { data }),
     } as RelayContext);
 
@@ -288,8 +364,53 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     markdown: async (content: string) => {
       await this.sendOutput({ type: "output.markdown", content });
     },
-    table: async ({ title, data }) => {
-      await this.sendOutput({ type: "output.table", title, data });
+    table: async (opts: any) => {
+      if (isLoaderTable(opts)) {
+        const { source, title, pageSize, columns } = opts;
+        const stepId = this.stepName("output");
+
+        // Store renderCell functions in the registry for the HTTP endpoint
+        if (columns) {
+          const definition = getWorkflow(this.workflowSlug);
+          if (definition) {
+            const renderFns = (columns as any[]).map((col: any) => {
+              if (typeof col !== "string" && "renderCell" in col) {
+                return col.renderCell as (row: any) => any;
+              }
+              return null;
+            });
+            if (renderFns.some((fn) => fn !== null)) {
+              definition.renderCells.set(stepId, renderFns);
+            }
+          }
+        }
+
+        const block: OutputBlock = {
+          type: "output.table_loader" as const,
+          title,
+          loader: {
+            name: source.name,
+            workflow: this.workflowSlug,
+            pageSize,
+            params: source.params,
+            columns: serializeColumns(columns),
+          },
+        };
+
+        if (!this.step) {
+          throw new Error("Relay not initialized.");
+        }
+
+        await this.step.do(stepId, async () => {
+          await this.sendMessage(createOutputMessage(stepId, block));
+        });
+      } else {
+        await this.sendOutput({
+          type: "output.table",
+          title: opts.title,
+          data: opts.data,
+        });
+      }
     },
     code: async ({ code, language }) => {
       await this.sendOutput({ type: "output.code", code, language });

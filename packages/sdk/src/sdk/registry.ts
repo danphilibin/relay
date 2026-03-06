@@ -1,5 +1,6 @@
 import type { RelayHandler } from "./cf-workflow";
 import type { InputSchema } from "../isomorphic/input";
+import type { LoaderDef, CellValue } from "./loader";
 
 export type WorkflowDefinition = {
   slug: string;
@@ -7,6 +8,15 @@ export type WorkflowDefinition = {
   description?: string;
   handler: RelayHandler;
   input?: InputSchema;
+  loaders?: Record<
+    string,
+    {
+      fn: LoaderDef["fn"];
+      paramDescriptor?: LoaderDef["paramDescriptor"];
+    }
+  >;
+  /** renderCell functions keyed by step ID + column index */
+  renderCells: Map<string, Array<((row: any) => CellValue) | null>>;
 };
 
 const workflows: Map<string, WorkflowDefinition> = new Map();
@@ -26,9 +36,24 @@ export function registerWorkflow(
   handler: RelayHandler,
   input?: InputSchema,
   description?: string,
+  loaders?: Record<
+    string,
+    {
+      fn: LoaderDef["fn"];
+      paramDescriptor?: LoaderDef["paramDescriptor"];
+    }
+  >,
 ): void {
   const slug = slugify(title);
-  workflows.set(slug, { slug, title, description, handler, input });
+  workflows.set(slug, {
+    slug,
+    title,
+    description,
+    handler,
+    input,
+    loaders,
+    renderCells: new Map(),
+  });
 }
 
 export function getWorkflow(slug: string): WorkflowDefinition | undefined {
