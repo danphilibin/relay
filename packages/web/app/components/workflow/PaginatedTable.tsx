@@ -11,7 +11,6 @@ import { apiPath } from "../../lib/api";
 
 interface PaginatedTableProps {
   block: OutputTableLoaderBlock;
-  stepId: string;
 }
 
 type LoaderResponse = {
@@ -19,7 +18,7 @@ type LoaderResponse = {
   totalCount?: number;
 };
 
-export function PaginatedTable({ block, stepId }: PaginatedTableProps) {
+export function PaginatedTable({ block }: PaginatedTableProps) {
   const { loader } = block;
   const pageSize = loader.pageSize ?? 20;
 
@@ -36,25 +35,13 @@ export function PaginatedTable({ block, stepId }: PaginatedTableProps) {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({
-        page: String(p),
-        pageSize: String(pageSize),
-        stepId,
-      });
+      const [basePath, baseQuery = ""] = loader.path.split("?");
+      const params = new URLSearchParams(baseQuery);
+      params.set("page", String(p));
+      params.set("pageSize", String(pageSize));
 
       if (q) params.set("query", q);
-      if (loader.presenter) params.set("presenter", loader.presenter);
-
-      // Add custom params
-      for (const [key, value] of Object.entries(loader.params)) {
-        if (value !== undefined && value !== null) {
-          params.set(key, String(value));
-        }
-      }
-
-      const url = apiPath(
-        `workflows/${loader.workflow}/loader/${loader.name}?${params}`,
-      );
+      const url = apiPath(`${basePath}?${params}`);
 
       try {
         const res = await fetch(url);
@@ -69,7 +56,7 @@ export function PaginatedTable({ block, stepId }: PaginatedTableProps) {
         setLoading(false);
       }
     },
-    [loader.workflow, loader.name, loader.params, pageSize, stepId],
+    [loader.path, pageSize],
   );
 
   useEffect(() => {

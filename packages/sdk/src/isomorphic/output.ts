@@ -68,6 +68,7 @@ export const OutputTableLoaderBlockSchema = z.object({
   type: z.literal("output.table_loader"),
   title: z.string().optional(),
   loader: z.object({
+    path: z.string(),
     name: z.string(),
     workflow: z.string(),
     presenter: z.string().optional(),
