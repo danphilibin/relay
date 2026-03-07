@@ -82,13 +82,7 @@ export function MessageList({
       {pairedMessages.map(({ message, submittedValue, confirmedValue }) => {
         switch (message.type) {
           case "output":
-            return (
-              <OutputMessage
-                key={message.id}
-                block={message.block}
-                messageId={message.id}
-              />
-            );
+            return <OutputMessage key={message.id} block={message.block} />;
 
           case "input_request":
             return (

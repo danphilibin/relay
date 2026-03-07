@@ -264,6 +264,28 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     return `relay-${prefix}-${this.counter++}`;
   }
 
+  // Build an opaque fetch target for loader-backed tables. This keeps transport
+  // details like step scoping, bound params, and presenter selection on the
+  // server side so the browser only has to append paging/search inputs.
+  private buildLoaderPath(opts: {
+    workflow: string;
+    name: string;
+    stepId: string;
+    presenterName?: string;
+    params: Record<string, unknown>;
+  }): string {
+    const search = new URLSearchParams({ stepId: opts.stepId });
+    if (opts.presenterName) {
+      search.set("presenter", opts.presenterName);
+    }
+    for (const [key, value] of Object.entries(opts.params)) {
+      if (value !== undefined && value !== null) {
+        search.set(key, String(value));
+      }
+    }
+    return `workflows/${opts.workflow}/loader/${opts.name}?${search.toString()}`;
+  }
+
   private normalizeInputArgs(
     schemaOrOptions?: InputSchema | InputOptions,
     maybeOptions?: InputOptions,
@@ -331,6 +353,13 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           type: "output.table_loader" as const,
           title,
           loader: {
+            path: this.buildLoaderPath({
+              workflow: this.workflowSlug,
+              name: source.name,
+              stepId,
+              presenterName: presenter?.name,
+              params: source.params,
+            }),
             name: source.name,
             workflow: this.workflowSlug,
             presenter: presenter?.name,
