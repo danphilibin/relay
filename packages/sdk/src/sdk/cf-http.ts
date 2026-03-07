@@ -1,4 +1,4 @@
-import { getWorkflow, getWorkflowList } from "./registry";
+import { getPresenter, getWorkflow, getWorkflowList } from "./registry";
 import {
   WorkflowParamsSchema,
   type StartWorkflowParams,
@@ -225,6 +225,7 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     const pageSize = parseInt(url.searchParams.get("pageSize") ?? "20", 10);
     const query = url.searchParams.get("query") ?? undefined;
     const stepId = url.searchParams.get("stepId") ?? undefined;
+    const presenterName = url.searchParams.get("presenter") ?? undefined;
 
     // Parse custom params from the descriptor
     const customParams: Record<string, unknown> = {};
@@ -248,8 +249,21 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       env,
     );
 
-    // Apply renderCell transforms if present
-    if (stepId) {
+    // Named presenters are globally reusable and don't depend on per-run state.
+    if (presenterName) {
+      const tablePresenter = getPresenter(presenterName);
+      if (tablePresenter && result.data.length > 0) {
+        result.data = result.data.map((row: any) => {
+          const transformed = { ...row };
+          tablePresenter.columns.forEach((col: any, index) => {
+            if (typeof col !== "string" && "renderCell" in col) {
+              transformed[`__render_${index}`] = col.renderCell(row);
+            }
+          });
+          return transformed;
+        });
+      }
+    } else if (stepId) {
       const renderFns = definition.renderCells.get(stepId);
       if (renderFns && result.data.length > 0) {
         result.data = result.data.map((row: any) => {

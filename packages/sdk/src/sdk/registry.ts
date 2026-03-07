@@ -1,6 +1,6 @@
 import type { RelayHandler } from "./cf-workflow";
 import type { InputSchema } from "../isomorphic/input";
-import type { LoaderDef, CellValue } from "./loader";
+import type { LoaderDef, CellValue, PresenterDef } from "./loader";
 
 export type WorkflowDefinition = {
   slug: string;
@@ -20,6 +20,7 @@ export type WorkflowDefinition = {
 };
 
 const workflows: Map<string, WorkflowDefinition> = new Map();
+const presenters: Map<string, PresenterDef<any>> = new Map();
 
 /**
  * Converts a title to a URL-friendly slug
@@ -58,6 +59,14 @@ export function registerWorkflow(
 
 export function getWorkflow(slug: string): WorkflowDefinition | undefined {
   return workflows.get(slug);
+}
+
+export function registerPresenter(presenter: PresenterDef<any>): void {
+  presenters.set(presenter.name, presenter);
+}
+
+export function getPresenter(name: string): PresenterDef<any> | undefined {
+  return presenters.get(name);
 }
 
 export function getWorkflowList(): {

@@ -41,6 +41,14 @@ export type ColumnDef<TRow> =
   | AccessorColumn<TRow>
   | RenderColumn<TRow>;
 
+/** Reusable table presenter for a row type */
+export type PresenterDef<TRow = unknown> = {
+  __brand: "presenter";
+  __row: TRow;
+  name: string;
+  columns: ColumnDef<TRow>[];
+};
+
 // ── Param descriptor ────────────────────────────────────────────────
 
 type ParamTypeMap = {
@@ -126,6 +134,19 @@ export function loader(...args: any[]): any {
   };
 }
 
+/** Create a named presenter that can be reused across loader-backed tables */
+export function presenter<TRow>(
+  name: string,
+  config: { columns: ColumnDef<TRow>[] },
+): PresenterDef<TRow> {
+  return {
+    __brand: "presenter" as const,
+    __row: undefined as TRow,
+    name,
+    columns: config.columns,
+  };
+}
+
 // ── Table output types for loader-backed tables ─────────────────────
 
 /** Static table (existing) */
@@ -140,6 +161,7 @@ export type TableOutputLoader<TRow = unknown> = {
   source: LoaderRef<TRow>;
   pageSize?: number;
   columns?: ColumnDef<TRow>[];
+  presenter?: PresenterDef<TRow>;
 };
 
 /** Helper to check if output.table was called with a loader source */

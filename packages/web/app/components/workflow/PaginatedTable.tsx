@@ -41,7 +41,9 @@ export function PaginatedTable({ block, stepId }: PaginatedTableProps) {
         pageSize: String(pageSize),
         stepId,
       });
+
       if (q) params.set("query", q);
+      if (loader.presenter) params.set("presenter", loader.presenter);
 
       // Add custom params
       for (const [key, value] of Object.entries(loader.params)) {
