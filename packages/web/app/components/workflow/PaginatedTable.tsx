@@ -35,6 +35,8 @@ export function PaginatedTable({ block }: PaginatedTableProps) {
       setLoading(true);
       setError(null);
 
+      // The SDK now hands the browser a server-built path. The UI only adds
+      // page/search inputs instead of rebuilding loader details itself.
       const [basePath, baseQuery = ""] = loader.path.split("?");
       const params = new URLSearchParams(baseQuery);
       params.set("page", String(p));
@@ -164,6 +166,8 @@ export function PaginatedTable({ block }: PaginatedTableProps) {
 type ResolvedColumn = {
   label: string;
   accessorKey?: string;
+  // For columns backed by renderCell(), the server adds a `__render_i` field
+  // where `i` matches the column's position in the serialized columns array.
   renderIndex?: number;
 };
 

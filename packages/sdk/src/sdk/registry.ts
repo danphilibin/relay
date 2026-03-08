@@ -15,11 +15,13 @@ export type WorkflowDefinition = {
       paramDescriptor?: LoaderDef["paramDescriptor"];
     }
   >;
-  /** renderCell functions keyed by step ID + column index */
+  /** Legacy inline renderCell functions keyed by per-run output step ID */
   renderCells: Map<string, Array<((row: any) => CellValue) | null>>;
 };
 
 const workflows: Map<string, WorkflowDefinition> = new Map();
+// Process-local presenter registry. A named presenter keeps its callbacks on the
+// server while loader responses only stream serialized column metadata to the UI.
 const presenters: Map<string, PresenterDef<any>> = new Map();
 
 /**

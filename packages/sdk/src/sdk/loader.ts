@@ -45,6 +45,7 @@ export type ColumnDef<TRow> =
 export type PresenterDef<TRow = unknown> = {
   __brand: "presenter";
   __row: TRow;
+  /** Stable server-side lookup key for reapplying this presenter on fetches */
   name: string;
   columns: ColumnDef<TRow>[];
 };
@@ -72,9 +73,12 @@ type NoParams = {};
 /** Check if NoParams extends P — true only when P is exactly {} */
 type HasParams<P> = [NoParams] extends [P] ? false : true;
 
-/** A loader definition — wraps the fn + carries phantom types */
+/** A loader definition — wraps the fn + carries type-only metadata */
 export type LoaderDef<TParams = any, TRow = any> = {
   __brand: "loader";
+  // These fields do not exist at runtime. They are only here so TypeScript can
+  // remember the row and param types through helpers like createWorkflow().
+  // row/param types through helpers like createWorkflow() and output.table().
   __params: TParams;
   __row: TRow;
   fn: (
@@ -89,6 +93,9 @@ export type LoaderRef<TRow = unknown> = {
   __brand: "loader_ref";
   __row: TRow;
   name: string;
+  // These params are captured during the workflow run, then copied into the
+  // server-built loader path so later page/search requests can fetch the same
+  // scoped data without re-running workflow code.
   params: Record<string, unknown>;
 };
 
@@ -161,6 +168,8 @@ export type TableOutputLoader<TRow = unknown> = {
   source: LoaderRef<TRow>;
   pageSize?: number;
   columns?: ColumnDef<TRow>[];
+  // Presenters are the reusable, named version of table display logic.
+  // Inline columns still work, but presenters avoid tying rendering to one run.
   presenter?: PresenterDef<TRow>;
 };
 
@@ -187,7 +196,9 @@ export function serializeColumns<TRow>(
         accessorKey: col.accessorKey,
       };
     }
-    // renderCell column — only serialize the label; the fn stays in the registry
+    // Only the label is sent to the browser. The render fn stays on the server,
+    // and the column index is later used to attach its computed value to
+    // `__render_i`.
     return { type: "render" as const, label: col.label };
   });
 }

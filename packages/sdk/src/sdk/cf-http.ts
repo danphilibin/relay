@@ -224,6 +224,8 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     const page = parseInt(url.searchParams.get("page") ?? "0", 10);
     const pageSize = parseInt(url.searchParams.get("pageSize") ?? "20", 10);
     const query = url.searchParams.get("query") ?? undefined;
+    // These query params are added by buildLoaderPath(). The browser does not
+    // need to know what they mean; it just uses the path the SDK gave it.
     const stepId = url.searchParams.get("stepId") ?? undefined;
     const presenterName = url.searchParams.get("presenter") ?? undefined;
 
@@ -255,8 +257,13 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       if (tablePresenter && result.data.length > 0) {
         result.data = result.data.map((row: any) => {
           const transformed = { ...row };
+          // Keep computed cell output separate from the source row so the UI can
+          // render rich columns without losing access to the original fields.
           tablePresenter.columns.forEach((col: any, index) => {
             if (typeof col !== "string" && "renderCell" in col) {
+              // The index here must stay aligned with serializeColumns() so the
+              // browser knows which computed display value belongs to which
+              // column.
               transformed[`__render_${index}`] = col.renderCell(row);
             }
           });
@@ -264,6 +271,8 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
         });
       }
     } else if (stepId) {
+      // Legacy inline renderCell path keyed by the specific output step that
+      // originally emitted this table block.
       const renderFns = definition.renderCells.get(stepId);
       if (renderFns && result.data.length > 0) {
         result.data = result.data.map((row: any) => {

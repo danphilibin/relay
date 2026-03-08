@@ -124,6 +124,7 @@ The handler context (`RelayContext`) passed to every workflow:
 | -------------------------------------------- | -------------------------------- | ------------------------------------------------------- |
 | `output.markdown(content)`                   | `(string) => Promise<void>`      | Sends a markdown block                                  |
 | `output.table({ title?, data })`             | `=> Promise<void>`               | Sends a data table                                      |
+| `output.table({ source, ... })`              | `=> Promise<void>`               | Sends a loader-backed paginated table                   |
 | `output.code({ code, language? })`           | `=> Promise<void>`               | Sends a code block                                      |
 | `output.image({ src, alt? })`                | `=> Promise<void>`               | Sends an image                                          |
 | `output.link({ url, title?, description? })` | `=> Promise<void>`               | Sends a link card                                       |
@@ -144,12 +145,37 @@ The handler context (`RelayContext`) passed to every workflow:
 
 ### Interactive API (browser clients)
 
-| Method | Path                         | Action                                                  |
-| ------ | ---------------------------- | ------------------------------------------------------- |
-| `GET`  | `/workflows`                 | Returns workflow metadata list from registry            |
-| `POST` | `/workflows`                 | Creates a new workflow instance, returns `{ id, name }` |
-| `GET`  | `/workflows/:id/stream`      | Proxies to the executor DO's NDJSON stream              |
-| `POST` | `/workflows/:id/event/:name` | Submits user response (input value or confirm decision) |
+| Method | Path                                 | Action                                                  |
+| ------ | ------------------------------------ | ------------------------------------------------------- |
+| `GET`  | `/workflows`                         | Returns workflow metadata list from registry            |
+| `POST` | `/workflows`                         | Creates a new workflow instance, returns `{ id, name }` |
+| `GET`  | `/workflows/:id/stream`              | Proxies to the executor DO's NDJSON stream              |
+| `POST` | `/workflows/:id/event/:name`         | Submits user response (input value or confirm decision) |
+| `POST` | `/workflows/:id/table/:stepId/query` | Queries a loader-backed table for pagination/search     |
+
+## Loaders And Presenters
+
+Loaders let a workflow emit a table without persisting all rows into the NDJSON
+stream. Instead, `output.table({ source, ... })` stores a small table
+descriptor in the run Durable Object and streams only a stable query endpoint.
+The browser pages through that table by POSTing transient browsing state later.
+
+The loader itself is still registered globally with the workflow definition, but
+the handler receives a serializable `LoaderRef` rather than a direct callback.
+That ref captures any bound params from the workflow run and is resolved against
+the stored descriptor when the table query route executes.
+
+Table descriptors live in the run DO keyed by `stepId` and hold the durable
+table contract:
+
+- loader name
+- bound params
+- table renderer name or serialized columns
+- pagination defaults and row-key metadata
+
+The query route receives only transient interaction state like `page`,
+`pageSize`, and `query`, then the server re-runs the loader and returns a
+normalized `{ columns, rows, totalCount }` payload to the frontend.
 
 ### Call-response API (agents)
 
