@@ -8,6 +8,10 @@ Read `ARCHITECTURE.md` when you need to understand how the codebase fits togethe
 
 If your work changes the architecture, adds/removes modules, or updates the SDK interface, update `ARCHITECTURE.md` to reflect the new state before finishing.
 
+## Code gudielines
+
+The author of this repo wants to prioritize understanding the AI-generated code. Be liberal with comments that explain why certain code exists and what it does, especially when its purpose is not obvious at the callsite, such as with cross-boundary concerns.
+
 ## Common commands
 
 Generally you should only need to run these commands to verify your work.
