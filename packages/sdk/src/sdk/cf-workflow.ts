@@ -340,22 +340,6 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           registerPresenter(presenter);
         }
 
-        // Legacy path: store inline renderCell functions in the workflow registry.
-        if (columns && !presenter) {
-          const definition = getWorkflow(this.workflowSlug);
-          if (definition) {
-            const renderFns = (columns as any[]).map((col: any) => {
-              if (typeof col !== "string" && "renderCell" in col) {
-                return col.renderCell as (row: any) => any;
-              }
-              return null;
-            });
-            if (renderFns.some((fn) => fn !== null)) {
-              definition.renderCells.set(stepId, renderFns);
-            }
-          }
-        }
-
         const block: OutputBlock = {
           type: "output.table_loader" as const,
           title,

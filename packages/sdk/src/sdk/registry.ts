@@ -1,6 +1,6 @@
 import type { RelayHandler } from "./cf-workflow";
 import type { InputSchema } from "../isomorphic/input";
-import type { LoaderDef, CellValue, PresenterDef } from "./loader";
+import type { LoaderDef, PresenterDef } from "./loader";
 
 export type WorkflowDefinition = {
   slug: string;
@@ -15,8 +15,6 @@ export type WorkflowDefinition = {
       paramDescriptor?: LoaderDef["paramDescriptor"];
     }
   >;
-  /** Legacy inline renderCell functions keyed by per-run output step ID */
-  renderCells: Map<string, Array<((row: any) => CellValue) | null>>;
 };
 
 const workflows: Map<string, WorkflowDefinition> = new Map();
@@ -55,7 +53,6 @@ export function registerWorkflow(
     handler,
     input,
     loaders,
-    renderCells: new Map(),
   });
 }
 

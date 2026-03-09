@@ -237,21 +237,6 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
           return transformed;
         });
       }
-    } else if (stepId) {
-      // Legacy inline renderCell path keyed by the specific output step that
-      // originally emitted this table block.
-      const renderFns = definition.renderCells.get(stepId);
-      if (renderFns && result.data.length > 0) {
-        result.data = result.data.map((row: any) => {
-          const transformed = { ...row };
-          renderFns.forEach((fn, index) => {
-            if (fn) {
-              transformed[`__render_${index}`] = fn(row);
-            }
-          });
-          return transformed;
-        });
-      }
     }
 
     return Response.json(result);
