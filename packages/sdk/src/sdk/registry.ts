@@ -64,6 +64,11 @@ export function getWorkflow(slug: string): WorkflowDefinition | undefined {
 export function registerTableRenderer(
   tableRenderer: TableRendererDef<any>,
 ): void {
+  if (tableRenderers.has(tableRenderer.name)) {
+    throw new Error(
+      `Duplicate table renderer registration: ${tableRenderer.name}`,
+    );
+  }
   tableRenderers.set(tableRenderer.name, tableRenderer);
 }
 
