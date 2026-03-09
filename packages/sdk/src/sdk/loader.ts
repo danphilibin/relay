@@ -5,6 +5,8 @@
  * the Worker's fetch handler, completely outside the workflow lifecycle.
  */
 
+import { registerTableRenderer } from "./registry";
+
 // ── Public types ────────────────────────────────────────────────────
 
 /** Built-in pagination params that every loader receives */
@@ -141,17 +143,20 @@ export function loader(...args: any[]): any {
   };
 }
 
-/** Create a named table renderer that can be reused across loader-backed tables */
+/** Create a named table renderer that can be reused across loader-backed tables.
+ * Auto-registers into the global renderer registry at creation time (module scope). */
 export function tableRenderer<TRow>(
   name: string,
   config: { columns: ColumnDef<TRow>[] },
 ): TableRendererDef<TRow> {
-  return {
+  const def: TableRendererDef<TRow> = {
     __brand: "table_renderer" as const,
     __row: undefined as TRow,
     name,
     columns: config.columns,
   };
+  registerTableRenderer(def);
+  return def;
 }
 
 // ── Table output types for loader-backed tables ─────────────────────
