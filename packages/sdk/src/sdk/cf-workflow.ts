@@ -12,6 +12,7 @@ import {
 } from "../isomorphic/input";
 import {
   createInputRequest,
+  createTableInputRequest,
   createLoadingMessage,
   createOutputMessage,
   createConfirmRequest,
@@ -477,27 +478,23 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
         await this.step.do(`${eventName}-request`, async () => {
           await this.sendMessage(
-            createInputRequest(
-              eventName,
-              prompt,
-              undefined, // no form schema — the table config drives the UI
-              undefined, // no custom buttons
-              {
-                loader: {
-                  path: this.buildLoaderPath({
-                    workflow: this.workflowSlug,
-                    name: source.name,
-                    stepId: eventName,
-                    tableRendererName: tableRenderer?.name,
-                    params: source.params,
-                  }),
-                  pageSize,
-                  columns: serializeColumns(columns),
-                },
-                rowKey,
-                selection,
+            createTableInputRequest(eventName, prompt, {
+              type: "table",
+              label: prompt,
+              loader: {
+                path: this.buildLoaderPath({
+                  workflow: this.workflowSlug,
+                  name: source.name,
+                  stepId: eventName,
+                  tableRendererName: tableRenderer?.name,
+                  params: source.params,
+                }),
+                pageSize,
+                columns: serializeColumns(columns),
               },
-            ),
+              rowKey,
+              selection,
+            }),
           );
         });
 
@@ -506,10 +503,10 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           timeout: "5 minutes",
         });
 
-        // The client sends back { rowKeys: [...] }. We resolve them to full
-        // source rows server-side by calling the loader's resolve function.
+        // The client sends back the selected row keys as the value of the
+        // synthetic table field. We resolve them to full source rows server-side.
         const payload = event.payload as Record<string, unknown>;
-        const rowKeys = payload.rowKeys as string[];
+        const rowKeys = payload.input as string[];
 
         // Look up the loader definition to call its resolve function.
         const definition = getWorkflow(this.workflowSlug);

@@ -4,14 +4,16 @@ import { Button } from "@cloudflare/kumo/components/button";
 import { Input } from "@cloudflare/kumo/components/input";
 import { Loader } from "@cloudflare/kumo/components/loader";
 import type {
-  InputRequestMessage,
   SerializedColumnDef,
+  TableFieldDefinition,
 } from "relay-sdk/client";
 import { apiPath } from "../../lib/api";
 
 interface InputTableMessageProps {
-  /** An input_request message whose `table` field is present */
-  message: InputRequestMessage;
+  eventName: string;
+  prompt: string;
+  fieldName: string;
+  fieldDef: TableFieldDefinition;
   onSubmit: (
     eventName: string,
     value: Record<string, unknown>,
@@ -32,13 +34,14 @@ type ResolvedColumn = {
 };
 
 export function InputTableMessage({
-  message,
+  eventName,
+  prompt,
+  fieldName,
+  fieldDef,
   onSubmit,
   submittedValue,
 }: InputTableMessageProps) {
-  // The table config is guaranteed to be present by the caller (MessageList).
-  const tableConfig = message.table!;
-  const { loader, rowKey, selection } = tableConfig;
+  const { loader, rowKey, selection } = fieldDef;
   const pageSize = loader.pageSize ?? 20;
 
   const [page, setPage] = useState(0);
@@ -127,19 +130,17 @@ export function InputTableMessage({
 
     // Send only the row identity values. The server resolves these back to
     // full source rows via the loader's resolve function.
-    await onSubmit(message.id, { rowKeys: Array.from(selectedKeys) });
+    await onSubmit(eventName, { [fieldName]: Array.from(selectedKeys) });
   };
 
   const columns = resolveColumns(loader.columns, data?.data);
 
   // If already submitted, show a summary instead of the interactive table
   if (isSubmitted && submittedValue) {
-    const keys = (submittedValue.rowKeys as string[]) ?? [];
+    const keys = (submittedValue[fieldName] as string[]) ?? [];
     return (
       <div className="p-5 rounded-xl border bg-[#111] border-[#222] space-y-3">
-        <span className="text-base font-medium text-[#fafafa]">
-          {message.prompt}
-        </span>
+        <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
         <div className="text-sm text-kumo-subtle">
           Selected {keys.length} row{keys.length !== 1 ? "s" : ""}
         </div>
@@ -158,9 +159,7 @@ export function InputTableMessage({
 
   return (
     <div className="p-5 rounded-xl border bg-[#111] border-[#222] space-y-3">
-      <span className="text-base font-medium text-[#fafafa]">
-        {message.prompt}
-      </span>
+      <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
 
       <div className="flex items-center gap-3">
         <div className="w-64">

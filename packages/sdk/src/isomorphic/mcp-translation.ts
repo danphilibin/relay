@@ -30,6 +30,12 @@ function formatInputField(key: string, field: InputFieldDefinition): string {
     return `${base} [options: ${options}]`;
   }
 
+  if (field.type === "table") {
+    return (
+      `${base} ` + `[selection: ${field.selection}, rowKey: ${field.rowKey}]`
+    );
+  }
+
   return base;
 }
 
@@ -124,14 +130,7 @@ export function formatCallResponseForMcp(result: CallResponseResult): string {
 
     if (result.interaction.type === "input_request") {
       lines.push(`Prompt: ${result.interaction.prompt}`);
-      if (result.interaction.table) {
-        // Table selection input — describe the selection mode
-        lines.push(
-          `Selection: ${result.interaction.table.selection} (rowKey: ${result.interaction.table.rowKey})`,
-        );
-      } else {
-        lines.push(...formatInputSchema(result.interaction.schema));
-      }
+      lines.push(...formatInputSchema(result.interaction.schema));
       if (result.interaction.buttons.length > 0) {
         const labels = result.interaction.buttons
           .map((button) => button.label)

@@ -8,7 +8,6 @@ export {
   type OutputMessage,
   type InputRequestMessage,
   type InputReceivedMessage,
-  type InputTableConfig,
   type LoadingMessage,
   type ConfirmRequestMessage,
   type ConfirmReceivedMessage,
@@ -38,6 +37,7 @@ export type WorkflowStatus =
 export type {
   InputSchema,
   InputFieldDefinition,
+  TableFieldDefinition,
   NormalizedButton,
 } from "../isomorphic/input";
 

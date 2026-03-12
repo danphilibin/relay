@@ -18,9 +18,8 @@ export type FieldRegistryEntry = {
   component: React.ComponentType<FieldProps>;
 };
 
-export const FIELD_REGISTRY: Record<
-  InputFieldDefinition["type"],
-  FieldRegistryEntry
+export const FIELD_REGISTRY: Partial<
+  Record<InputFieldDefinition["type"], FieldRegistryEntry>
 > = {
   text: { autoFocusable: true, component: TextField },
   number: { autoFocusable: true, component: NumberField },
