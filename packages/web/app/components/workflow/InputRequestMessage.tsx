@@ -38,6 +38,8 @@ function initFieldValues(
       values[fieldName] = fieldDef.options?.[0]?.value ?? "";
     } else if (fieldDef.type === "number") {
       values[fieldName] = 0;
+    } else if (fieldDef.type === "table") {
+      values[fieldName] = [];
     } else {
       values[fieldName] = "";
     }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SerializedColumnDefSchema } from "./output";
 
 /**
  * Input field definition schemas for structured input
@@ -34,14 +35,31 @@ const SelectFieldSchema = z.object({
   required: z.boolean().optional(),
 });
 
+const TableFieldSchema = z.object({
+  type: z.literal("table"),
+  label: z.string(),
+  description: z.string().optional(),
+  loader: z.object({
+    path: z.string(),
+    pageSize: z.number().optional(),
+    columns: z.array(SerializedColumnDefSchema).optional(),
+  }),
+  /** Field name used to identify rows for selection (defaults to "id") */
+  rowKey: z.string(),
+  /** Whether the user can select one row or many */
+  selection: z.enum(["single", "multiple"]),
+});
+
 export const InputFieldDefinitionSchema = z.discriminatedUnion("type", [
   TextFieldSchema,
   CheckboxFieldSchema,
   NumberFieldSchema,
   SelectFieldSchema,
+  TableFieldSchema,
 ]);
 
 export type InputFieldDefinition = z.infer<typeof InputFieldDefinitionSchema>;
+export type TableFieldDefinition = z.infer<typeof TableFieldSchema>;
 
 export type TextFieldConfig = Omit<
   z.infer<typeof TextFieldSchema>,
@@ -119,6 +137,7 @@ type FieldTypeMap = {
   number: number;
   checkbox: boolean;
   select: string;
+  table: string[];
 };
 
 /**

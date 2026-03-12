@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   type InputSchema,
   type ButtonDef,
+  type InputFieldDefinition,
   InputSchemaSchema,
   normalizeButtons,
 } from "./input";
@@ -108,6 +109,22 @@ export function createInputRequest(
     prompt,
     schema: normalizedSchema,
     buttons: normalizeButtons(buttons),
+  };
+}
+
+export function createTableInputRequest(
+  id: string,
+  prompt: string,
+  table: Extract<InputFieldDefinition, { type: "table" }>,
+): InputRequestMessage {
+  return {
+    type: "input_request",
+    id,
+    prompt,
+    schema: {
+      input: table,
+    },
+    buttons: normalizeButtons(),
   };
 }
 

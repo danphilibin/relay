@@ -16,6 +16,7 @@ export {
   StreamMessageSchema,
   parseStreamMessage,
   createConfirmReceived,
+  createTableInputRequest,
   createWorkflowComplete,
 } from "../isomorphic/messages";
 
@@ -28,6 +29,7 @@ export type {
   InputFieldBuilder,
   InputFieldBuilders,
   RelayFieldFactory,
+  TableFieldDefinition,
   NormalizedButton,
   SelectOption,
 } from "../isomorphic/input";

@@ -44,6 +44,9 @@ export function inputSchemaToZod(
                 .describe(desc)
             : z.string().describe(desc);
         break;
+      case "table":
+        shape[key] = z.array(z.string()).describe(desc);
+        break;
       default:
         assertNever(field);
     }
