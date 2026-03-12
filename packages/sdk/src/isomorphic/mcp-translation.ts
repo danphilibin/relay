@@ -30,6 +30,12 @@ function formatInputField(key: string, field: InputFieldDefinition): string {
     return `${base} [options: ${options}]`;
   }
 
+  if (field.type === "table") {
+    return (
+      `${base} ` + `[selection: ${field.selection}, rowKey: ${field.rowKey}]`
+    );
+  }
+
   return base;
 }
 

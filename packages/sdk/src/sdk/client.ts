@@ -41,6 +41,7 @@ export type {
   InputFieldBuilder,
   InputFieldBuilders,
   RelayFieldFactory,
+  TableFieldDefinition,
   NormalizedButton,
   SelectOption,
 } from "../isomorphic/input";

@@ -75,7 +75,17 @@ type NoParams = {};
 /** Check if NoParams extends P — true only when P is exactly {} */
 type HasParams<P> = [NoParams] extends [P] ? false : true;
 
-/** A loader definition — wraps the fn + carries type-only metadata */
+type ParamsOf<L> = L extends { fn: (params: infer P, env: Env) => Promise<any> }
+  ? Omit<P, keyof PaginationParams>
+  : never;
+
+type RowOf<L> = L extends {
+  fn: (...args: any[]) => Promise<LoaderResult<infer R>>;
+}
+  ? R
+  : never;
+
+/** A loader definition — wraps the loader callback plus runtime metadata. */
 export type LoaderDef<TParams = any, TRow = any> = {
   __brand: "loader";
   // These fields do not exist at runtime. They are only here so TypeScript can
@@ -88,6 +98,13 @@ export type LoaderDef<TParams = any, TRow = any> = {
     env: Env,
   ) => Promise<LoaderResult<TRow>>;
   paramDescriptor?: ParamDescriptor;
+  /** Field used to identify rows for interactive table selection */
+  rowKey?: string;
+  /** Resolves selected row keys back to full source rows for `input.table()` */
+  resolve?: (
+    params: { keys: string[] } & Record<string, unknown>,
+    env: Env,
+  ) => Promise<TRow[]>;
 };
 
 /** A serializable reference to a loader with bound params */
@@ -99,15 +116,15 @@ export type LoaderRef<TRow = unknown> = {
   // server-built loader path so later page/search requests can fetch the same
   // scoped data without re-running workflow code.
   params: Record<string, unknown>;
+  /** Carried from the loader definition so `input.table()` can validate selection. */
+  rowKey?: string;
 };
 
 /** Derive the handler's `loaders` context from the config */
 export type LoaderRefs<L extends Record<string, LoaderDef<any, any>>> = {
-  [K in keyof L]: L[K] extends LoaderDef<infer P, infer R>
-    ? HasParams<P> extends true
-      ? (params: P) => LoaderRef<R>
-      : LoaderRef<R>
-    : never;
+  [K in keyof L]: HasParams<ParamsOf<L[K]>> extends true
+    ? (params: ParamsOf<L[K]>) => LoaderRef<RowOf<L[K]>>
+    : LoaderRef<RowOf<L[K]>>;
 };
 
 // ── Serialized column def (for NDJSON stream, no functions) ─────────
@@ -132,10 +149,46 @@ export function loader<D extends ParamDescriptor, TRow>(
   ) => Promise<LoaderResult<TRow>>,
 ): LoaderDef<InferParams<D>, TRow>;
 
+/** Config object with rowKey + resolve — no custom params */
+export function loader<TRow>(config: {
+  rowKey: keyof TRow & string;
+  load: (params: PaginationParams, env: Env) => Promise<LoaderResult<TRow>>;
+  resolve: (params: { keys: string[] }, env: Env) => Promise<TRow[]>;
+}): LoaderDef<NoParams, TRow>;
+
+/** Config object with rowKey + resolve — with custom params */
+export function loader<D extends ParamDescriptor, TRow>(config: {
+  rowKey: keyof TRow & string;
+  params: D;
+  load: (
+    params: InferParams<D> & PaginationParams,
+    env: Env,
+  ) => Promise<LoaderResult<TRow>>;
+  resolve: (
+    params: { keys: string[] } & InferParams<D>,
+    env: Env,
+  ) => Promise<TRow[]>;
+}): LoaderDef<InferParams<D>, TRow>;
+
 export function loader(...args: any[]): any {
+  // Simple function form: loader(fn)
   if (typeof args[0] === "function") {
     return { __brand: "loader" as const, fn: args[0] };
   }
+
+  // Config object form: loader({ rowKey, load, resolve, params? })
+  if ("load" in args[0]) {
+    const config = args[0];
+    return {
+      __brand: "loader" as const,
+      fn: config.load,
+      paramDescriptor: config.params,
+      rowKey: config.rowKey,
+      resolve: config.resolve,
+    };
+  }
+
+  // Param descriptor form: loader(descriptor, fn)
   return {
     __brand: "loader" as const,
     fn: args[1],
@@ -176,6 +229,26 @@ export type TableOutputLoader<TRow = unknown> = {
   // Table renderers are the reusable, named version of table display logic.
   // Inline columns still work, but a table renderer avoids tying rendering to one run.
   tableRenderer?: TableRendererDef<TRow>;
+};
+
+/** Options for selecting a single row from a loader-backed table. */
+export type TableInputSingle<TRow> = {
+  prompt: string;
+  source: LoaderRef<TRow>;
+  pageSize?: number;
+  columns?: ColumnDef<TRow>[];
+  tableRenderer?: TableRendererDef<TRow>;
+  selection?: "single";
+};
+
+/** Options for selecting multiple rows from a loader-backed table. */
+export type TableInputMultiple<TRow> = {
+  prompt: string;
+  source: LoaderRef<TRow>;
+  pageSize?: number;
+  columns?: ColumnDef<TRow>[];
+  tableRenderer?: TableRendererDef<TRow>;
+  selection: "multiple";
 };
 
 /** Helper to check if output.table was called with a loader source */

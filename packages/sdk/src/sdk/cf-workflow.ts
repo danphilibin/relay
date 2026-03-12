@@ -10,6 +10,8 @@ import { registerWorkflow } from "./registry";
 import {
   type LoaderDef,
   type LoaderRefs,
+  type TableInputSingle,
+  type TableInputMultiple,
   type TableOutputStatic,
   type TableOutputLoader,
 } from "./loader";
@@ -33,6 +35,14 @@ export type RelayLoadingFn = (
  * Confirm function type - prompts user for approval
  */
 export type RelayConfirmFn = (message: string) => Promise<boolean>;
+
+/**
+ * Table selection helper for interactive loader-backed tables.
+ */
+export type RelayInputTableFn = {
+  <TRow>(opts: TableInputSingle<TRow>): Promise<TRow>;
+  <TRow>(opts: TableInputMultiple<TRow>): Promise<TRow[]>;
+};
 
 export type RelayOutput = {
   markdown: (content: string) => Promise<void>;
@@ -59,7 +69,7 @@ export type RelayOutput = {
  */
 export type RelayContext = {
   step: ExecutorStep;
-  input: RelayInputFn;
+  input: RelayInputFn & { table: RelayInputTableFn };
   output: RelayOutput;
   loading: RelayLoadingFn;
   confirm: RelayConfirmFn;
@@ -103,7 +113,12 @@ export function createWorkflow(config: {
     ? Object.fromEntries(
         Object.entries(config.loaders).map(([name, def]) => [
           name,
-          { fn: def.fn, paramDescriptor: def.paramDescriptor },
+          {
+            fn: def.fn,
+            paramDescriptor: def.paramDescriptor,
+            rowKey: def.rowKey,
+            resolve: def.resolve,
+          },
         ]),
       )
     : undefined;
