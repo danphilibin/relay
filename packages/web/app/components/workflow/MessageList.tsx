@@ -1,10 +1,5 @@
-import {
-  type InputSchema,
-  type StreamMessage,
-  type TableFieldDefinition,
-} from "relay-sdk/client";
+import { type StreamMessage } from "relay-sdk/client";
 import { InputRequestMessage } from "./InputRequestMessage";
-import { InputTableMessage } from "./InputTableMessage";
 import { ConfirmRequestMessage } from "./ConfirmRequestMessage";
 import { LoadingMessage } from "./LoadingMessage";
 import { OutputMessage } from "./OutputMessage";
@@ -66,19 +61,6 @@ function pairMessages(messages: StreamMessage[]) {
   return paired;
 }
 
-// TODO: what's up with the entries length check? is only a single table field allowed?
-function getTableField(
-  schema: InputSchema,
-): [string, TableFieldDefinition] | null {
-  const entries = Object.entries(schema) as [string, { type?: string }][];
-  if (entries.length !== 1) return null;
-
-  const [fieldName, fieldDef] = entries[0];
-  if (fieldDef.type !== "table") return null;
-
-  return [fieldName, fieldDef as TableFieldDefinition];
-}
-
 export function MessageList({
   messages,
   workflowId,
@@ -102,22 +84,7 @@ export function MessageList({
           case "output":
             return <OutputMessage key={message.id} block={message.block} />;
 
-          case "input_request": {
-            const tableField = getTableField(message.schema);
-            if (tableField) {
-              const [fieldName, fieldDef] = tableField;
-              return (
-                <InputTableMessage
-                  key={message.id}
-                  eventName={message.id}
-                  prompt={message.prompt}
-                  fieldName={fieldName}
-                  fieldDef={fieldDef}
-                  onSubmit={onSubmitInput}
-                  submittedValue={submittedValue}
-                />
-              );
-            }
+          case "input_request":
             return (
               <InputRequestMessage
                 key={message.id}
@@ -131,7 +98,6 @@ export function MessageList({
                 suppressAutoFocus={suppressAutoFocus}
               />
             );
-          }
 
           case "confirm_request":
             return (

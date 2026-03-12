@@ -3,6 +3,7 @@ import { TextField } from "./fields/TextField";
 import { NumberField } from "./fields/NumberField";
 import { CheckboxField } from "./fields/CheckboxField";
 import { SelectField } from "./fields/SelectField";
+import { TableField } from "./fields/TableField";
 
 export type FieldProps = {
   fieldName: string;
@@ -25,4 +26,5 @@ export const FIELD_REGISTRY: Partial<
   number: { autoFocusable: true, component: NumberField },
   checkbox: { autoFocusable: false, component: CheckboxField },
   select: { autoFocusable: false, component: SelectField },
+  table: { autoFocusable: false, component: TableField },
 };

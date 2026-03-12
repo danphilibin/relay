@@ -1,26 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Table } from "@cloudflare/kumo/components/table";
-import { Button } from "@cloudflare/kumo/components/button";
 import { Input } from "@cloudflare/kumo/components/input";
 import { Loader } from "@cloudflare/kumo/components/loader";
 import type {
   SerializedColumnDef,
   TableFieldDefinition,
 } from "relay-sdk/client";
-import { apiPath } from "../../lib/api";
-
-interface InputTableMessageProps {
-  eventName: string;
-  prompt: string;
-  fieldName: string;
-  fieldDef: TableFieldDefinition;
-  onSubmit: (
-    eventName: string,
-    value: Record<string, unknown>,
-  ) => Promise<void>;
-  /** When present the selection has already been submitted (replay / history) */
-  submittedValue?: Record<string, unknown>;
-}
+import { apiPath } from "../../../lib/api";
+import type { FieldProps } from "../SchemaFieldComponents";
 
 type LoaderResponse = {
   data: Record<string, unknown>[];
@@ -33,30 +20,27 @@ type ResolvedColumn = {
   renderIndex?: number;
 };
 
-export function InputTableMessage({
-  eventName,
-  prompt,
+export function TableField({
   fieldName,
   fieldDef,
-  onSubmit,
-  submittedValue,
-}: InputTableMessageProps) {
-  const { loader, rowKey, selection } = fieldDef;
+  disabled,
+  defaultValue,
+  onChange,
+}: FieldProps) {
+  const def = fieldDef as TableFieldDefinition;
+  const { loader, rowKey, selection } = def;
   const pageSize = loader.pageSize ?? 20;
 
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [data, setData] = useState<LoaderResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!disabled);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  // Track selected rows by their rowKey value. The client never holds full
-  // source rows — only the display columns from the loader response.
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
-
-  const isSubmitted = !!submittedValue;
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(
+    () => new Set((defaultValue as string[] | undefined) ?? []),
+  );
 
   const fetchData = useCallback(
     async (p: number, q: string) => {
@@ -88,11 +72,14 @@ export function InputTableMessage({
   );
 
   useEffect(() => {
-    // Don't fetch if already submitted (viewing history)
-    if (!isSubmitted) {
+    onChange(fieldName, Array.from(selectedKeys));
+  }, [fieldName, onChange, selectedKeys]);
+
+  useEffect(() => {
+    if (!disabled) {
       fetchData(page, debouncedQuery);
     }
-  }, [page, debouncedQuery, fetchData, isSubmitted]);
+  }, [page, debouncedQuery, fetchData, disabled]);
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
@@ -104,7 +91,8 @@ export function InputTableMessage({
   };
 
   const toggleRow = (key: string) => {
-    if (isSubmitted) return;
+    if (disabled) return;
+
     setSelectedKeys((prev) => {
       const next = new Set(prev);
       if (selection === "single") {
@@ -114,40 +102,17 @@ export function InputTableMessage({
           next.clear();
           next.add(key);
         }
+      } else if (next.has(key)) {
+        next.delete(key);
       } else {
-        if (next.has(key)) {
-          next.delete(key);
-        } else {
-          next.add(key);
-        }
+        next.add(key);
       }
+
       return next;
     });
   };
 
-  const handleSubmit = async () => {
-    if (isSubmitted || selectedKeys.size === 0) return;
-
-    // Send only the row identity values. The server resolves these back to
-    // full source rows via the loader's resolve function.
-    await onSubmit(eventName, { [fieldName]: Array.from(selectedKeys) });
-  };
-
   const columns = resolveColumns(loader.columns, data?.data);
-
-  // If already submitted, show a summary instead of the interactive table
-  if (isSubmitted && submittedValue) {
-    const keys = (submittedValue[fieldName] as string[]) ?? [];
-    return (
-      <div className="p-5 rounded-xl border bg-[#111] border-[#222] space-y-3">
-        <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
-        <div className="text-sm text-kumo-subtle">
-          Selected {keys.length} row{keys.length !== 1 ? "s" : ""}
-        </div>
-      </div>
-    );
-  }
-
   const totalCount = data?.totalCount;
   const totalPages =
     totalCount !== undefined ? Math.ceil(totalCount / pageSize) : undefined;
@@ -157,9 +122,29 @@ export function InputTableMessage({
       : (data?.data.length ?? 0) === pageSize;
   const hasPrev = page > 0;
 
+  if (disabled) {
+    const keys = Array.from(selectedKeys);
+    return (
+      <div className="space-y-2">
+        <div className="text-base text-[#fafafa]">{def.label}</div>
+        {def.description && (
+          <div className="text-sm text-kumo-subtle">{def.description}</div>
+        )}
+        <div className="text-sm text-kumo-subtle">
+          Selected {keys.length} row{keys.length !== 1 ? "s" : ""}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-5 rounded-xl border bg-[#111] border-[#222] space-y-3">
-      <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <div className="text-base text-[#fafafa]">{def.label}</div>
+        {def.description && (
+          <div className="text-sm text-kumo-subtle">{def.description}</div>
+        )}
+      </div>
 
       <div className="flex items-center gap-3">
         <div className="w-64">
@@ -197,6 +182,7 @@ export function InputTableMessage({
               {data.data.map((row) => {
                 const key = String(row[rowKey] ?? "");
                 const checked = selectedKeys.has(key);
+
                 return (
                   <Table.Row
                     key={key}
@@ -222,43 +208,34 @@ export function InputTableMessage({
       ) : null}
 
       <div className="flex items-center gap-3 text-sm text-kumo-subtle">
-        <Button
-          variant="secondary"
+        <button
+          type="button"
+          className="text-inherit disabled:opacity-50"
           disabled={!hasPrev}
           onClick={() => setPage((p) => p - 1)}
         >
           Previous
-        </Button>
+        </button>
         <span>
           Page {page + 1}
           {totalPages !== undefined ? ` of ${totalPages}` : ""}
           {totalCount !== undefined ? ` (${totalCount} total)` : ""}
         </span>
-        <Button
-          variant="secondary"
+        <button
+          type="button"
+          className="text-inherit disabled:opacity-50"
           disabled={!hasNext}
           onClick={() => setPage((p) => p + 1)}
         >
           Next
-        </Button>
+        </button>
       </div>
 
-      <div className="flex items-center gap-3 pt-2">
-        <Button
-          type="button"
-          disabled={selectedKeys.size === 0}
-          onClick={handleSubmit}
-        >
-          {selection === "single"
-            ? "Select"
-            : `Select ${selectedKeys.size > 0 ? `(${selectedKeys.size})` : ""}`}
-        </Button>
-        {selectedKeys.size > 0 && (
-          <span className="text-sm text-kumo-subtle">
-            {selectedKeys.size} row{selectedKeys.size !== 1 ? "s" : ""} selected
-          </span>
-        )}
-      </div>
+      {selectedKeys.size > 0 && (
+        <div className="text-sm text-kumo-subtle">
+          {selectedKeys.size} row{selectedKeys.size !== 1 ? "s" : ""} selected
+        </div>
+      )}
     </div>
   );
 }
@@ -280,7 +257,7 @@ function resolveColumns(
   if (data && data.length > 0) {
     const keys = Array.from(
       new Set(data.flatMap((row) => Object.keys(row))),
-    ).filter((k) => !k.startsWith("__render_"));
+    ).filter((key) => !key.startsWith("__render_"));
     return keys.map((key) => ({ label: key, accessorKey: key }));
   }
 
