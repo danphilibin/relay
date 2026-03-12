@@ -5,21 +5,19 @@ import {
 } from "cloudflare:workers";
 import {
   type InputSchema,
-  type InferInputResult,
-  type InferInputDefinitionResult,
   type ButtonDef,
   type InputOptions,
+  type ButtonLabels,
   type RelayInputFn,
   type InputFieldDefinition,
   type InputFieldBuilder,
   type InputFieldBuilders,
-  type InputDefinition,
   type TextFieldConfig,
   type NumberFieldConfig,
   type CheckboxFieldConfig,
   type SelectFieldConfig,
-  compileInputDefinition,
   compileInputFields,
+  type InferBuilderGroupResult,
 } from "../isomorphic/input";
 import {
   createInputRequest,
@@ -91,18 +89,12 @@ export type RelayHandler = (ctx: RelayContext) => Promise<void>;
  * Factory function for creating and registering workflow handlers.
  * When `input` is provided, the handler receives typed `data` with the collected values.
  */
-export function createWorkflow<T extends InputSchema>(config: {
-  name: string;
-  description?: string;
-  input: T;
-  handler: (ctx: RelayContext & { data: InferInputResult<T> }) => Promise<void>;
-}): void;
 export function createWorkflow<T extends InputFieldBuilders>(config: {
   name: string;
   description?: string;
   input: T;
   handler: (
-    ctx: RelayContext & { data: InferInputDefinitionResult<T> },
+    ctx: RelayContext & { data: InferBuilderGroupResult<T> },
   ) => Promise<void>;
 }): void;
 export function createWorkflow(config: {
@@ -113,13 +105,13 @@ export function createWorkflow(config: {
 export function createWorkflow(config: {
   name: string;
   description?: string;
-  input?: InputDefinition;
+  input?: InputFieldBuilders;
   handler: (...args: any[]) => Promise<void>;
 }): void {
   registerWorkflow(
     config.name,
     config.handler as RelayHandler,
-    compileInputDefinition(config.input),
+    config.input ? compileInputFields(config.input) : undefined,
     config.description,
   );
 }
@@ -205,24 +197,6 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     return `relay-${prefix}-${this.counter++}`;
   }
 
-  private normalizeInputArgs(
-    schemaOrOptions?: InputSchema | InputOptions,
-    maybeOptions?: InputOptions,
-  ): {
-    schema: InputSchema | undefined;
-    options: InputOptions | undefined;
-    buttons: ButtonDef[] | undefined;
-  } {
-    const isOptions = (v: unknown): v is InputOptions =>
-      typeof v === "object" && v !== null && "buttons" in v;
-
-    const schema = isOptions(schemaOrOptions) ? undefined : schemaOrOptions;
-    const options = isOptions(schemaOrOptions) ? schemaOrOptions : maybeOptions;
-    const buttons = options?.buttons as ButtonDef[] | undefined;
-
-    return { schema, options, buttons };
-  }
-
   private normalizeGroupArgs(
     promptOrOptions?: string | InputOptions,
     maybeOptions?: InputOptions,
@@ -244,10 +218,13 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     prompt: string,
     definition: TDef,
   ): InputFieldBuilder<TValue, TDef> {
-    const execute = async () => {
-      const result = await this.input(prompt, { input: definition });
-      return result.input as TValue;
-    };
+    const execute = () =>
+      this.requestSchemaInput(
+        prompt,
+        { input: definition },
+        undefined,
+        (payload) => payload.input as TValue,
+      );
 
     return {
       __relayFieldBuilder: true,
@@ -256,6 +233,33 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
       then: (onfulfilled, onrejected) =>
         execute().then(onfulfilled, onrejected),
     };
+  }
+
+  private async requestSchemaInput<TPayload>(
+    prompt: string,
+    schema: InputSchema | undefined,
+    buttons?: ButtonDef[],
+    mapPayload?: (payload: Record<string, unknown>) => TPayload,
+  ): Promise<TPayload> {
+    if (!this.step) {
+      throw new Error("Relay not initialized. Call initRelay() first.");
+    }
+
+    const eventName = this.stepName("input");
+
+    await this.step.do(`${eventName}-request`, async () => {
+      await this.sendMessage(
+        createInputRequest(eventName, prompt, schema, buttons),
+      );
+    });
+
+    const event = await this.step.waitForEvent(eventName, {
+      type: eventName,
+      timeout: "5 minutes",
+    });
+
+    const payload = event.payload as Record<string, unknown>;
+    return mapPayload ? mapPayload(payload) : (payload as TPayload);
   }
 
   private async sendOutput(block: OutputBlock): Promise<void> {
@@ -301,49 +305,31 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
    * Request input from the user and wait for a response.
    */
   input: RelayInputFn = Object.assign(
-    async (
+    async <const B extends readonly ButtonDef[]>(
       prompt: string,
-      schemaOrOptions?: InputSchema | InputOptions,
-      maybeOptions?: InputOptions,
+      options?: InputOptions<B>,
     ) => {
-      if (!this.step) {
-        throw new Error("Relay not initialized. Call initRelay() first.");
-      }
+      const buttons = options?.buttons as ButtonDef[] | undefined;
 
-      const { schema, buttons } = this.normalizeInputArgs(
-        schemaOrOptions,
-        maybeOptions,
-      );
-
-      const eventName = this.stepName("input");
-
-      await this.step.do(`${eventName}-request`, async () => {
-        await this.sendMessage(
-          createInputRequest(eventName, prompt, schema, buttons),
+      if (!buttons) {
+        return this.requestSchemaInput(
+          prompt,
+          undefined,
+          undefined,
+          (payload) => payload.input as string,
         );
-      });
-
-      const event = await this.step.waitForEvent(eventName, {
-        type: eventName,
-        timeout: "5 minutes",
-      });
-
-      const payload = event.payload as Record<string, unknown>;
-
-      // With buttons: always return object (with $choice)
-      if (buttons) {
-        if (!schema) {
-          return { value: payload.input, $choice: payload.$choice };
-        }
-        return payload;
       }
 
-      // No buttons: unwrap simple case
-      if (!schema) {
-        return payload.input;
-      }
-
-      return payload;
+      return this.requestSchemaInput(
+        prompt,
+        undefined,
+        buttons,
+        (payload) =>
+          ({
+            value: payload.input,
+            $choice: payload.$choice,
+          }) as { value: string; $choice: ButtonLabels<B> },
+      );
     },
     {
       text: (label: string, config: TextFieldConfig = {}) =>
@@ -397,8 +383,12 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
         const schema = compileInputFields(fields);
         return options
-          ? this.input(prompt, schema, options)
-          : this.input(prompt, schema);
+          ? this.requestSchemaInput(
+              prompt,
+              schema,
+              options.buttons as ButtonDef[],
+            )
+          : this.requestSchemaInput(prompt, schema);
       },
     },
   ) as RelayInputFn;

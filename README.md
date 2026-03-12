@@ -133,8 +133,9 @@ createWorkflow({
 });
 ```
 
-Field builders are awaitable on their own and composable in groups. Relay still
-compiles them down to the same schema-driven protocol sent to the browser, so
-the frontend remains workflow-agnostic.
+Field builders are awaitable on their own and composable in groups. For
+upfront workflow input, use `field.*` in `createWorkflow({ input })`. Relay
+still compiles those builders down to the same schema-driven protocol sent to
+the browser, so the frontend remains workflow-agnostic.
 
 Each workflow instance gets a Durable Object (keyed by instance ID) that supplies a persistent message buffer. The `RelayWorkflow` entrypoint wraps `step.do()` and `step.waitForEvent()` under the hood — `input()` sends an input request message, then waits for an event with the user's response. Messages are durably stored and streamed to clients via NDJSON, so the stream survives page reloads.

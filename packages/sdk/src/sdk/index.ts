@@ -19,14 +19,14 @@ export {
 } from "../isomorphic/messages";
 
 export { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
+export { field } from "../isomorphic/input";
 
 export type {
   InputSchema,
   InputFieldDefinition,
   InputFieldBuilder,
   InputFieldBuilders,
-  InputDefinition,
-  InferInputDefinitionResult,
+  RelayFieldFactory,
   NormalizedButton,
   SelectOption,
 } from "../isomorphic/input";

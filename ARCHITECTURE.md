@@ -87,35 +87,42 @@ Playwright end-to-end tests.
 
 **Message protocol:** The `StreamMessage` Zod-validated discriminated union (on `type`) is the contract between SDK, DO, HTTP layer, and frontend. All message types are defined once in `isomorphic/messages.ts`.
 
-**Input schema / type inference:** workflow authors now build inputs with awaitable field builders like `input.text()` and `input.select()`, then compose them with `input.group()`. Those builders compile to `InputSchema` field definitions (`text`, `number`, `checkbox`, `select`) for the stream protocol and frontend renderer. TypeScript inference still maps field types to result types (`text` -> `string`, `checkbox` -> `boolean`, etc.), but the authoring API is no longer the transport shape.
+**Input schema / type inference:** Relay now has two builder entry points for two different phases. `field.*` is used at workflow definition time in `createWorkflow({ input })` to declare upfront inputs. `input.*` is used inside a running workflow handler to request interactive inputs, and `input.group()` composes multiple runtime field builders into one interaction. Both forms compile to `InputSchema` field definitions (`text`, `number`, `checkbox`, `select`) for the stream protocol and frontend renderer. `InputSchema` remains the transport/intermediate representation, not the primary public authoring API.
 
 **Dual API surface:** Both the interactive API (browser: stream + events) and the call-response API (agents: blocking POST) share the same core execution functions in `workflow-api.ts`, avoiding divergence.
 
 ## SDK Primitives
 
+Top-level workflow definition helpers:
+
+| Property                          | Signature                       | What it does                                             |
+| --------------------------------- | ------------------------------- | -------------------------------------------------------- |
+| `field.text(label, options?)`     | `=> InputFieldBuilder<string>`  | Defines an upfront text field for `createWorkflow()`     |
+| `field.select(label, options)`    | `=> InputFieldBuilder<string>`  | Defines an upfront select field for `createWorkflow()`   |
+| `field.number(label, options?)`   | `=> InputFieldBuilder<number>`  | Defines an upfront number field for `createWorkflow()`   |
+| `field.checkbox(label, options?)` | `=> InputFieldBuilder<boolean>` | Defines an upfront checkbox field for `createWorkflow()` |
+
 The handler context (`RelayContext`) passed to every workflow:
 
-| Property                                     | Signature                                       | What it does                                            |
-| -------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------- |
-| `output.markdown(content)`                   | `(string) => Promise<void>`                     | Sends a markdown block                                  |
-| `output.table({ title?, data })`             | `=> Promise<void>`                              | Sends a data table                                      |
-| `output.code({ code, language? })`           | `=> Promise<void>`                              | Sends a code block                                      |
-| `output.image({ src, alt? })`                | `=> Promise<void>`                              | Sends an image                                          |
-| `output.link({ url, title?, description? })` | `=> Promise<void>`                              | Sends a link card                                       |
-| `output.buttons(buttons)`                    | `=> Promise<void>`                              | Sends action buttons                                    |
-| `input(prompt)`                              | `(string) => Promise<string>`                   | Text input, waits for response                          |
-| `input.text(label, options?)`                | `=> InputFieldBuilder<string>`                  | Awaitable text field builder                            |
-| `input.select(label, options)`               | `=> InputFieldBuilder<string>`                  | Awaitable select field builder                          |
-| `input.number(label, options?)`              | `=> InputFieldBuilder<number>`                  | Awaitable number field builder                          |
-| `input.checkbox(label, options?)`            | `=> InputFieldBuilder<boolean>`                 | Awaitable checkbox field builder                        |
-| `input.group(fields, prompt?, options?)`     | `=> Promise<{ ...fields }>`                     | Compose multiple field builders into one interaction    |
-| `input(prompt, schema)`                      | `=> Promise<InferInputResult<T>>`               | Multi-field form, waits                                 |
-| `input(prompt, { buttons })`                 | `=> Promise<{ value, $choice }>`                | Text input with custom buttons                          |
-| `input(prompt, schema, { buttons })`         | `=> Promise<InferInputResult<T> & { $choice }>` | Form with custom buttons                                |
-| `loading(msg, callback)`                     | `(string, cb) => Promise<void>`                 | Shows spinner during async work                         |
-| `confirm(msg)`                               | `(string) => Promise<boolean>`                  | Approve/reject dialog                                   |
-| `step`                                       | `WorkflowStep`                                  | Raw Cloudflare step (`step.do()`, `step.sleep()`, etc.) |
-| `data`                                       | `InferInputResult<T>`                           | Typed upfront input (only when input schema provided)   |
+| Property                                     | Signature                        | What it does                                            |
+| -------------------------------------------- | -------------------------------- | ------------------------------------------------------- |
+| `output.markdown(content)`                   | `(string) => Promise<void>`      | Sends a markdown block                                  |
+| `output.table({ title?, data })`             | `=> Promise<void>`               | Sends a data table                                      |
+| `output.code({ code, language? })`           | `=> Promise<void>`               | Sends a code block                                      |
+| `output.image({ src, alt? })`                | `=> Promise<void>`               | Sends an image                                          |
+| `output.link({ url, title?, description? })` | `=> Promise<void>`               | Sends a link card                                       |
+| `output.buttons(buttons)`                    | `=> Promise<void>`               | Sends action buttons                                    |
+| `input(prompt)`                              | `(string) => Promise<string>`    | Text input, waits for response                          |
+| `input.text(label, options?)`                | `=> InputFieldBuilder<string>`   | Awaitable text field builder                            |
+| `input.select(label, options)`               | `=> InputFieldBuilder<string>`   | Awaitable select field builder                          |
+| `input.number(label, options?)`              | `=> InputFieldBuilder<number>`   | Awaitable number field builder                          |
+| `input.checkbox(label, options?)`            | `=> InputFieldBuilder<boolean>`  | Awaitable checkbox field builder                        |
+| `input.group(fields, prompt?, options?)`     | `=> Promise<{ ...fields }>`      | Compose multiple field builders into one interaction    |
+| `input(prompt, { buttons })`                 | `=> Promise<{ value, $choice }>` | Text input with custom buttons                          |
+| `loading(msg, callback)`                     | `(string, cb) => Promise<void>`  | Shows spinner during async work                         |
+| `confirm(msg)`                               | `(string) => Promise<boolean>`   | Approve/reject dialog                                   |
+| `step`                                       | `WorkflowStep`                   | Raw Cloudflare step (`step.do()`, `step.sleep()`, etc.) |
+| `data`                                       | `InferBuilderGroupResult<T>`     | Typed upfront input (only when field builders provided) |
 
 ## HTTP API
 
@@ -148,7 +155,7 @@ Both return a `CallResponseResult`:
 
 ## How `input()` suspends and resumes
 
-1. Field builders optionally compile into an `InputSchema`
+1. `field.*` and `input.*` builders compile into an `InputSchema`
 2. `step.do(requestEvent)` → sends `input_request` message to DO stream
 3. `step.waitForEvent(eventName)` → suspends the Workflow
 4. Client submits form → `POST /workflows/:id/event/:name` → sends `input_received` to DO + calls `instance.sendEvent()` to resume

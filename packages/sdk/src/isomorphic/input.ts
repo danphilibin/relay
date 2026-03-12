@@ -154,15 +154,6 @@ export type InferInputResult<T extends InputSchema> = {
   [K in keyof T]: InferFieldType<T[K]>;
 };
 
-export type InputDefinition = InputSchema | InputFieldBuilders;
-
-export type InferInputDefinitionResult<T extends InputDefinition> =
-  T extends InputSchema
-    ? InferInputResult<T>
-    : T extends InputFieldBuilders
-      ? InferBuilderGroupResult<T>
-      : never;
-
 export function isInputFieldBuilder(
   value: unknown,
 ): value is InputFieldBuilder<unknown> {
@@ -174,21 +165,27 @@ export function isInputFieldBuilder(
   );
 }
 
+function createStaticFieldBuilder<TValue, TDef extends InputFieldDefinition>(
+  definition: TDef,
+): InputFieldBuilder<TValue, TDef> {
+  return {
+    __relayFieldBuilder: true,
+    definition,
+    // oxlint-disable-next-line unicorn/no-thenable -- static field builders share the same builder contract as awaitable runtime builders
+    then: () => {
+      throw new Error(
+        "Field builders from `field.*` are only for schema composition. Await `input.*` inside a workflow handler instead.",
+      );
+    },
+  };
+}
+
 export function compileInputFields<TFields extends InputFieldBuilders>(
   fields: TFields,
 ): InputSchema {
   return Object.fromEntries(
     Object.entries(fields).map(([key, field]) => [key, field.definition]),
   );
-}
-
-export function compileInputDefinition(
-  input: InputDefinition | undefined,
-): InputSchema | undefined {
-  if (!input) return undefined;
-  return isInputFieldBuilder(Object.values(input)[0])
-    ? compileInputFields(input as InputFieldBuilders)
-    : (input as InputSchema);
 }
 
 type InputGroupFn = {
@@ -241,6 +238,29 @@ type InputSelectFn = <const TOptions extends readonly SelectOption[]>(
   Extract<InputFieldDefinition, { type: "select" }>
 >;
 
+export type RelayFieldFactory = {
+  text: InputTextFn;
+  checkbox: InputCheckboxFn;
+  number: InputNumberFn;
+  select: InputSelectFn;
+};
+
+export const field: RelayFieldFactory = {
+  text: (label, config = {}) =>
+    createStaticFieldBuilder({ type: "text", label, ...config }),
+  checkbox: (label, config = {}) =>
+    createStaticFieldBuilder({ type: "checkbox", label, ...config }),
+  number: (label, config = {}) =>
+    createStaticFieldBuilder({ type: "number", label, ...config }),
+  select: (label, config) =>
+    createStaticFieldBuilder({
+      type: "select",
+      label,
+      ...config,
+      options: [...config.options],
+    }),
+};
+
 /**
  * Input function type with overloads for simple and structured inputs
  */
@@ -248,24 +268,11 @@ export type RelayInputFn = {
   // Simple prompt
   (prompt: string): Promise<string>;
 
-  // Prompt with schema
-  <T extends InputSchema>(
-    prompt: string,
-    schema: T,
-  ): Promise<InferInputResult<T>>;
-
   // Prompt with buttons
   <const B extends readonly ButtonDef[]>(
     prompt: string,
     options: InputOptions<B>,
   ): Promise<{ value: string; $choice: ButtonLabels<B> }>;
-
-  // Schema with buttons
-  <T extends InputSchema, const B extends readonly ButtonDef[]>(
-    prompt: string,
-    schema: T,
-    options: InputOptions<B>,
-  ): Promise<InferInputResult<T> & { $choice: ButtonLabels<B> }>;
 } & {
   text: InputTextFn;
   checkbox: InputCheckboxFn;
