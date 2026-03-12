@@ -5,36 +5,33 @@ export const createWebhook = createWorkflow({
   description:
     "Configure a webhook endpoint with event subscriptions and test it.",
   handler: async ({ input, output }) => {
-    const { url, contentType } = await input("Configure your webhook", {
-      url: {
-        type: "text",
-        label: "Endpoint URL",
-        placeholder: "https://api.example.com/webhooks",
-      },
-      contentType: {
-        type: "select",
-        label: "Content type",
-        options: [
-          { value: "json", label: "application/json" },
-          { value: "form", label: "application/x-www-form-urlencoded" },
-        ],
-      },
-    });
-
-    const { events } = await input(
-      "Which events should trigger this webhook?",
+    const { url, contentType } = await input.group(
       {
-        events: {
-          type: "select",
-          label: "Event",
+        url: input.text("Endpoint URL", {
+          placeholder: "https://api.example.com/webhooks",
+        }),
+        contentType: input.select("Content type", {
+          options: [
+            { value: "json", label: "application/json" },
+            { value: "form", label: "application/x-www-form-urlencoded" },
+          ],
+        }),
+      },
+      "Configure your webhook",
+    );
+
+    const { events } = await input.group(
+      {
+        events: input.select("Event", {
           options: [
             { value: "order.created", label: "Order created" },
             { value: "order.updated", label: "Order updated" },
             { value: "payment.completed", label: "Payment completed" },
             { value: "refund.processed", label: "Refund processed" },
           ],
-        },
+        }),
       },
+      "Which events should trigger this webhook?",
     );
 
     const payload = {

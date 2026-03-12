@@ -37,7 +37,12 @@ export type WorkflowStatus =
 export type {
   InputSchema,
   InputFieldDefinition,
+  InputFieldBuilder,
+  InputFieldBuilders,
+  InputDefinition,
+  InferInputDefinitionResult,
   NormalizedButton,
+  SelectOption,
 } from "../isomorphic/input";
 
 export type {

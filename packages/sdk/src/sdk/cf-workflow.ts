@@ -6,9 +6,20 @@ import {
 import {
   type InputSchema,
   type InferInputResult,
+  type InferInputDefinitionResult,
   type ButtonDef,
   type InputOptions,
   type RelayInputFn,
+  type InputFieldDefinition,
+  type InputFieldBuilder,
+  type InputFieldBuilders,
+  type InputDefinition,
+  type TextFieldConfig,
+  type NumberFieldConfig,
+  type CheckboxFieldConfig,
+  type SelectFieldConfig,
+  compileInputDefinition,
+  compileInputFields,
 } from "../isomorphic/input";
 import {
   createInputRequest,
@@ -86,6 +97,14 @@ export function createWorkflow<T extends InputSchema>(config: {
   input: T;
   handler: (ctx: RelayContext & { data: InferInputResult<T> }) => Promise<void>;
 }): void;
+export function createWorkflow<T extends InputFieldBuilders>(config: {
+  name: string;
+  description?: string;
+  input: T;
+  handler: (
+    ctx: RelayContext & { data: InferInputDefinitionResult<T> },
+  ) => Promise<void>;
+}): void;
 export function createWorkflow(config: {
   name: string;
   description?: string;
@@ -94,13 +113,13 @@ export function createWorkflow(config: {
 export function createWorkflow(config: {
   name: string;
   description?: string;
-  input?: InputSchema;
+  input?: InputDefinition;
   handler: (...args: any[]) => Promise<void>;
 }): void {
   registerWorkflow(
     config.name,
     config.handler as RelayHandler,
-    config.input,
+    compileInputDefinition(config.input),
     config.description,
   );
 }
@@ -204,6 +223,41 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     return { schema, options, buttons };
   }
 
+  private normalizeGroupArgs(
+    promptOrOptions?: string | InputOptions,
+    maybeOptions?: InputOptions,
+  ): {
+    prompt: string;
+    options: InputOptions | undefined;
+  } {
+    if (typeof promptOrOptions === "string") {
+      return { prompt: promptOrOptions, options: maybeOptions };
+    }
+
+    return {
+      prompt: "",
+      options: promptOrOptions,
+    };
+  }
+
+  private createFieldBuilder<TValue, TDef extends InputFieldDefinition>(
+    prompt: string,
+    definition: TDef,
+  ): InputFieldBuilder<TValue, TDef> {
+    const execute = async () => {
+      const result = await this.input(prompt, { input: definition });
+      return result.input as TValue;
+    };
+
+    return {
+      __relayFieldBuilder: true,
+      definition,
+      // oxlint-disable-next-line unicorn/no-thenable -- builders are intentionally awaitable so the same API works for simple fields and groups
+      then: (onfulfilled, onrejected) =>
+        execute().then(onfulfilled, onrejected),
+    };
+  }
+
   private async sendOutput(block: OutputBlock): Promise<void> {
     if (!this.step) {
       throw new Error("Relay not initialized. Call initRelay() first.");
@@ -246,50 +300,108 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
   /**
    * Request input from the user and wait for a response.
    */
-  input: RelayInputFn = (async (
-    prompt: string,
-    schemaOrOptions?: InputSchema | InputOptions,
-    maybeOptions?: InputOptions,
-  ) => {
-    if (!this.step) {
-      throw new Error("Relay not initialized. Call initRelay() first.");
-    }
-
-    const { schema, buttons } = this.normalizeInputArgs(
-      schemaOrOptions,
-      maybeOptions,
-    );
-
-    const eventName = this.stepName("input");
-
-    await this.step.do(`${eventName}-request`, async () => {
-      await this.sendMessage(
-        createInputRequest(eventName, prompt, schema, buttons),
-      );
-    });
-
-    const event = await this.step.waitForEvent(eventName, {
-      type: eventName,
-      timeout: "5 minutes",
-    });
-
-    const payload = event.payload as Record<string, unknown>;
-
-    // With buttons: always return object (with $choice)
-    if (buttons) {
-      if (!schema) {
-        return { value: payload.input, $choice: payload.$choice };
+  input: RelayInputFn = Object.assign(
+    async (
+      prompt: string,
+      schemaOrOptions?: InputSchema | InputOptions,
+      maybeOptions?: InputOptions,
+    ) => {
+      if (!this.step) {
+        throw new Error("Relay not initialized. Call initRelay() first.");
       }
+
+      const { schema, buttons } = this.normalizeInputArgs(
+        schemaOrOptions,
+        maybeOptions,
+      );
+
+      const eventName = this.stepName("input");
+
+      await this.step.do(`${eventName}-request`, async () => {
+        await this.sendMessage(
+          createInputRequest(eventName, prompt, schema, buttons),
+        );
+      });
+
+      const event = await this.step.waitForEvent(eventName, {
+        type: eventName,
+        timeout: "5 minutes",
+      });
+
+      const payload = event.payload as Record<string, unknown>;
+
+      // With buttons: always return object (with $choice)
+      if (buttons) {
+        if (!schema) {
+          return { value: payload.input, $choice: payload.$choice };
+        }
+        return payload;
+      }
+
+      // No buttons: unwrap simple case
+      if (!schema) {
+        return payload.input;
+      }
+
       return payload;
-    }
+    },
+    {
+      text: (label: string, config: TextFieldConfig = {}) =>
+        this.createFieldBuilder<
+          string,
+          Extract<InputFieldDefinition, { type: "text" }>
+        >(label, { type: "text", label, ...config }),
+      checkbox: (label: string, config: CheckboxFieldConfig = {}) =>
+        this.createFieldBuilder<
+          boolean,
+          Extract<InputFieldDefinition, { type: "checkbox" }>
+        >(label, {
+          type: "checkbox",
+          label,
+          ...config,
+        }),
+      number: (label: string, config: NumberFieldConfig = {}) =>
+        this.createFieldBuilder<
+          number,
+          Extract<InputFieldDefinition, { type: "number" }>
+        >(label, { type: "number", label, ...config }),
+      select: <
+        const TOptions extends readonly { value: string; label: string }[],
+      >(
+        label: string,
+        config: Omit<
+          SelectFieldConfig<TOptions[number]["value"]>,
+          "options"
+        > & {
+          options: TOptions;
+        },
+      ) =>
+        this.createFieldBuilder<
+          TOptions[number]["value"],
+          Extract<InputFieldDefinition, { type: "select" }>
+        >(label, {
+          type: "select",
+          label,
+          ...config,
+          options: [...config.options],
+        }),
+      group: async (
+        fields: InputFieldBuilders,
+        promptOrOptions?: string | InputOptions,
+        maybeOptions?: InputOptions,
+      ) => {
+        const { prompt, options } = this.normalizeGroupArgs(
+          promptOrOptions,
+          maybeOptions,
+        );
 
-    // No buttons: unwrap simple case
-    if (!schema) {
-      return payload.input;
-    }
-
-    return payload;
-  }) as RelayInputFn;
+        const schema = compileInputFields(fields);
+        return options
+          ? this.input(prompt, schema, options)
+          : this.input(prompt, schema);
+      },
+    },
+  ) as RelayInputFn;
 
   /**
    * Show a loading indicator while performing async work.

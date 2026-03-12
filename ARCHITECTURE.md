@@ -87,7 +87,7 @@ Playwright end-to-end tests.
 
 **Message protocol:** The `StreamMessage` Zod-validated discriminated union (on `type`) is the contract between SDK, DO, HTTP layer, and frontend. All message types are defined once in `isomorphic/messages.ts`.
 
-**Input schema / type inference:** `InputSchema` field definitions (`text`, `number`, `checkbox`, `select`) flow from workflow definition through the stream protocol to the frontend form renderer. TypeScript inference maps field types to result types (`text` -> `string`, `checkbox` -> `boolean`, etc.).
+**Input schema / type inference:** workflow authors now build inputs with awaitable field builders like `input.text()` and `input.select()`, then compose them with `input.group()`. Those builders compile to `InputSchema` field definitions (`text`, `number`, `checkbox`, `select`) for the stream protocol and frontend renderer. TypeScript inference still maps field types to result types (`text` -> `string`, `checkbox` -> `boolean`, etc.), but the authoring API is no longer the transport shape.
 
 **Dual API surface:** Both the interactive API (browser: stream + events) and the call-response API (agents: blocking POST) share the same core execution functions in `workflow-api.ts`, avoiding divergence.
 
@@ -104,6 +104,11 @@ The handler context (`RelayContext`) passed to every workflow:
 | `output.link({ url, title?, description? })` | `=> Promise<void>`                              | Sends a link card                                       |
 | `output.buttons(buttons)`                    | `=> Promise<void>`                              | Sends action buttons                                    |
 | `input(prompt)`                              | `(string) => Promise<string>`                   | Text input, waits for response                          |
+| `input.text(label, options?)`                | `=> InputFieldBuilder<string>`                  | Awaitable text field builder                            |
+| `input.select(label, options)`               | `=> InputFieldBuilder<string>`                  | Awaitable select field builder                          |
+| `input.number(label, options?)`              | `=> InputFieldBuilder<number>`                  | Awaitable number field builder                          |
+| `input.checkbox(label, options?)`            | `=> InputFieldBuilder<boolean>`                 | Awaitable checkbox field builder                        |
+| `input.group(fields, prompt?, options?)`     | `=> Promise<{ ...fields }>`                     | Compose multiple field builders into one interaction    |
 | `input(prompt, schema)`                      | `=> Promise<InferInputResult<T>>`               | Multi-field form, waits                                 |
 | `input(prompt, { buttons })`                 | `=> Promise<{ value, $choice }>`                | Text input with custom buttons                          |
 | `input(prompt, schema, { buttons })`         | `=> Promise<InferInputResult<T> & { $choice }>` | Form with custom buttons                                |
@@ -143,7 +148,8 @@ Both return a `CallResponseResult`:
 
 ## How `input()` suspends and resumes
 
-1. `step.do(requestEvent)` → sends `input_request` message to DO stream
-2. `step.waitForEvent(eventName)` → suspends the Workflow
-3. Client submits form → `POST /workflows/:id/event/:name` → sends `input_received` to DO + calls `instance.sendEvent()` to resume
-4. Workflow continues with the submitted payload
+1. Field builders optionally compile into an `InputSchema`
+2. `step.do(requestEvent)` → sends `input_request` message to DO stream
+3. `step.waitForEvent(eventName)` → suspends the Workflow
+4. Client submits form → `POST /workflows/:id/event/:name` → sends `input_received` to DO + calls `instance.sendEvent()` to resume
+5. Workflow continues with the submitted payload
