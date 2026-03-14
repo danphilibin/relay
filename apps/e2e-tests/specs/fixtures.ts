@@ -20,3 +20,17 @@ export const test = base.extend<{
 });
 
 export { expect };
+
+/**
+ * Helper to read a metadata value from the Result metadata block.
+ * Looks for a <dt> with the key text and returns the sibling <dd> text.
+ */
+export async function getMetadataValue(
+  page: import("@playwright/test").Page,
+  key: string,
+): Promise<string> {
+  // Use exact text matching to avoid "name" matching "nameType"
+  const dt = page.locator("dt", { hasText: new RegExp(`^${key}$`) });
+  const dd = dt.locator("+ dd");
+  return (await dd.textContent()) ?? "";
+}

@@ -11,6 +11,5 @@ settings.local.json
 .dev.vars
 opensrc/
 .docs
-specs
 playwright-report
 test-results

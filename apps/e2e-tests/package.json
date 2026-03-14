@@ -1,0 +1,17 @@
+{
+  "name": "relay-e2e-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8788",
+    "typecheck": "wrangler types && tsc"
+  },
+  "dependencies": {
+    "relay-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "wrangler": "^4.56.0"
+  }
+}

@@ -1,9 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174";
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: "./apps/e2e-tests/specs",
   timeout: 60_000,
   expect: {
     timeout: 10_000,
@@ -16,16 +16,28 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
+  // E2e tests run the worker on port 8788 and the web app on port 5174
+  // so they don't conflict with `pnpm dev` (which uses 8787 + 5173).
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
-    : {
-        command: "pnpm dev",
-        url: baseURL,
-        reuseExistingServer: true,
-        timeout: 180_000,
-        stdout: "ignore",
-        stderr: "pipe",
-      },
+    : [
+        {
+          command: "pnpm --filter relay-e2e-tests dev",
+          port: 8788,
+          reuseExistingServer: true,
+          timeout: 180_000,
+          stdout: "ignore",
+          stderr: "pipe",
+        },
+        {
+          command: "pnpm dev:e2e:react",
+          url: baseURL,
+          reuseExistingServer: true,
+          timeout: 180_000,
+          stdout: "ignore",
+          stderr: "pipe",
+        },
+      ],
   projects: [
     {
       name: "chromium",

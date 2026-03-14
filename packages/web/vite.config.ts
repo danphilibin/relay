@@ -4,6 +4,9 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ command }) => {
+  // Allow overriding the worker URL for e2e tests (e.g., port 8788)
+  const workerUrl = process.env.RELAY_WORKER_URL ?? "http://localhost:8787";
+
   return {
     plugins: [
       tailwindcss(),
@@ -14,9 +17,9 @@ export default defineConfig(({ command }) => {
     ],
     server: {
       proxy: {
-        "/api": "http://localhost:8787",
-        "/stream": "http://localhost:8787",
-        "/workflows": "http://localhost:8787",
+        "/api": workerUrl,
+        "/stream": workerUrl,
+        "/workflows": workerUrl,
       },
     },
     build: {

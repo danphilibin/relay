@@ -28,6 +28,19 @@ importers:
         specifier: ^1.50.0
         version: 1.50.0
 
+  apps/e2e-tests:
+    dependencies:
+      relay-sdk:
+        specifier: workspace:*
+        version: link:../../packages/sdk
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.56.0
+        version: 4.56.0(@cloudflare/workers-types@4.20260228.1)
+
   apps/examples:
     dependencies:
       relay-sdk:

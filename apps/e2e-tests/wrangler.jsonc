@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "relay-e2e-tests",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "workflows": [
+    {
+      "name": "relay-workflow-prototype",
+      "binding": "RELAY_WORKFLOW",
+      "class_name": "RelayWorkflow",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "RELAY_DURABLE_OBJECT",
+        "class_name": "RelayDurableObject",
+      },
+      {
+        "name": "RELAY_MCP_AGENT",
+        "class_name": "RelayMcpAgent",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RelayDurableObject"],
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["RelayMcpAgent"],
+    },
+  ],
+}

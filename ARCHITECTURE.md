@@ -26,10 +26,15 @@ workflows-starter/
 │           ├── lib/
 │           └── routes/
 ├── apps/
-│   └── examples/         → Example Cloudflare Worker
-│       └── src/
-│           ├── index.ts      # Worker entrypoint
-│           └── workflows/    # Example workflow definitions
+│   ├── examples/         → Example Cloudflare Worker
+│   │   └── src/
+│   │       ├── index.ts      # Worker entrypoint
+│   │       └── workflows/    # Example workflow definitions
+│   └── e2e-tests/        → E2e test suite (workflows + Playwright specs)
+│       ├── src/
+│       │   ├── index.ts      # Worker entrypoint
+│       │   └── workflows/    # One workflow per SDK primitive
+│       └── specs/            # Playwright specs organized by primitive
 ├── mcp/                  # MCP server entrypoint (stdio transport)
 ├── tests/
 │   └── e2e/              # Playwright end-to-end tests
@@ -67,13 +72,13 @@ The core hook is `useWorkflowStream` — it manages the full lifecycle of connec
 
 Example Cloudflare Worker demonstrating the deployment shape: imports `relay-sdk`, defines workflows, deploys independently. Contains several example workflows covering simple to complex cases.
 
+### `apps/e2e-tests`
+
+E2e test suite — colocates the test Cloudflare Worker (workflows) and Playwright specs. One workflow per SDK primitive, designed for automated testing rather than demos. Runs on separate ports (worker:8788, web:5174) so it doesn't conflict with `pnpm dev`. See `apps/e2e-tests/README.md`.
+
 ### `mcp/`
 
 Thin MCP server entrypoint that delegates to `relay-sdk/mcp`. Used for running a local MCP server over stdio.
-
-### `tests/e2e/`
-
-Playwright end-to-end tests.
 
 ## Ground Rules
 
