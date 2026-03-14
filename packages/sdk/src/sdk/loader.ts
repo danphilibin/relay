@@ -233,7 +233,7 @@ export type TableOutputLoader<TRow = unknown> = {
 
 /** Options for selecting a single row from a loader-backed table. */
 export type TableInputSingle<TRow> = {
-  prompt: string;
+  title: string;
   source: LoaderRef<TRow>;
   pageSize?: number;
   columns?: ColumnDef<TRow>[];
@@ -243,7 +243,7 @@ export type TableInputSingle<TRow> = {
 
 /** Options for selecting multiple rows from a loader-backed table. */
 export type TableInputMultiple<TRow> = {
-  prompt: string;
+  title: string;
   source: LoaderRef<TRow>;
   pageSize?: number;
   columns?: ColumnDef<TRow>[];

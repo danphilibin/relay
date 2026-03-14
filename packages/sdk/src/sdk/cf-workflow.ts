@@ -526,7 +526,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           throw new Error("Relay not initialized. Call initRelay() first.");
         }
 
-        const { prompt, source, pageSize, renderer } = opts;
+        const { title, source, pageSize, renderer } = opts;
         const selection = opts.selection ?? "single";
 
         // rowKey comes from the loader definition, not the call site.
@@ -554,9 +554,9 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             pageSize,
           });
           await this.sendMessage(
-            createTableInputRequest(eventName, prompt, {
+            createTableInputRequest(eventName, title, {
               type: "table",
-              label: prompt,
+              label: title,
               loader: {
                 path: this.buildLoaderPath({
                   runId: this.runId,
