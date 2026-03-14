@@ -30,20 +30,21 @@ export const tables = createWorkflow({
     await output.table({
       title: "Users (data)",
       data: (await db.users.findMany()).data,
+      pageSize: 5,
     });
 
     // 2. output.table with loader — paginated server-side
     await output.table({
       title: "Users (loader)",
       source: loaders.users,
-      pageSize: 10,
+      pageSize: 5,
     });
 
     // 3. input.table with loader, single selection
     const user = await input.table({
       title: "Pick a user",
       source: loaders.users,
-      pageSize: 10,
+      pageSize: 5,
     });
     const _userIsUser: User = user;
 
@@ -52,6 +53,7 @@ export const tables = createWorkflow({
       title: "Pick user (from static data)",
       data: (await db.users.findMany()).data,
       rowKey: "id",
+      pageSize: 5,
     });
     const _userFromDataIsUser: User = userFromData;
 
