@@ -56,6 +56,7 @@ export type {
   LoaderResult,
   PaginationParams,
   ColumnDef,
+  LoaderColumnDef,
   CellValue,
   RowKeyValue,
   TableRendererDef,
