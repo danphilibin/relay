@@ -149,13 +149,6 @@ export function loader<D extends ParamDescriptor, TRow>(
   ) => Promise<LoaderResult<TRow>>,
 ): LoaderDef<InferParams<D>, TRow>;
 
-/** Config object with rowKey + resolve — no custom params */
-export function loader<TRow>(config: {
-  rowKey: keyof TRow & string;
-  load: (params: PaginationParams, env: Env) => Promise<LoaderResult<TRow>>;
-  resolve: (params: { keys: string[] }, env: Env) => Promise<TRow[]>;
-}): LoaderDef<NoParams, TRow>;
-
 /** Config object with rowKey + resolve — with custom params */
 export function loader<D extends ParamDescriptor, TRow>(config: {
   rowKey: keyof TRow & string;
@@ -164,11 +157,21 @@ export function loader<D extends ParamDescriptor, TRow>(config: {
     params: InferParams<D> & PaginationParams,
     env: Env,
   ) => Promise<LoaderResult<TRow>>;
+  // `params` is the source of truth for the loader contract. `resolve` may
+  // ignore bound params it does not need, so we allow a narrower callback here
+  // instead of forcing authors to reference every param just for overloads.
   resolve: (
-    params: { keys: string[] } & InferParams<D>,
+    params: { keys: string[] } & Partial<InferParams<D>>,
     env: Env,
   ) => Promise<TRow[]>;
 }): LoaderDef<InferParams<D>, TRow>;
+
+/** Config object with rowKey + resolve — no custom params */
+export function loader<TRow>(config: {
+  rowKey: keyof TRow & string;
+  load: (params: PaginationParams, env: Env) => Promise<LoaderResult<TRow>>;
+  resolve: (params: { keys: string[] }, env: Env) => Promise<TRow[]>;
+}): LoaderDef<NoParams, TRow>;
 
 export function loader(...args: any[]): any {
   // Simple function form: loader(fn)
