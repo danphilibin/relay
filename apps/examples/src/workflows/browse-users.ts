@@ -33,21 +33,18 @@ export const browseUsers = createWorkflow({
     // await output.table({
     //   title: "All Users",
     //   source: loaders.users,
-    //   tableRenderer: userTableRenderer,
+    //   renderer: userTableRenderer,
     //   pageSize: 10,
     // });
 
-    const { department } = await input.group(
-      {
-        department: input.select("Department", {
-          options: ["All", ...DEPARTMENTS].map((department) => ({
-            value: department,
-            label: department,
-          })),
-        }),
-      },
-      "Select a department",
-    );
+    const { department } = await input.group("Select a department", {
+      department: input.select("Department", {
+        options: ["All", ...DEPARTMENTS].map((department) => ({
+          value: department,
+          label: department,
+        })),
+      }),
+    });
 
     // Department-scoped view
     await output.table({
@@ -58,7 +55,7 @@ export const browseUsers = createWorkflow({
           : loaders.deptUsers({ department }),
       pageSize: 5,
       // columns: ["name", "email", "department", "role"],
-      tableRenderer: userTableRenderer,
+      renderer: userTableRenderer,
     });
   },
 });

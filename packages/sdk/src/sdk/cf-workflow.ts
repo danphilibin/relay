@@ -429,10 +429,10 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     },
     table: async (opts: any) => {
       if (isLoaderTable(opts)) {
-        const { source, title, pageSize, tableRenderer } = opts;
+        const { source, title, pageSize, renderer } = opts;
         // Table renderers own the display shape when provided; otherwise we fall back
         // to any inline columns passed directly to output.table().
-        const columns = tableRenderer?.columns ?? opts.columns;
+        const columns = renderer?.columns ?? opts.columns;
         const serializedColumns = serializeColumns(columns);
         const stepId = this.stepName("output");
 
@@ -459,7 +459,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             stepId,
             loaderName: source.name,
             params: source.params,
-            tableRendererName: tableRenderer?.name,
+            tableRendererName: renderer?.name,
             columns: serializedColumns,
             pageSize,
           });
@@ -526,7 +526,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           throw new Error("Relay not initialized. Call initRelay() first.");
         }
 
-        const { prompt, source, pageSize, tableRenderer } = opts;
+        const { prompt, source, pageSize, renderer } = opts;
         const selection = opts.selection ?? "single";
 
         // rowKey comes from the loader definition, not the call site.
@@ -540,7 +540,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
         // Table renderers own the display shape when provided; otherwise fall
         // back to inline columns.
-        const columns = tableRenderer?.columns ?? opts.columns;
+        const columns = renderer?.columns ?? opts.columns;
         const serializedColumns = serializeColumns(columns);
         const eventName = this.stepName("input");
 
@@ -549,7 +549,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             stepId: eventName,
             loaderName: source.name,
             params: source.params,
-            tableRendererName: tableRenderer?.name,
+            tableRendererName: renderer?.name,
             columns: serializedColumns,
             pageSize,
           });

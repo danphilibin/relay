@@ -228,7 +228,7 @@ export type TableOutputLoader<TRow = unknown> = {
   columns?: ColumnDef<TRow>[];
   // Table renderers are the reusable, named version of table display logic.
   // Inline columns still work, but a table renderer avoids tying rendering to one run.
-  tableRenderer?: TableRendererDef<TRow>;
+  renderer?: TableRendererDef<TRow>;
 };
 
 /** Options for selecting a single row from a loader-backed table. */
@@ -237,7 +237,7 @@ export type TableInputSingle<TRow> = {
   source: LoaderRef<TRow>;
   pageSize?: number;
   columns?: ColumnDef<TRow>[];
-  tableRenderer?: TableRendererDef<TRow>;
+  renderer?: TableRendererDef<TRow>;
   selection?: "single";
 };
 
@@ -247,7 +247,7 @@ export type TableInputMultiple<TRow> = {
   source: LoaderRef<TRow>;
   pageSize?: number;
   columns?: ColumnDef<TRow>[];
-  tableRenderer?: TableRendererDef<TRow>;
+  renderer?: TableRendererDef<TRow>;
   selection: "multiple";
 };
 
