@@ -33,7 +33,7 @@ export function TableDisplay({
 
   return (
     <div className="overflow-x-auto">
-      <Table className="text-sm border border-[#222] rounded-md">
+      <Table className="text-sm">
         <Table.Header>
           <Table.Row>
             {selection && <Table.CheckHead />}

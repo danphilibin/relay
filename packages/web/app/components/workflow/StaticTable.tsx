@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@cloudflare/kumo/components/button";
-import { Input } from "@cloudflare/kumo/components/input";
 import type { LoaderTableData, RowKeyValue } from "relay-sdk/client";
 import { TableDisplay } from "./TableDisplay";
+import { TableToolbar } from "./TableToolbar";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -54,8 +53,8 @@ export function StaticTable({
   const hasPrev = page > 0;
   const hasNext = page < totalPages - 1;
 
-  // Only show pagination controls when there are enough rows to paginate.
-  const showPagination = data.rows.length > pageSize;
+  // Only show toolbar when there are enough rows to paginate.
+  const showToolbar = data.rows.length > pageSize;
 
   useEffect(() => {
     if (selection) {
@@ -91,62 +90,42 @@ export function StaticTable({
     });
   };
 
+  const toolbar = showToolbar ? (
+    <TableToolbar
+      query={query}
+      onQueryChange={handleQueryChange}
+      page={page}
+      totalPages={totalPages}
+      totalCount={totalCount}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
+      onPrev={() => setPage((p) => p - 1)}
+      onNext={() => setPage((p) => p + 1)}
+    />
+  ) : null;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {title && (
         <div className="text-base font-medium text-[#ddd]">{title}</div>
       )}
 
-      {showPagination && (
-        <div className="flex items-center gap-3">
-          <div className="w-64">
-            <Input
-              type="text"
-              label="Search"
-              placeholder="Search..."
-              value={query}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleQueryChange(e.target.value)
-              }
-            />
-          </div>
-        </div>
-      )}
+      <div className="border border-[#222] rounded-md overflow-hidden">
+        {toolbar && <div className="border-b border-[#222]">{toolbar}</div>}
 
-      <TableDisplay
-        columns={data.columns}
-        rows={pagedRows}
-        selection={selection}
-        selectedKeys={selectedKeys}
-        onToggleRow={toggleRow}
-      />
+        <TableDisplay
+          columns={data.columns}
+          rows={pagedRows}
+          selection={selection}
+          selectedKeys={selectedKeys}
+          onToggleRow={toggleRow}
+        />
 
-      {showPagination && (
-        <div className="flex items-center gap-3 text-sm text-kumo-subtle">
-          <Button
-            variant="secondary"
-            disabled={!hasPrev}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous
-          </Button>
-          <span>
-            Page {page + 1}
-            {totalPages > 0 ? ` of ${totalPages}` : ""}
-            {` (${totalCount} total)`}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={!hasNext}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+        {toolbar && <div className="border-t border-[#222]">{toolbar}</div>}
+      </div>
 
       {selection && selectedKeys.size > 0 && (
-        <div className="text-sm text-kumo-subtle">
+        <div className="text-xs text-kumo-subtle">
           {selectedKeys.size} row{selectedKeys.size !== 1 ? "s" : ""} selected
         </div>
       )}

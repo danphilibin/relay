@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@cloudflare/kumo/components/button";
-import { Input } from "@cloudflare/kumo/components/input";
-import { Loader } from "@cloudflare/kumo/components/loader";
 import type { LoaderTableData, RowKeyValue } from "relay-sdk/client";
 import { apiPath } from "../../lib/api";
 import { TableDisplay } from "./TableDisplay";
+import { TableToolbar } from "./TableToolbar";
 
 interface ServerTableProps {
   loader: { path: string; pageSize?: number };
@@ -77,7 +75,6 @@ export function ServerTable({
     }
   }, [page, debouncedQuery, fetchData, disabled]);
 
-  // Notify parent when selection changes
   useEffect(() => {
     if (selection) {
       onSelectionChange?.(Array.from(selectedKeys));
@@ -123,67 +120,47 @@ export function ServerTable({
       : (data?.rows.length ?? 0) === pageSize;
   const hasPrev = page > 0;
 
+  const toolbar = (
+    <TableToolbar
+      query={query}
+      onQueryChange={handleQueryChange}
+      page={page}
+      totalPages={totalPages}
+      totalCount={totalCount}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
+      onPrev={() => setPage((p) => p - 1)}
+      onNext={() => setPage((p) => p + 1)}
+      loading={loading}
+    />
+  );
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {title && (
         <div className="text-base font-medium text-[#ddd]">{title}</div>
       )}
 
-      {!disabled && (
-        <div className="flex items-center gap-3">
-          <div className="w-64">
-            <Input
-              type="text"
-              label="Search"
-              placeholder="Search..."
-              value={query}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleQueryChange(e.target.value)
-              }
-            />
-          </div>
-          {loading && <Loader size="sm" />}
-        </div>
-      )}
+      <div className="border border-[#222] rounded-md overflow-hidden">
+        {!disabled && <div className="border-b border-[#222]">{toolbar}</div>}
 
-      {error ? (
-        <div className="text-sm text-red-400">{error}</div>
-      ) : data ? (
-        <TableDisplay
-          columns={data.columns}
-          rows={data.rows}
-          selection={selection}
-          selectedKeys={selectedKeys}
-          onToggleRow={toggleRow}
-        />
-      ) : null}
+        {error ? (
+          <div className="text-sm text-red-400 p-3">{error}</div>
+        ) : data ? (
+          <TableDisplay
+            columns={data.columns}
+            rows={data.rows}
+            selection={selection}
+            selectedKeys={selectedKeys}
+            onToggleRow={toggleRow}
+          />
+        ) : null}
 
-      {!disabled && (
-        <div className="flex items-center gap-3 text-sm text-kumo-subtle">
-          <Button
-            variant="secondary"
-            disabled={!hasPrev}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous
-          </Button>
-          <span>
-            Page {page + 1}
-            {totalPages !== undefined ? ` of ${totalPages}` : ""}
-            {totalCount !== undefined ? ` (${totalCount} total)` : ""}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={!hasNext}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+        {!disabled && <div className="border-t border-[#222]">{toolbar}</div>}
+      </div>
 
       {selection && selectedKeys.size > 0 && (
-        <div className="text-sm text-kumo-subtle">
+        <div className="text-xs text-kumo-subtle">
           {selectedKeys.size} row{selectedKeys.size !== 1 ? "s" : ""} selected
         </div>
       )}
