@@ -131,7 +131,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
       );
 
     case "output.table_loader":
-      return <PaginatedTable block={block} />;
+      return <PaginatedTable loader={block.loader} title={block.title} />;
 
     case "output.metadata":
       return (
