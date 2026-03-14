@@ -1,6 +1,5 @@
 import { createWorkflow, loader } from "relay-sdk";
-import { db } from "../lib/mock-db";
-import { userTableRenderer } from "./browse-users";
+import { db, type User, type Order } from "../lib/mock-db";
 
 export const tables = createWorkflow({
   name: "Tables",
@@ -27,28 +26,54 @@ export const tables = createWorkflow({
   },
 
   handler: async ({ input, output, loaders }) => {
-    const user = await input.table({
-      title: "Pick a user to view",
-      source: loaders.users,
-      renderer: userTableRenderer,
-      pageSize: 5,
+    // 1. output.table with data — static, all data over the wire
+    await output.table({
+      title: "Users (data)",
+      data: (await db.users.findMany()).data,
     });
 
-    await output.markdown(`You selected **${user.name}** (${user.email})`);
+    // 2. output.table with loader — paginated server-side
+    await output.table({
+      title: "Users (loader)",
+      source: loaders.users,
+      pageSize: 10,
+    });
 
-    const order = await input.table({
-      title: "Pick an order to view",
+    // 3. input.table with loader, single selection
+    const user = await input.table({
+      title: "Pick a user",
+      source: loaders.users,
+      pageSize: 10,
+    });
+    const _userIsUser: User = user;
+
+    // 4. input.table with data — HOLE: API only supports loader source
+    const userFromData = await input.table({
+      title: "Pick user (from static data)",
+      data: (await db.users.findMany()).data,
+      rowKey: "id",
+    });
+    const _userFromDataIsUser: User = userFromData;
+
+    // 5. input.table with loader, multiple selection
+    const orders = await input.table({
+      title: "Pick orders for this user",
       source: loaders.orders({ userId: user.id }),
       pageSize: 5,
+      selection: "multiple",
     });
+    const _ordersIsOrderArray: Order[] = orders;
+
+    await output.markdown(
+      `You selected **${user.name}** and ${orders.length} order(s)`,
+    );
 
     await output.metadata({
-      title: "Order details",
+      title: "Selection summary",
       data: {
         userId: user.id,
-        orderId: order.id,
-        amount: order.amount,
-        status: order.status,
+        orderIds: orders.map((o) => o.id).join(", "),
+        orderCount: orders.length,
       },
     });
   },

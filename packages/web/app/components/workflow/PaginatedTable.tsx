@@ -7,7 +7,10 @@ import type { LoaderTableData, RowKeyValue } from "relay-sdk/client";
 import { apiPath } from "../../lib/api";
 
 interface PaginatedTableProps {
-  loader: { path: string; pageSize?: number };
+  /** Loader endpoint for paginated server-side data. */
+  loader?: { path: string; pageSize?: number };
+  /** Pre-normalized static data — skips HTTP fetching when provided. */
+  initialData?: LoaderTableData;
   title?: string;
   /** When set, rows become selectable with checkboxes. */
   selection?: "single" | "multiple";
@@ -18,19 +21,21 @@ interface PaginatedTableProps {
 
 export function PaginatedTable({
   loader,
+  initialData,
   title,
   selection,
   defaultSelectedKeys,
   onSelectionChange,
   disabled,
 }: PaginatedTableProps) {
-  const pageSize = loader.pageSize ?? 20;
+  const isStatic = !loader;
+  const pageSize = loader?.pageSize ?? 20;
 
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [data, setData] = useState<LoaderTableData | null>(null);
-  const [loading, setLoading] = useState(!disabled);
+  const [data, setData] = useState<LoaderTableData | null>(initialData ?? null);
+  const [loading, setLoading] = useState(!disabled && !isStatic);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [selectedKeys, setSelectedKeys] = useState<Set<RowKeyValue>>(
@@ -39,6 +44,7 @@ export function PaginatedTable({
 
   const fetchData = useCallback(
     async (p: number, q: string) => {
+      if (!loader) return;
       setLoading(true);
       setError(null);
       const url = apiPath(loader.path);
@@ -64,14 +70,15 @@ export function PaginatedTable({
         setLoading(false);
       }
     },
-    [loader.path, pageSize],
+    [loader, pageSize],
   );
 
+  // Only fetch for loader-backed tables — static tables use initialData directly.
   useEffect(() => {
-    if (!disabled) {
+    if (!disabled && !isStatic) {
       fetchData(page, debouncedQuery);
     }
-  }, [page, debouncedQuery, fetchData, disabled]);
+  }, [page, debouncedQuery, fetchData, disabled, isStatic]);
 
   // Notify parent when selection changes
   useEffect(() => {
@@ -126,7 +133,7 @@ export function PaginatedTable({
         <div className="text-base font-medium text-[#ddd]">{title}</div>
       )}
 
-      {!disabled && (
+      {!disabled && !isStatic && (
         <div className="flex items-center gap-3">
           <div className="w-64">
             <Input
@@ -191,7 +198,7 @@ export function PaginatedTable({
         </div>
       ) : null}
 
-      {!disabled && (
+      {!disabled && !isStatic && (
         <div className="flex items-center gap-3 text-sm text-kumo-subtle">
           <Button
             variant="secondary"

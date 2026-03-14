@@ -7,6 +7,7 @@ import type {
   LoaderTableData,
   SerializedColumnDef,
 } from "../isomorphic/output";
+import { normalizeCellValue } from "../isomorphic/table";
 import {
   startWorkflowRun,
   respondToWorkflowRun,
@@ -21,15 +22,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
-
-function normalizeCellValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "object") {
-    const obj = value as { label?: string; value?: string };
-    return obj.label ?? obj.value ?? JSON.stringify(value);
-  }
-  return String(value);
-}
 
 function deriveColumnKey(column: SerializedColumnDef, index: number): string {
   if (column.type === "accessor") {

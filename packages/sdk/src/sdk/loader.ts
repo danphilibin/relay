@@ -287,6 +287,26 @@ export type TableInputMultiple<TRow> = {
   selection: "multiple";
 };
 
+/** Static table input — single selection, all data passed over the wire. */
+export type TableInputStaticSingle<TRow> = {
+  title: string;
+  data: TRow[];
+  rowKey: keyof TRow & string;
+  columns?: LoaderColumnDef<TRow>[];
+  renderer?: TableRendererDef<TRow>;
+  selection?: "single";
+};
+
+/** Static table input — multiple selection, all data passed over the wire. */
+export type TableInputStaticMultiple<TRow> = {
+  title: string;
+  data: TRow[];
+  rowKey: keyof TRow & string;
+  columns?: LoaderColumnDef<TRow>[];
+  renderer?: TableRendererDef<TRow>;
+  selection: "multiple";
+};
+
 /** Helper to check if output.table was called with a loader source */
 export function isLoaderTable<TRow = unknown>(
   opts: TableOutputStatic | TableOutputLoader<TRow>,

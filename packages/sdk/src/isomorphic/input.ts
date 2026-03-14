@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { RowKeyValue } from "./table";
+import { LoaderTableDataSchema } from "./table";
 
 /**
  * Input field definition schemas for structured input
@@ -39,10 +40,17 @@ const TableFieldSchema = z.object({
   type: z.literal("table"),
   label: z.string(),
   description: z.string().optional(),
-  loader: z.object({
-    path: z.string(),
-    pageSize: z.number().optional(),
-  }),
+  // Loader-backed table — browser fetches pages from this endpoint.
+  loader: z
+    .object({
+      path: z.string(),
+      pageSize: z.number().optional(),
+    })
+    .optional(),
+  // Static table — all data sent inline in the input request. Uses the same
+  // normalized shape as the loader HTTP response so the client renders both
+  // modes identically.
+  data: LoaderTableDataSchema.optional(),
   /** Field name used to identify rows for selection (defaults to "id") */
   rowKey: z.string(),
   /** Whether the user can select one row or many */

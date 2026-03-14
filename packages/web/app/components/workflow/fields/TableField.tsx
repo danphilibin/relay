@@ -43,6 +43,7 @@ export function TableField({
 
       <PaginatedTable
         loader={def.loader}
+        initialData={def.data}
         selection={def.selection}
         defaultSelectedKeys={(defaultValue as string[] | undefined) ?? []}
         onSelectionChange={handleSelectionChange}

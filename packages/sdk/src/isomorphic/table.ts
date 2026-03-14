@@ -51,3 +51,18 @@ export const LoaderTableDataSchema = z.object({
 export type NormalizedTableColumn = z.infer<typeof NormalizedTableColumnSchema>;
 export type NormalizedTableRow = z.infer<typeof NormalizedTableRowSchema>;
 export type LoaderTableData = z.infer<typeof LoaderTableDataSchema>;
+
+// ── Display normalization ────────────────────────────────────────────
+
+/** Coerce an arbitrary cell value to a display string.
+ * Objects with `label` or `value` fields are unwrapped; everything else
+ * is stringified. Used by both the table query endpoint (cf-http) and
+ * the static input.table path (cf-workflow). */
+export function normalizeCellValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") {
+    const obj = value as { label?: string; value?: string };
+    return obj.label ?? obj.value ?? JSON.stringify(value);
+  }
+  return String(value);
+}

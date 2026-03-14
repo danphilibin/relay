@@ -12,6 +12,8 @@ import {
   type LoaderRefs,
   type TableInputSingle,
   type TableInputMultiple,
+  type TableInputStaticSingle,
+  type TableInputStaticMultiple,
   type TableOutputStatic,
   type TableOutputLoader,
 } from "./loader";
@@ -37,9 +39,13 @@ export type RelayLoadingFn = (
 export type RelayConfirmFn = (message: string) => Promise<boolean>;
 
 /**
- * Table selection helper for interactive loader-backed tables.
+ * Table selection helper — supports both loader-backed and static tables.
+ * Static overloads are listed first so TypeScript prefers them when `data`
+ * is present (both shapes would otherwise match due to structural typing).
  */
 export type RelayInputTableFn = {
+  <TRow>(opts: TableInputStaticSingle<TRow>): Promise<TRow>;
+  <TRow>(opts: TableInputStaticMultiple<TRow>): Promise<TRow[]>;
   <TRow>(opts: TableInputSingle<TRow>): Promise<TRow>;
   <TRow>(opts: TableInputMultiple<TRow>): Promise<TRow[]>;
 };
