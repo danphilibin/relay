@@ -283,12 +283,17 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
           }),
         );
 
-        return {
-          rowKey: loaderDef.rowKey
-            ? normalizeCellValue(row[loaderDef.rowKey])
-            : undefined,
-          cells,
-        };
+        // Row keys are identity values — preserve their original primitive type
+        // (string or number) rather than coercing through display normalization.
+        const rawKey = loaderDef.rowKey ? row[loaderDef.rowKey] : undefined;
+        const rowKey =
+          typeof rawKey === "string" || typeof rawKey === "number"
+            ? rawKey
+            : rawKey != null
+              ? String(rawKey)
+              : undefined;
+
+        return { rowKey, cells };
       }),
       totalCount: result.totalCount,
     };

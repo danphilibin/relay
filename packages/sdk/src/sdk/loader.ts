@@ -6,6 +6,7 @@
  */
 
 import { registerTableRenderer } from "./registry";
+import type { RowKeyValue } from "../isomorphic/table";
 
 // ── Public types ────────────────────────────────────────────────────
 
@@ -85,6 +86,9 @@ type RowOf<L> = L extends {
   ? R
   : never;
 
+// Re-export so consumers can import from either location.
+export type { RowKeyValue } from "../isomorphic/table";
+
 /** A loader definition — wraps the loader callback plus runtime metadata. */
 export type LoaderDef<TParams = any, TRow = any> = {
   __brand: "loader";
@@ -102,7 +106,7 @@ export type LoaderDef<TParams = any, TRow = any> = {
   rowKey?: string;
   /** Resolves selected row keys back to full source rows for `input.table()` */
   resolve?: (
-    params: { keys: string[] } & Record<string, unknown>,
+    params: { keys: RowKeyValue[] } & Record<string, unknown>,
     env: Env,
   ) => Promise<TRow[]>;
 };
@@ -149,28 +153,36 @@ export function loader<D extends ParamDescriptor, TRow>(
   ) => Promise<LoaderResult<TRow>>,
 ): LoaderDef<InferParams<D>, TRow>;
 
-/** Config object with rowKey + resolve — with custom params */
-export function loader<D extends ParamDescriptor, TRow>(config: {
-  rowKey: keyof TRow & string;
+/** Config object with rowKey + resolve — with custom params.
+ * `K` is inferred from `rowKey` so that `resolve` receives keys typed as
+ * `TRow[K][]` — e.g. `number[]` when the row's ID field is numeric. */
+export function loader<
+  D extends ParamDescriptor,
+  TRow,
+  K extends keyof TRow & string,
+>(config: {
+  rowKey: K;
   params: D;
   load: (
     params: InferParams<D> & PaginationParams,
     env: Env,
   ) => Promise<LoaderResult<TRow>>;
-  // `params` is the source of truth for the loader contract. `resolve` may
-  // ignore bound params it does not need, so we allow a narrower callback here
-  // instead of forcing authors to reference every param just for overloads.
   resolve: (
-    params: { keys: string[] } & Partial<InferParams<D>>,
+    params: { keys: Extract<TRow[K], RowKeyValue>[] } & Partial<InferParams<D>>,
     env: Env,
   ) => Promise<TRow[]>;
 }): LoaderDef<InferParams<D>, TRow>;
 
-/** Config object with rowKey + resolve — no custom params */
-export function loader<TRow>(config: {
-  rowKey: keyof TRow & string;
+/** Config object with rowKey + resolve — no custom params.
+ * `K` is inferred from `rowKey` so that `resolve` receives keys typed as
+ * `TRow[K][]` — e.g. `number[]` when the row's ID field is numeric. */
+export function loader<TRow, K extends keyof TRow & string>(config: {
+  rowKey: K;
   load: (params: PaginationParams, env: Env) => Promise<LoaderResult<TRow>>;
-  resolve: (params: { keys: string[] }, env: Env) => Promise<TRow[]>;
+  resolve: (
+    params: { keys: Extract<TRow[K], RowKeyValue>[] },
+    env: Env,
+  ) => Promise<TRow[]>;
 }): LoaderDef<NoParams, TRow>;
 
 export function loader(...args: any[]): any {

@@ -3,7 +3,7 @@ import { Table } from "@cloudflare/kumo/components/table";
 import { Button } from "@cloudflare/kumo/components/button";
 import { Input } from "@cloudflare/kumo/components/input";
 import { Loader } from "@cloudflare/kumo/components/loader";
-import type { LoaderTableData } from "relay-sdk/client";
+import type { LoaderTableData, RowKeyValue } from "relay-sdk/client";
 import { apiPath } from "../../lib/api";
 
 interface PaginatedTableProps {
@@ -11,8 +11,8 @@ interface PaginatedTableProps {
   title?: string;
   /** When set, rows become selectable with checkboxes. */
   selection?: "single" | "multiple";
-  defaultSelectedKeys?: string[];
-  onSelectionChange?: (keys: string[]) => void;
+  defaultSelectedKeys?: RowKeyValue[];
+  onSelectionChange?: (keys: RowKeyValue[]) => void;
   disabled?: boolean;
 }
 
@@ -33,7 +33,7 @@ export function PaginatedTable({
   const [loading, setLoading] = useState(!disabled);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(
+  const [selectedKeys, setSelectedKeys] = useState<Set<RowKeyValue>>(
     () => new Set(defaultSelectedKeys ?? []),
   );
 
@@ -89,7 +89,7 @@ export function PaginatedTable({
     }, 300);
   };
 
-  const toggleRow = (key: string) => {
+  const toggleRow = (key: RowKeyValue) => {
     if (disabled) return;
 
     setSelectedKeys((prev) => {

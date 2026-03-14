@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { TableFieldDefinition } from "relay-sdk/client";
+import type { TableFieldDefinition, RowKeyValue } from "relay-sdk/client";
 import type { FieldProps } from "../SchemaFieldComponents";
 import { PaginatedTable } from "../PaginatedTable";
 
@@ -13,12 +13,12 @@ export function TableField({
   const def = fieldDef as TableFieldDefinition;
 
   const handleSelectionChange = useCallback(
-    (keys: string[]) => onChange(fieldName, keys),
+    (keys: RowKeyValue[]) => onChange(fieldName, keys),
     [fieldName, onChange],
   );
 
   if (disabled) {
-    const keys = (defaultValue as string[] | undefined) ?? [];
+    const keys = (defaultValue as RowKeyValue[] | undefined) ?? [];
     return (
       <div className="space-y-2">
         <div className="text-base text-[#fafafa]">{def.label}</div>

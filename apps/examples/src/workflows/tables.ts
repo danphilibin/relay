@@ -21,7 +21,7 @@ export const tables = createWorkflow({
         return db.orders.findMany({ query, page, pageSize, userId });
       },
       resolve: async ({ keys }) => {
-        return db.orders.findByIds(keys.map(Number));
+        return db.orders.findByIds(keys);
       },
     }),
   },

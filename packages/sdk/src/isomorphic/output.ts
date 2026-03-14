@@ -52,33 +52,17 @@ export const OutputMetadataBlockSchema = z.object({
   ),
 });
 
-const SerializedColumnDefSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("accessor"),
-    label: z.string(),
-    accessorKey: z.string(),
-  }),
-  z.object({
-    type: z.literal("render"),
-    label: z.string(),
-  }),
-]);
-
-export const NormalizedTableColumnSchema = z.object({
-  key: z.string(),
-  label: z.string(),
-});
-
-export const NormalizedTableRowSchema = z.object({
-  rowKey: z.string().optional(),
-  cells: z.record(z.string(), z.string()),
-});
-
-export const LoaderTableDataSchema = z.object({
-  columns: z.array(NormalizedTableColumnSchema),
-  rows: z.array(NormalizedTableRowSchema),
-  totalCount: z.number().optional(),
-});
+// Table data types live in table.ts — re-exported here for backwards compat.
+export {
+  type RowKeyValue,
+  type SerializedColumnDef,
+  type NormalizedTableColumn,
+  type NormalizedTableRow,
+  type LoaderTableData,
+  NormalizedTableColumnSchema,
+  NormalizedTableRowSchema,
+  LoaderTableDataSchema,
+} from "./table";
 
 export const OutputTableLoaderBlockSchema = z.object({
   type: z.literal("output.table_loader"),
@@ -109,10 +93,6 @@ export type OutputImageBlock = z.infer<typeof OutputImageBlockSchema>;
 export type OutputLinkBlock = z.infer<typeof OutputLinkBlockSchema>;
 export type OutputButtonsBlock = z.infer<typeof OutputButtonsBlockSchema>;
 export type OutputMetadataBlock = z.infer<typeof OutputMetadataBlockSchema>;
-export type SerializedColumnDef = z.infer<typeof SerializedColumnDefSchema>;
-export type NormalizedTableColumn = z.infer<typeof NormalizedTableColumnSchema>;
-export type NormalizedTableRow = z.infer<typeof NormalizedTableRowSchema>;
-export type LoaderTableData = z.infer<typeof LoaderTableDataSchema>;
 export type OutputTableLoaderBlock = z.infer<
   typeof OutputTableLoaderBlockSchema
 >;

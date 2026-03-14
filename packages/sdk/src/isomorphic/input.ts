@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { RowKeyValue } from "./table";
 
 /**
  * Input field definition schemas for structured input
@@ -135,7 +136,7 @@ type FieldTypeMap = {
   number: number;
   checkbox: boolean;
   select: string;
-  table: string[];
+  table: RowKeyValue[];
 };
 
 /**

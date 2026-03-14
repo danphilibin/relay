@@ -29,6 +29,7 @@ import {
   type StreamMessage,
 } from "../isomorphic/messages";
 import type { OutputBlock, OutputButtonDef } from "../isomorphic/output";
+import type { RowKeyValue } from "../isomorphic/table";
 import { getWorkflow, registerWorkflow } from "./registry";
 import type { WorkflowParams } from "../isomorphic/registry-types";
 import {
@@ -576,9 +577,10 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
         });
 
         // The client sends back the selected row keys as the value of the
-        // synthetic table field. We resolve them to full source rows server-side.
+        // synthetic table field. Row keys preserve their original primitive type
+        // (string or number) through the round-trip.
         const payload = event.payload as Record<string, unknown>;
-        const rowKeys = payload.input as string[];
+        const rowKeys = payload.input as RowKeyValue[];
 
         // Look up the loader definition to call its resolve function.
         const definition = getWorkflow(this.workflowSlug);
