@@ -71,6 +71,18 @@ type PaginatedResult<T> = {
 
 export const db = {
   users: {
+    async findById(id: string): Promise<User> {
+      const user = USERS.find((u) => u.id === id);
+      if (!user) {
+        throw new Error(`User not found: ${id}`);
+      }
+      return user;
+    },
+
+    async findByIds(ids: string[]): Promise<User[]> {
+      return Promise.all(ids.map((id) => this.findById(id)));
+    },
+
     async findMany(params: QueryParams): Promise<PaginatedResult<User>> {
       const { query, page, pageSize } = params;
       let filtered = USERS;
