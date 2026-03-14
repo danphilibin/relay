@@ -30,14 +30,19 @@ export function inputSchemaToZod(
         shape[key] = z.boolean().describe(desc);
         break;
       case "select":
-        shape[key] = z
-          .enum(
-            field.options.map((option) => option.value) as [
-              string,
-              ...string[],
-            ],
-          )
-          .describe(desc);
+        // Select builders can be authored before their option list is finalized,
+        // so fall back to a string schema when the list is empty.
+        shape[key] =
+          field.options.length > 0
+            ? z
+                .enum(
+                  field.options.map((option) => option.value) as [
+                    string,
+                    ...string[],
+                  ],
+                )
+                .describe(desc)
+            : z.string().describe(desc);
         break;
       default:
         assertNever(field);

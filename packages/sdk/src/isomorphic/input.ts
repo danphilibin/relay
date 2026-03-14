@@ -43,6 +43,29 @@ export const InputFieldDefinitionSchema = z.discriminatedUnion("type", [
 
 export type InputFieldDefinition = z.infer<typeof InputFieldDefinitionSchema>;
 
+export type TextFieldConfig = Omit<
+  z.infer<typeof TextFieldSchema>,
+  "type" | "label"
+>;
+export type CheckboxFieldConfig = Omit<
+  z.infer<typeof CheckboxFieldSchema>,
+  "type" | "label"
+>;
+export type NumberFieldConfig = Omit<
+  z.infer<typeof NumberFieldSchema>,
+  "type" | "label"
+>;
+export type SelectOption<V extends string = string> = {
+  value: V;
+  label: string;
+};
+export type SelectFieldConfig<V extends string = string> = Omit<
+  z.infer<typeof SelectFieldSchema>,
+  "type" | "label" | "options"
+> & {
+  options: readonly SelectOption<V>[];
+};
+
 /**
  * Schema for structured input - a record of field names to field definitions
  */
@@ -103,11 +126,139 @@ type FieldTypeMap = {
  */
 type InferFieldType<T extends InputFieldDefinition> = FieldTypeMap[T["type"]];
 
+type InputFieldBuilderBrand = {
+  readonly __relayFieldBuilder: true;
+};
+
+export type InputFieldBuilder<
+  TValue,
+  TDef extends InputFieldDefinition = InputFieldDefinition,
+> = InputFieldBuilderBrand &
+  PromiseLike<TValue> & {
+    readonly definition: TDef;
+  };
+
+export type InputFieldBuilders = Record<string, InputFieldBuilder<unknown>>;
+
+export type InferBuilderValue<T extends InputFieldBuilder<unknown>> =
+  T extends InputFieldBuilder<infer TValue> ? TValue : never;
+
+export type InferBuilderGroupResult<TFields extends InputFieldBuilders> = {
+  [K in keyof TFields]: InferBuilderValue<TFields[K]>;
+};
+
 /**
  * Infers the result type from an input schema
  */
 export type InferInputResult<T extends InputSchema> = {
   [K in keyof T]: InferFieldType<T[K]>;
+};
+
+export function isInputFieldBuilder(
+  value: unknown,
+): value is InputFieldBuilder<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__relayFieldBuilder" in value &&
+    "definition" in value
+  );
+}
+
+function createStaticFieldBuilder<TValue, TDef extends InputFieldDefinition>(
+  definition: TDef,
+): InputFieldBuilder<TValue, TDef> {
+  return {
+    __relayFieldBuilder: true,
+    definition,
+    // oxlint-disable-next-line unicorn/no-thenable -- static field builders share the same builder contract as awaitable runtime builders
+    then: () => {
+      throw new Error(
+        "Field builders from `field.*` are only for schema composition. Await `input.*` inside a workflow handler instead.",
+      );
+    },
+  };
+}
+
+export function compileInputFields<TFields extends InputFieldBuilders>(
+  fields: TFields,
+): InputSchema {
+  return Object.fromEntries(
+    Object.entries(fields).map(([key, field]) => [key, field.definition]),
+  );
+}
+
+type InputGroupFn = {
+  <TFields extends InputFieldBuilders>(
+    fields: TFields,
+  ): Promise<InferBuilderGroupResult<TFields>>;
+  <TFields extends InputFieldBuilders>(
+    title: string,
+    fields: TFields,
+  ): Promise<InferBuilderGroupResult<TFields>>;
+  <TFields extends InputFieldBuilders, const B extends readonly ButtonDef[]>(
+    fields: TFields,
+    options: InputOptions<B>,
+  ): Promise<InferBuilderGroupResult<TFields> & { $choice: ButtonLabels<B> }>;
+  <TFields extends InputFieldBuilders, const B extends readonly ButtonDef[]>(
+    title: string,
+    fields: TFields,
+    options: InputOptions<B>,
+  ): Promise<InferBuilderGroupResult<TFields> & { $choice: ButtonLabels<B> }>;
+};
+
+type InputTextFn = (
+  label: string,
+  config?: TextFieldConfig,
+) => InputFieldBuilder<string, Extract<InputFieldDefinition, { type: "text" }>>;
+
+type InputCheckboxFn = (
+  label: string,
+  config?: CheckboxFieldConfig,
+) => InputFieldBuilder<
+  boolean,
+  Extract<InputFieldDefinition, { type: "checkbox" }>
+>;
+
+type InputNumberFn = (
+  label: string,
+  config?: NumberFieldConfig,
+) => InputFieldBuilder<
+  number,
+  Extract<InputFieldDefinition, { type: "number" }>
+>;
+
+type InputSelectFn = <const TOptions extends readonly SelectOption[]>(
+  label: string,
+  config: Omit<SelectFieldConfig<TOptions[number]["value"]>, "options"> & {
+    options: TOptions;
+  },
+) => InputFieldBuilder<
+  TOptions[number]["value"],
+  Extract<InputFieldDefinition, { type: "select" }>
+>;
+
+export type RelayFieldFactory = {
+  text: InputTextFn;
+  checkbox: InputCheckboxFn;
+  number: InputNumberFn;
+  select: InputSelectFn;
+};
+
+export const field: RelayFieldFactory = {
+  text: (label, config = {}) =>
+    createStaticFieldBuilder({ type: "text", label, ...config }),
+  checkbox: (label, config = {}) =>
+    createStaticFieldBuilder({ type: "checkbox", label, ...config }),
+  number: (label, config = {}) =>
+    createStaticFieldBuilder({ type: "number", label, ...config }),
+  select: (label, config) =>
+    createStaticFieldBuilder({
+      type: "select",
+      label,
+      ...config,
+      options: [...config.options],
+    }),
 };
 
 /**
@@ -117,22 +268,15 @@ export type RelayInputFn = {
   // Simple prompt
   (prompt: string): Promise<string>;
 
-  // Prompt with schema
-  <T extends InputSchema>(
-    prompt: string,
-    schema: T,
-  ): Promise<InferInputResult<T>>;
-
   // Prompt with buttons
   <const B extends readonly ButtonDef[]>(
     prompt: string,
     options: InputOptions<B>,
   ): Promise<{ value: string; $choice: ButtonLabels<B> }>;
-
-  // Schema with buttons
-  <T extends InputSchema, const B extends readonly ButtonDef[]>(
-    prompt: string,
-    schema: T,
-    options: InputOptions<B>,
-  ): Promise<InferInputResult<T> & { $choice: ButtonLabels<B> }>;
+} & {
+  text: InputTextFn;
+  checkbox: InputCheckboxFn;
+  number: InputNumberFn;
+  select: InputSelectFn;
+  group: InputGroupFn;
 };

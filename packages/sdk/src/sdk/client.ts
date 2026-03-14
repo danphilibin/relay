@@ -20,6 +20,7 @@ export {
 } from "../isomorphic/messages";
 
 export { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
+export { field } from "../isomorphic/input";
 
 export {
   type WorkflowParams,
@@ -37,7 +38,11 @@ export type WorkflowStatus =
 export type {
   InputSchema,
   InputFieldDefinition,
+  InputFieldBuilder,
+  InputFieldBuilders,
+  RelayFieldFactory,
   NormalizedButton,
+  SelectOption,
 } from "../isomorphic/input";
 
 export type {

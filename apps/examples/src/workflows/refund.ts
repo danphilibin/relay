@@ -5,12 +5,10 @@ export const refund = createWorkflow({
   description:
     "Look up an order, select items, and process a refund with policy validation and approval gates.",
   handler: async ({ input, output, confirm }) => {
-    const { orderId } = await input("Enter order information", {
-      orderId: {
-        type: "text",
-        label: "Order ID",
+    const { orderId } = await input.group("Enter order information", {
+      orderId: input.text("Order ID", {
         description: "Found in the confirmation email, e.g. ORD-12345",
-      },
+      }),
     });
 
     // Simulated order lookup
@@ -26,19 +24,16 @@ export const refund = createWorkflow({
     };
 
     // Step 2: Select items to refund
-    const selection = await input("Select items to refund", {
-      item_1: {
-        type: "checkbox",
-        label: `${order.items[0].name} ($${order.items[0].price})`,
-      },
-      item_2: {
-        type: "checkbox",
-        label: `${order.items[1].name} ($${order.items[1].price})`,
-      },
-      item_3: {
-        type: "checkbox",
-        label: `${order.items[2].name} ($${order.items[2].price})`,
-      },
+    const selection = await input.group("Select items to refund", {
+      item_1: input.checkbox(
+        `${order.items[0].name} ($${order.items[0].price})`,
+      ),
+      item_2: input.checkbox(
+        `${order.items[1].name} ($${order.items[1].price})`,
+      ),
+      item_3: input.checkbox(
+        `${order.items[2].name} ($${order.items[2].price})`,
+      ),
     });
 
     const selectedItems = order.items.filter((_, i) => {
@@ -57,10 +52,8 @@ export const refund = createWorkflow({
     );
 
     // Step 3: Get refund reason
-    const { reason, reasonDetail } = await input("Refund reason", {
-      reason: {
-        type: "select",
-        label: "Reason",
+    const { reason, reasonDetail } = await input.group("Refund reason", {
+      reason: input.select("Reason", {
         options: [
           { value: "defective", label: "Defective product" },
           { value: "wrong_item", label: "Wrong item received" },
@@ -68,11 +61,8 @@ export const refund = createWorkflow({
           { value: "duplicate", label: "Duplicate order" },
           { value: "other", label: "Other" },
         ],
-      },
-      reasonDetail: {
-        type: "text",
-        label: "Additional details (optional)",
-      },
+      }),
+      reasonDetail: input.text("Additional details (optional)"),
     });
 
     await output.table({

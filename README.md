@@ -113,11 +113,11 @@ import { createWorkflow } from "relay-sdk";
 createWorkflow({
   name: "Newsletter Signup",
   handler: async ({ input, output, loading }) => {
-    const name = await input("What is your name?");
+    const name = await input.text("What is your name?");
 
-    const { email, subscribe } = await input("More info", {
-      email: { type: "text", label: "Email" },
-      subscribe: { type: "checkbox", label: "Subscribe?" },
+    const { email, subscribe } = await input.group("More info", {
+      email: input.text("Email"),
+      subscribe: input.checkbox("Subscribe?"),
     });
 
     await loading("Processing...", async ({ complete }) => {
@@ -129,5 +129,10 @@ createWorkflow({
   },
 });
 ```
+
+Field builders are awaitable on their own and composable in groups. For
+upfront workflow input, use `field.*` in `createWorkflow({ input })`. Relay
+still compiles those builders down to the same schema-driven protocol sent to
+the browser, so the frontend remains workflow-agnostic.
 
 Each workflow instance gets a Durable Object (keyed by instance ID) that supplies a persistent message buffer. The `RelayWorkflow` entrypoint wraps `step.do()` and `step.waitForEvent()` under the hood — `input()` sends an input request message, then waits for an event with the user's response. Messages are durably stored and streamed to clients via NDJSON, so the stream survives page reloads.

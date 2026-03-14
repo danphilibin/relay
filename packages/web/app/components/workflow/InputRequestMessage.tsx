@@ -110,7 +110,7 @@ export function InputRequestMessage({
       onSubmit={handleSubmit}
     >
       <div className="flex flex-col gap-4">
-        {!isSimpleInput && (
+        {!isSimpleInput && prompt && (
           <span className="text-base font-medium text-[#fafafa]">{prompt}</span>
         )}
 

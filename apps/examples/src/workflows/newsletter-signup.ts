@@ -1,12 +1,12 @@
-import { createWorkflow } from "relay-sdk";
+import { createWorkflow, field } from "relay-sdk";
 
 export const newsletterSignup = createWorkflow({
   name: "Newsletter Signup",
   description: "Collect user info and subscribe them to the newsletter.",
   input: {
-    name: { type: "text", label: "Your name" },
-    email: { type: "text", label: "Email address" },
-    newsletter: { type: "checkbox", label: "Subscribe to updates?" },
+    name: field.text("Your name"),
+    email: field.text("Email address"),
+    newsletter: field.checkbox("Subscribe to updates?"),
   },
   handler: async ({ step, data, output, loading }) => {
     if (data.newsletter) {

@@ -55,16 +55,17 @@ export const fetchHackernews = createWorkflow({
     }
 
     // Let user pick a story
-    const { story: selectedStoryId } = await input("Pick a story to explore:", {
-      story: {
-        type: "select",
-        label: "Story",
-        options: stories.map((s) => ({
-          value: String(s.id),
-          label: `${s.title} (${s.score} pts)`,
-        })),
+    const { story: selectedStoryId } = await input.group(
+      "Pick a story to explore:",
+      {
+        story: input.select("Story", {
+          options: stories.map((s) => ({
+            value: String(s.id),
+            label: `${s.title} (${s.score} pts)`,
+          })),
+        }),
       },
-    });
+    );
 
     const selectedStory = stories.find((s) => String(s.id) === selectedStoryId);
     if (!selectedStory) {
