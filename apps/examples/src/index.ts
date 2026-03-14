@@ -17,3 +17,4 @@ import "./workflows/newsletter-signup";
 import "./workflows/refund";
 import "./workflows/create-webhook";
 import "./workflows/browse-users";
+import "./workflows/tables";

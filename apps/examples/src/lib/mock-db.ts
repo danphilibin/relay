@@ -69,6 +69,23 @@ type PaginatedResult<T> = {
   totalCount: number;
 };
 
+export type Order = {
+  id: number;
+  userId: string;
+  amount: number;
+  status: "pending" | "shipped" | "delivered";
+  createdAt: string;
+};
+
+const ORDER_STATUSES: Order["status"][] = ["pending", "shipped", "delivered"];
+const ORDERS: Order[] = Array.from({ length: 50 }, (_, i) => ({
+  id: i + 1,
+  userId: USERS[i % USERS.length].id,
+  amount: Math.round((50 + ((i * 31) % 450)) * 100) / 100,
+  status: ORDER_STATUSES[i % ORDER_STATUSES.length],
+  createdAt: new Date(Date.now() - i * 86400000).toISOString(),
+}));
+
 export const db = {
   users: {
     async findById(id: string): Promise<User> {
@@ -116,6 +133,65 @@ export const db = {
           (u) =>
             u.name.toLowerCase().includes(q) ||
             u.email.toLowerCase().includes(q),
+        );
+      }
+
+      const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
+      return { data, totalCount: filtered.length };
+    },
+  },
+
+  orders: {
+    async findById(id: number): Promise<Order> {
+      const order = ORDERS.find((o) => o.id === id);
+      if (!order) {
+        throw new Error(`Order not found: ${id}`);
+      }
+      return order;
+    },
+
+    async findByIds(ids: number[]): Promise<Order[]> {
+      return Promise.all(ids.map((id) => this.findById(id)));
+    },
+
+    async findMany(
+      params: QueryParams & { userId?: string },
+    ): Promise<PaginatedResult<Order>> {
+      const { query, page, pageSize, userId } = params;
+
+      let filtered = ORDERS;
+
+      if (userId) {
+        filtered = filtered.filter((o) => o.userId === userId);
+      }
+
+      if (query) {
+        const q = query.toLowerCase();
+        filtered = ORDERS.filter(
+          (o) =>
+            o.id.toString().includes(q) ||
+            o.status.toLowerCase().includes(q) ||
+            o.userId.toLowerCase().includes(q),
+        );
+      }
+
+      const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
+
+      return { data, totalCount: filtered.length };
+    },
+
+    async findByUserId(
+      userId: string,
+      params: QueryParams,
+    ): Promise<PaginatedResult<Order>> {
+      const { query, page, pageSize } = params;
+      let filtered = ORDERS.filter((o) => o.userId === userId);
+
+      if (query) {
+        const q = query.toLowerCase();
+        filtered = filtered.filter(
+          (o) =>
+            o.status.toLowerCase().includes(q) || o.id.toString().includes(q),
         );
       }
 

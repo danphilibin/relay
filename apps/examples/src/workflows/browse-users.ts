@@ -1,7 +1,7 @@
 import { createWorkflow, loader, tableRenderer } from "relay-sdk";
 import { db, type User } from "../lib/mock-db";
 
-const userTableRenderer = tableRenderer<User>("user-table", {
+export const userTableRenderer = tableRenderer<User>("user-table", {
   columns: [
     { label: "ID", accessorKey: "id" },
     {
