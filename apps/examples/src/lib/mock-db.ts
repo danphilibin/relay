@@ -60,14 +60,27 @@ const USERS: User[] = Array.from({ length: 87 }, (_, i) => {
 
 type QueryParams = {
   query?: string;
-  page: number;
-  pageSize: number;
+  page?: number;
+  pageSize?: number;
 };
 
 type PaginatedResult<T> = {
   data: T[];
   totalCount: number;
 };
+
+/** Shared pagination: slices array when page/pageSize provided, returns totalCount. */
+function paginate<T>(
+  items: T[],
+  params: { page?: number; pageSize?: number },
+): PaginatedResult<T> {
+  const { page, pageSize } = params;
+  const data =
+    page !== undefined && pageSize !== undefined
+      ? items.slice(page * pageSize, (page + 1) * pageSize)
+      : items;
+  return { data, totalCount: items.length };
+}
 
 export type Order = {
   id: number;
@@ -100,8 +113,8 @@ export const db = {
       return Promise.all(ids.map((id) => this.findById(id)));
     },
 
-    async findMany(params: QueryParams): Promise<PaginatedResult<User>> {
-      const { query, page, pageSize } = params;
+    async findMany(params?: QueryParams): Promise<PaginatedResult<User>> {
+      const { query, page, pageSize } = params ?? {};
       let filtered = USERS;
 
       if (query) {
@@ -114,8 +127,7 @@ export const db = {
         );
       }
 
-      const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
-      return { data, totalCount: filtered.length };
+      return paginate(filtered, { page, pageSize });
     },
 
     async findByDepartment(
@@ -136,8 +148,7 @@ export const db = {
         );
       }
 
-      const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
-      return { data, totalCount: filtered.length };
+      return paginate(filtered, { page, pageSize });
     },
   },
 
@@ -175,9 +186,7 @@ export const db = {
         );
       }
 
-      const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
-
-      return { data, totalCount: filtered.length };
+      return paginate(filtered, { page, pageSize });
     },
 
     async findByUserId(
@@ -195,8 +204,7 @@ export const db = {
         );
       }
 
-      const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
-      return { data, totalCount: filtered.length };
+      return paginate(filtered, { page, pageSize });
     },
   },
 };
