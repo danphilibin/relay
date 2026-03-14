@@ -254,6 +254,7 @@ export function tableRenderer<TRow>(
 export type TableOutputStatic = {
   title?: string;
   data: Array<Record<string, string>>;
+  pageSize?: number;
 };
 
 /** Loader-backed table — columns are optional, typed against TRow */
@@ -292,6 +293,7 @@ export type TableInputStaticSingle<TRow> = {
   title: string;
   data: TRow[];
   rowKey: keyof TRow & string;
+  pageSize?: number;
   columns?: LoaderColumnDef<TRow>[];
   renderer?: TableRendererDef<TRow>;
   selection?: "single";
@@ -302,6 +304,7 @@ export type TableInputStaticMultiple<TRow> = {
   title: string;
   data: TRow[];
   rowKey: keyof TRow & string;
+  pageSize?: number;
   columns?: LoaderColumnDef<TRow>[];
   renderer?: TableRendererDef<TRow>;
   selection: "multiple";

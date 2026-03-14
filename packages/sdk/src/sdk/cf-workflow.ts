@@ -415,7 +415,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     opts: TableInputStaticSingle<any> | TableInputStaticMultiple<any>,
     selection: "single" | "multiple",
   ) {
-    const { title, data, rowKey, renderer } = opts;
+    const { title, data, rowKey, pageSize, renderer } = opts;
     const columns = renderer?.columns ?? opts.columns;
     const eventName = this.stepName("input");
 
@@ -427,6 +427,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           type: "table",
           label: title,
           data: normalizedData,
+          pageSize,
           rowKey,
           selection,
         }),
@@ -666,6 +667,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
           type: "output.table",
           title: opts.title,
           data: opts.data,
+          pageSize: opts.pageSize,
         });
       }
     },

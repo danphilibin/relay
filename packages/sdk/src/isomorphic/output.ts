@@ -17,6 +17,7 @@ export const OutputTableBlockSchema = z.object({
   type: z.literal("output.table"),
   title: z.string().optional(),
   data: z.array(z.record(z.string(), z.string())),
+  pageSize: z.number().optional(),
 });
 
 export const OutputCodeBlockSchema = z.object({
