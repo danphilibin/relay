@@ -44,6 +44,13 @@ export type ColumnDef<TRow> =
   | AccessorColumn<TRow>
   | RenderColumn<TRow>;
 
+/** Inline columns for loader-backed tables.
+ * These must stay serializable because the browser only receives a descriptor,
+ * not executable callbacks. Computed columns belong in a named tableRenderer. */
+export type LoaderColumnDef<TRow> =
+  | (keyof TRow & string)
+  | AccessorColumn<TRow>;
+
 /** Reusable table renderer for a row type */
 export type TableRendererDef<TRow = unknown> = {
   __brand: "table_renderer";
@@ -240,7 +247,7 @@ export type TableOutputLoader<TRow = unknown> = {
   title?: string;
   source: LoaderRef<TRow>;
   pageSize?: number;
-  columns?: ColumnDef<TRow>[];
+  columns?: LoaderColumnDef<TRow>[];
   // Table renderers are the reusable, named version of table display logic.
   // Inline columns still work, but a table renderer avoids tying rendering to one run.
   renderer?: TableRendererDef<TRow>;
@@ -251,7 +258,7 @@ export type TableInputSingle<TRow> = {
   title: string;
   source: LoaderRef<TRow>;
   pageSize?: number;
-  columns?: ColumnDef<TRow>[];
+  columns?: LoaderColumnDef<TRow>[];
   renderer?: TableRendererDef<TRow>;
   selection?: "single";
 };
@@ -261,7 +268,7 @@ export type TableInputMultiple<TRow> = {
   title: string;
   source: LoaderRef<TRow>;
   pageSize?: number;
-  columns?: ColumnDef<TRow>[];
+  columns?: LoaderColumnDef<TRow>[];
   renderer?: TableRendererDef<TRow>;
   selection: "multiple";
 };
