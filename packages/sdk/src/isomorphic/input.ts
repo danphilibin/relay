@@ -41,6 +41,7 @@ const TableFieldSchema = z.object({
   label: z.string(),
   description: z.string().optional(),
   // Loader-backed table — browser fetches pages from this endpoint.
+  // pageSize lives inside loader for server-side pagination.
   loader: z
     .object({
       path: z.string(),
@@ -49,8 +50,9 @@ const TableFieldSchema = z.object({
     .optional(),
   // Static table — all data sent inline in the input request. Uses the same
   // normalized shape as the loader HTTP response so the client renders both
-  // modes identically.
+  // modes identically. pageSize controls client-side pagination.
   data: LoaderTableDataSchema.optional(),
+  pageSize: z.number().optional(),
   /** Field name used to identify rows for selection (defaults to "id") */
   rowKey: z.string(),
   /** Whether the user can select one row or many */

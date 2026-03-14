@@ -42,7 +42,13 @@ export function OutputMessage({ block }: OutputMessageProps) {
         totalCount: rows.length,
       };
 
-      return <StaticTable data={data} title={block.title} />;
+      return (
+        <StaticTable
+          data={data}
+          title={block.title}
+          pageSize={block.pageSize}
+        />
+      );
     }
 
     case "output.code":

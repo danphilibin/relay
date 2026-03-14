@@ -52,6 +52,7 @@ export function TableField({
       ) : def.data ? (
         <StaticTable
           data={def.data}
+          pageSize={def.pageSize}
           selection={def.selection}
           defaultSelectedKeys={(defaultValue as string[] | undefined) ?? []}
           onSelectionChange={handleSelectionChange}
