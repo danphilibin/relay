@@ -427,7 +427,7 @@ export class RelayWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
     markdown: async (content: string) => {
       await this.sendOutput({ type: "output.markdown", content });
     },
-    table: async (opts: any) => {
+    table: async <TRow>(opts: TableOutputStatic | TableOutputLoader<TRow>) => {
       if (isLoaderTable(opts)) {
         const { source, title, pageSize, renderer } = opts;
         // Table renderers own the display shape when provided; otherwise we fall back

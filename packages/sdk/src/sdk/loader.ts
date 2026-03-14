@@ -252,9 +252,9 @@ export type TableInputMultiple<TRow> = {
 };
 
 /** Helper to check if output.table was called with a loader source */
-export function isLoaderTable(
-  opts: TableOutputStatic | TableOutputLoader,
-): opts is TableOutputLoader {
+export function isLoaderTable<TRow = unknown>(
+  opts: TableOutputStatic | TableOutputLoader<TRow>,
+): opts is TableOutputLoader<TRow> {
   return "source" in opts && opts.source !== undefined;
 }
 
