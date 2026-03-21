@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"pnpm:dev:*\" --names \"worker,react\" --prefix-colors \"blue,magenta\"",
+    "dev": "concurrently \"pnpm:dev:worker\" \"pnpm:dev:react\" --names \"worker,react\" --prefix-colors \"blue,magenta\"",
     "dev:worker": "pnpm --filter relay-examples dev",
     "dev:react": "pnpm --filter relay-web dev",
     "dev:e2e": "concurrently \"pnpm:dev:e2e:*\" --names \"worker,react\" --prefix-colors \"blue,magenta\"",
