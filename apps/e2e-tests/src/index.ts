@@ -14,9 +14,11 @@ import "./workflows/input-select";
 import "./workflows/input-mixed-schema";
 import "./workflows/input-buttons";
 import "./workflows/input-schema-buttons";
+import "./workflows/input-table";
 // -- Output primitives --
 import "./workflows/output-markdown";
 import "./workflows/output-table";
+import "./workflows/output-table-loader";
 import "./workflows/output-code";
 import "./workflows/output-image";
 import "./workflows/output-link";
