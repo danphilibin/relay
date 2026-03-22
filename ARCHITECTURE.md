@@ -1,19 +1,27 @@
 # Architecture
 
-This document describes the high-level architecture of Relay, a workflow engine that pairs Cloudflare Workflows with Cloudflare Durable Objects to let developers define interactive, multi-step workflows in backend code and have them rendered automatically in a React frontend. If you want to familiarize yourself with the codebase, this is a good place to start.
+This document describes the high-level architecture of Relay, a workflow engine that runs on Cloudflare Durable Objects and lets developers define interactive, multi-step workflows in backend code and have them rendered automatically in a React frontend. If you want to familiarize yourself with the codebase, this is a good place to start.
 
 ## Bird's Eye View
 
-A workflow author writes a handler using a small SDK (`createWorkflow`). The SDK provides primitives — `input`, `output`, `loading`, `confirm` — that each become a durable step in a Cloudflare Workflow. Each step sends a JSON message to a per-run Durable Object, which persists the message and broadcasts it over an NDJSON stream. A React SPA connects to that stream and renders structured UI (forms, spinners, confirmation dialogs, rich content) without any per-workflow frontend code.
+A workflow author writes a handler using a small SDK (`createWorkflow`). The SDK provides primitives — `input`, `output`, `loading`, `confirm` — that each become a durable step inside a `RelayExecutor` Durable Object. Each step persists its result and appends a JSON message to the run's message log, which is broadcast over an NDJSON stream. A React SPA connects to that stream and renders structured UI (forms, spinners, confirmation dialogs, rich content) without any per-workflow frontend code.
 
 There is also a synchronous call-response API for agents (MCP, CLI) that blocks until the next interaction point, so non-browser clients can drive workflows too.
+
+### Execution model
+
+The executor uses a **replay-based** execution model. The workflow handler is a normal async function that runs from the beginning on every event. Previously completed `step.do()` calls return their cached result from DO storage; previously received events satisfy `waitForEvent()` immediately. When the handler reaches a `waitForEvent` for an event that hasn't arrived yet, it throws `SuspendExecution` to park the workflow. On the next event arrival, the handler replays from the top, skipping cached steps, until it either completes or suspends again.
+
+This replaces an earlier Cloudflare Workflows-based implementation. Workflows had an unacceptable ~6 second scheduling delay in production. The DO-based executor wakes in <10ms via `fetch()`, giving near-instant interactive feedback.
+
+**Constraint:** Because handlers replay from the top, they must be deterministic — the same steps must execute in the same order on every replay. Conditional steps (e.g., `if (condition) await input()`) will break the counter-based step naming and corrupt replay state.
 
 ## Codemap
 
 The repo is a pnpm monorepo with two packages and one example app.
 
 ```
-workflows-starter/
+relay/
 ├── packages/
 │   ├── sdk/              → Core SDK
 │   │   └── src/
@@ -47,7 +55,7 @@ The core SDK. Everything needed to build a Relay-powered Cloudflare Worker.
 
 Three entry points:
 
-- **`relay-sdk`** — Server-side. `createWorkflow`, `RelayWorkflow`, `RelayDurableObject`, `RelayMcpAgent`, `httpHandler`, registry functions.
+- **`relay-sdk`** — Server-side. `createWorkflow`, `RelayExecutor`, `RelayMcpAgent`, `httpHandler`, registry functions.
 - **`relay-sdk/client`** — Browser-safe. Message types, schemas, `parseStreamMessage`. No `cloudflare:workers` dependency.
 - **`relay-sdk/mcp`** — Node.js. `createRelayMcpServer` factory for stdio-based MCP servers.
 
@@ -55,11 +63,11 @@ Internally split into two directories:
 
 - **`src/isomorphic/`** — Shared types and logic with no Cloudflare runtime dependency. Message schemas (`messages.ts`), input field types (`input.ts`), output block types (`output.ts`), registry types, MCP text formatting.
 - **`src/sdk/`** — Cloudflare-specific implementation. The key files:
-  - `cf-workflow.ts` — `RelayWorkflow` class (`WorkflowEntrypoint`) and `createWorkflow()` factory
-  - `cf-durable-object.ts` — `RelayDurableObject`, stores and streams messages per run
+  - `cf-executor.ts` — `RelayExecutor` Durable Object, owns both workflow execution and message streaming per run
+  - `cf-workflow.ts` — `createWorkflow()` factory and shared types (`RelayContext`, `RelayOutput`, etc.). Also contains the legacy `RelayWorkflow` class (Workflows entrypoint, no longer used)
   - `cf-http.ts` — HTTP request handler with all routes
   - `cf-mcp-agent.ts` — `RelayMcpAgent`, Cloudflare-native MCP server (Durable Object)
-  - `workflow-api.ts` — Core execution functions shared between the HTTP handler and MCP agent
+  - `workflow-api.ts` — Core call-response execution functions shared between the HTTP handler and MCP agent
   - `registry.ts` — Global workflow registry (`Map`), populated by `createWorkflow()`
 
 ### `packages/web`
@@ -84,9 +92,10 @@ Thin MCP server entrypoint that delegates to `relay-sdk/mcp`. Used for running a
 
 - **`isomorphic/` has no Cloudflare runtime imports.** Everything in `src/isomorphic/` must be safe to import from both the Worker and the browser. The `relay-sdk/client` entry point re-exports only from this directory.
 - **Workflows self-register.** `createWorkflow()` pushes into a global `Map`. There is no manual wiring step — importing a workflow file is sufficient.
-- **Every SDK primitive is a `step.do()` call.** `output`, `input`, `loading`, and `confirm` all go through Cloudflare's `step.do()`, making them replay-safe and durable.
+- **Every SDK primitive is a durable step.** `output`, `input`, `loading`, and `confirm` all go through `step.do()`, making them replay-safe. Step results are persisted in DO storage as `step:{name}` keys.
 - **The frontend is workflow-agnostic.** The React app renders any workflow purely from the `StreamMessage` stream. There is no per-workflow UI code.
-- **The Durable Object is the source of truth.** All messages are persisted in the DO. The stream replays full history on reconnect, so the client can recover from disconnects or page reloads.
+- **The Durable Object is the source of truth.** All messages are persisted in the executor DO. The stream replays full history on connect, so the client can recover from disconnects or page reloads.
+- **Handlers must be deterministic.** The replay engine uses a counter-based naming scheme (`relay-input-0`, `relay-input-1`, etc.). Handlers must always execute the same steps in the same order.
 
 ## Cross-Cutting Concerns
 
@@ -95,6 +104,8 @@ Thin MCP server entrypoint that delegates to `relay-sdk/mcp`. Used for running a
 **Input schema / type inference:** Relay now has two builder entry points for two different phases. `field.*` is used at workflow definition time in `createWorkflow({ input })` to declare upfront inputs. `input.*` is used inside a running workflow handler to request interactive inputs, and `input.group(title?, fields, options?)` composes multiple runtime field builders into one interaction. Both forms compile to `InputSchema` field definitions (`text`, `number`, `checkbox`, `select`) for the stream protocol and frontend renderer. `InputSchema` remains the transport/intermediate representation, not the primary public authoring API.
 
 **Dual API surface:** Both the interactive API (browser: stream + events) and the call-response API (agents: blocking POST) share the same core execution functions in `workflow-api.ts`, avoiding divergence.
+
+**Suspend/resume via replay:** When a workflow needs user input, it throws `SuspendExecution` to unwind the call stack. The handler's state is fully reconstructable from persisted step results and events, so replay is the resume mechanism. `step.sleep()` uses DO alarms to wake the executor after a delay.
 
 ## SDK Primitives
 
@@ -126,7 +137,7 @@ The handler context (`RelayContext`) passed to every workflow:
 | `input(prompt, { buttons })`                 | `=> Promise<{ value, $choice }>` | Text input with custom buttons                          |
 | `loading(msg, callback)`                     | `(string, cb) => Promise<void>`  | Shows spinner during async work                         |
 | `confirm(msg)`                               | `(string) => Promise<boolean>`   | Approve/reject dialog                                   |
-| `step`                                       | `WorkflowStep`                   | Raw Cloudflare step (`step.do()`, `step.sleep()`, etc.) |
+| `step`                                       | `ExecutorStep`                   | Step primitives (`step.do()`, `step.sleep()`)           |
 | `data`                                       | `InferBuilderGroupResult<T>`     | Typed upfront input (only when field builders provided) |
 
 ## HTTP API
@@ -137,7 +148,7 @@ The handler context (`RelayContext`) passed to every workflow:
 | ------ | ---------------------------- | ------------------------------------------------------- |
 | `GET`  | `/workflows`                 | Returns workflow metadata list from registry            |
 | `POST` | `/workflows`                 | Creates a new workflow instance, returns `{ id, name }` |
-| `GET`  | `/workflows/:id/stream`      | Proxies to the DO's NDJSON stream                       |
+| `GET`  | `/workflows/:id/stream`      | Proxies to the executor DO's NDJSON stream              |
 | `POST` | `/workflows/:id/event/:name` | Submits user response (input value or confirm decision) |
 
 ### Call-response API (agents)
@@ -151,7 +162,7 @@ Both return a `CallResponseResult`:
 
 ```ts
 {
-  run_id: string;
+  runId: string;
   status: "awaiting_input" | "awaiting_confirm" | "complete";
   messages: StreamMessage[];      // all messages since last interaction
   interaction: InputRequestMessage | ConfirmRequestMessage | null;
@@ -161,7 +172,7 @@ Both return a `CallResponseResult`:
 ## How `input()` suspends and resumes
 
 1. `field.*` and `input.*` builders compile into an `InputSchema`
-2. `step.do(requestEvent)` → sends `input_request` message to DO stream
-3. `step.waitForEvent(eventName)` → suspends the Workflow
-4. Client submits form → `POST /workflows/:id/event/:name` → sends `input_received` to DO + calls `instance.sendEvent()` to resume
-5. Workflow continues with the submitted payload
+2. `step.do(requestEvent)` → appends `input_request` message to the executor DO's message log and broadcasts to stream
+3. `waitForEvent(eventName)` → throws `SuspendExecution`, unwinding the handler
+4. Client submits form → `POST /workflows/:id/event/:name` → appends `input_received` to stream + persists event in DO storage as `event:{name}`
+5. Executor replays the handler from the top — cached steps return instantly, the new event satisfies `waitForEvent`, and execution continues

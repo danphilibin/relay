@@ -3,8 +3,7 @@
  * Users provide these via their wrangler.jsonc configuration.
  */
 interface Env {
-  RELAY_WORKFLOW: Workflow;
-  RELAY_DURABLE_OBJECT: DurableObjectNamespace;
+  RELAY_EXECUTOR: DurableObjectNamespace;
   RELAY_APP_URL: string;
   RELAY_MCP_AGENT?: DurableObjectNamespace;
 }

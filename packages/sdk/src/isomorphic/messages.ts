@@ -180,9 +180,9 @@ export type InteractionPoint =
  * Response shape for the call-response API.
  */
 export type CallResponseResult = {
-  run_id: string;
-  workflow_slug: string;
-  run_url: string | null;
+  runId: string;
+  workflowSlug: string;
+  runUrl: string | null;
   status: CallResponseStatus;
   messages: StreamMessage[];
   interaction: InteractionPoint;

@@ -7,8 +7,10 @@ import {
   startWorkflowRun,
   respondToWorkflowRun,
   WorkflowNotFoundError,
+  WorkflowStreamInterruptedError,
 } from "./workflow-api";
 import { RelayMcpAgent } from "./cf-mcp-agent";
+import { getExecutorStub } from "./cf-executor";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +87,9 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       if (e instanceof WorkflowNotFoundError) {
         return Response.json({ error: e.message }, { status: 404 });
       }
+      if (e instanceof WorkflowStreamInterruptedError) {
+        return Response.json({ error: "Stream interrupted" }, { status: 400 });
+      }
       throw e;
     }
   }
@@ -98,13 +103,20 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       data: Record<string, unknown>;
     }>();
 
-    const result = await respondToWorkflowRun(
-      env,
-      instanceId,
-      body.event,
-      body.data,
-    );
-    return Response.json(result);
+    try {
+      const result = await respondToWorkflowRun(
+        env,
+        instanceId,
+        body.event,
+        body.data,
+      );
+      return Response.json(result);
+    } catch (e) {
+      if (e instanceof WorkflowStreamInterruptedError) {
+        return Response.json({ error: "Stream interrupted" }, { status: 400 });
+      }
+      throw e;
+    }
   }
 
   // ── Interactive API (browser clients) ──────────────────────────
@@ -117,9 +129,28 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
   // POST /workflows - spawns a new workflow instance
   if (url.pathname === "/workflows") {
     const params = WorkflowParamsSchema.parse(await req.json());
-    const instance = await env.RELAY_WORKFLOW.create({ params });
+
+    // Generate a unique run ID and start execution on the executor DO
+    const runId = crypto.randomUUID();
+    const stub = getExecutorStub(env, runId);
+
+    // Start execution — the handler runs inside the DO until it
+    // suspends (waiting for input) or completes. By the time this
+    // returns, all initial messages are in the stream.
+    //
+    // Note: unlike the call-response API (workflow-api.ts), we don't
+    // open the stream before starting — the browser connects to
+    // GET /stream separately after receiving the run ID. This is safe
+    // because messages are persisted in DO storage; the stream replays
+    // them on connect, so the browser never misses anything.
+    await stub.fetch("http://internal/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: params.name, data: params.data }),
+    });
+
     return Response.json({
-      id: instance.id,
+      id: runId,
       name: params.name,
     } satisfies StartWorkflowParams);
   }
@@ -128,7 +159,7 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
   const streamMatch = url.pathname.match(/^\/workflows\/([^/]+)\/stream$/);
   if (streamMatch) {
     const [, workflowId] = streamMatch;
-    const stub = env.RELAY_DURABLE_OBJECT.getByName(workflowId);
+    const stub = getExecutorStub(env, workflowId);
     return stub.fetch("http://internal/stream");
   }
 
@@ -140,7 +171,7 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     const [, instanceId, eventName] = eventMatch;
     const body = await req.json<{ value?: any; approved?: boolean }>();
 
-    const stub = env.RELAY_DURABLE_OBJECT.getByName(instanceId);
+    const stub = getExecutorStub(env, instanceId);
 
     // Determine message type based on payload shape
     const isConfirm = typeof body.approved === "boolean";
@@ -148,17 +179,19 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       ? { type: "confirm_received", id: eventName, approved: body.approved }
       : { type: "input_received", id: eventName, value: body.value };
 
+    // Record the user's response in the stream (for browser replay)
     await stub.fetch("http://internal/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: streamMessage }),
     });
 
-    // Send event to workflow engine
-    const instance = await env.RELAY_WORKFLOW.get(instanceId);
-    await instance.sendEvent({
-      type: eventName,
-      payload: isConfirm ? { approved: body.approved } : body.value,
+    // Deliver the event to the executor and replay the handler
+    const eventPayload = isConfirm ? { approved: body.approved } : body.value;
+    await stub.fetch(`http://internal/event/${encodeURIComponent(eventName)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(eventPayload),
     });
 
     return Response.json({ success: true });

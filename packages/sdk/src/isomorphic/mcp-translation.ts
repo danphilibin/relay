@@ -104,8 +104,8 @@ export function formatCallResponseForMcp(result: CallResponseResult): string {
     }
   }
 
-  if (result.run_url) {
-    lines.push(`View in browser: ${result.run_url}`);
+  if (result.runUrl) {
+    lines.push(`View in browser: ${result.runUrl}`);
     lines.push("");
   }
 
@@ -119,7 +119,7 @@ export function formatCallResponseForMcp(result: CallResponseResult): string {
   } else if (result.interaction) {
     lines.push("");
     lines.push(`[Workflow paused - ${result.status}]`);
-    lines.push(`Run ID: ${result.run_id}`);
+    lines.push(`Run ID: ${result.runId}`);
     lines.push(`Event: ${result.interaction.id}`);
 
     if (result.interaction.type === "input_request") {

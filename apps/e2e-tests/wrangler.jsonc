@@ -7,8 +7,8 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "RELAY_DURABLE_OBJECT",
-        "class_name": "RelayDurableObject",
+        "name": "RELAY_EXECUTOR",
+        "class_name": "RelayExecutor",
       },
       {
         "name": "RELAY_MCP_AGENT",
@@ -19,7 +19,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["RelayDurableObject"],
+      "new_sqlite_classes": ["RelayExecutor"],
     },
     {
       "tag": "v2",

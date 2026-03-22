@@ -14,8 +14,8 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "RELAY_DURABLE_OBJECT",
-        "class_name": "RelayDurableObject",
+        "name": "RELAY_EXECUTOR",
+        "class_name": "RelayExecutor",
       },
       {
         "name": "RELAY_MCP_AGENT",
@@ -31,6 +31,11 @@
     {
       "tag": "v2",
       "new_sqlite_classes": ["RelayMcpAgent"],
+    },
+    {
+      "tag": "v3",
+      "deleted_classes": ["RelayDurableObject"],
+      "new_sqlite_classes": ["RelayExecutor"],
     },
   ],
 }
