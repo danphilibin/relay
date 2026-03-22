@@ -1,7 +1,7 @@
 {
-  "run_id": "run-confirm-1",
-  "workflow_slug": "test-workflow",
-  "run_url": null,
+  "runId": "run-confirm-1",
+  "workflowSlug": "test-workflow",
+  "runUrl": null,
   "status": "awaiting_confirm",
   "messages": [
     {

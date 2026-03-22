@@ -1,12 +1,7 @@
-import {
-  RelayDurableObject,
-  RelayWorkflow,
-  RelayMcpAgent,
-  httpHandler,
-} from "relay-sdk";
+import { RelayExecutor, RelayMcpAgent, httpHandler } from "relay-sdk";
 
 // Required Cloudflare worker exports
-export { RelayDurableObject, RelayWorkflow, RelayMcpAgent };
+export { RelayExecutor, RelayMcpAgent };
 
 export default { fetch: httpHandler };
 

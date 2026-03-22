@@ -1,7 +1,7 @@
 {
-  "run_id": "run-start-1",
-  "workflow_slug": "test-workflow",
-  "run_url": null,
+  "runId": "run-start-1",
+  "workflowSlug": "test-workflow",
+  "runUrl": null,
   "status": "awaiting_input",
   "messages": [
     {

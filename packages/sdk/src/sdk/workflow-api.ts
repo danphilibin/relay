@@ -5,13 +5,15 @@ import {
   type InteractionPoint,
   interactionStatus,
 } from "../isomorphic/messages";
+import { getExecutorStub } from "./cf-executor";
 
 /**
- * Consume an NDJSON stream from the DO, collecting messages until we hit
- * an unanswered interaction point (input_request, confirm_request, or workflow_complete).
- * Optionally skips past messages until `afterId` is found.
+ * Read the executor's NDJSON stream and return once the run needs
+ * something (input, confirmation) or finishes. Collects all messages
+ * along the way. When `afterId` is provided, skips past already-seen
+ * messages before looking for the next interaction point.
  */
-export async function consumeUntilInteraction(
+async function getNextInteraction(
   streamResponse: Response,
   afterId?: string,
 ): Promise<{ messages: StreamMessage[]; interaction: InteractionPoint }> {
@@ -56,8 +58,7 @@ export async function consumeUntilInteraction(
     throw e;
   }
 
-  // Stream ended without an interaction point (shouldn't happen in normal flow)
-  return { messages, interaction: null };
+  throw new WorkflowStreamInterruptedError();
 }
 
 function buildRunUrl(
@@ -85,28 +86,29 @@ export async function startWorkflowRun(
     throw new WorkflowNotFoundError(slugOrTitle);
   }
 
-  // Create workflow instance — pass slug as name (used by getWorkflow lookup)
-  const params = { name: slug, data };
-  const instance = await env.RELAY_WORKFLOW.create({ params });
+  // Create a unique run ID and get the executor DO
+  const runId = crypto.randomUUID();
+  const stub = getExecutorStub(env, runId);
 
-  // Open stream and consume until first interaction point
-  const stub = env.RELAY_DURABLE_OBJECT.getByName(instance.id);
+  // Open the stream first so we continue blocking through any timer-based
+  // suspensions and only return once the run reaches a real interaction point
+  // or completion.
+  const streamResponse = await stub.fetch("http://internal/stream");
 
-  // Store workflow slug in the DO for later retrieval (e.g. respond calls)
-  await stub.fetch("http://internal/metadata", {
+  // Start execution. The executor may suspend on input, confirm, or sleep,
+  // but the stream remains open across alarm-driven replays.
+  await stub.fetch("http://internal/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug }),
+    body: JSON.stringify({ slug, data }),
   });
 
-  const streamResponse = await stub.fetch("http://internal/stream");
-  const { messages, interaction } =
-    await consumeUntilInteraction(streamResponse);
+  const { messages, interaction } = await getNextInteraction(streamResponse);
 
   return {
-    run_id: instance.id,
-    workflow_slug: slug,
-    run_url: buildRunUrl(env.RELAY_APP_URL, slug, instance.id),
+    runId,
+    workflowSlug: slug,
+    runUrl: buildRunUrl(env.RELAY_APP_URL, slug, runId),
     status: interactionStatus(interaction),
     messages,
     interaction,
@@ -122,13 +124,14 @@ export async function respondToWorkflowRun(
   event: string,
   data: Record<string, unknown>,
 ): Promise<CallResponseResult> {
-  const stub = env.RELAY_DURABLE_OBJECT.getByName(runId);
+  const stub = getExecutorStub(env, runId);
 
   // Retrieve the workflow slug stored at run creation
   const metaResponse = await stub.fetch("http://internal/metadata");
   const { slug } = (await metaResponse.json()) as { slug: string | null };
 
-  // Open stream BEFORE submitting the event so we don't miss messages
+  // Open the stream before sending the response so we don't miss messages
+  // emitted by the replay, including completions that happen after sleeps.
   const streamResponse = await stub.fetch("http://internal/stream");
 
   // Determine message type based on payload shape
@@ -137,30 +140,31 @@ export async function respondToWorkflowRun(
     ? { type: "confirm_received", id: event, approved: data.approved }
     : { type: "input_received", id: event, value: data };
 
-  // Record the response in the stream
+  // Record the response in the stream (so browser clients see it)
   await stub.fetch("http://internal/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message: streamMessage }),
   });
 
-  // Resume the workflow
-  const instance = await env.RELAY_WORKFLOW.get(runId);
-  await instance.sendEvent({
-    type: event,
-    payload: isConfirm ? { approved: data.approved } : data,
+  // Deliver the event to the executor. The replay may suspend on a timer,
+  // so the stream is the source of truth for "next interaction or complete".
+  const eventPayload = isConfirm ? { approved: data.approved } : data;
+  await stub.fetch(`http://internal/event/${encodeURIComponent(event)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(eventPayload),
   });
 
-  // Consume stream until next interaction point, skipping past the event we just submitted
-  const { messages, interaction } = await consumeUntilInteraction(
+  const { messages, interaction } = await getNextInteraction(
     streamResponse,
     event,
   );
 
   return {
-    run_id: runId,
-    workflow_slug: slug ?? "",
-    run_url: slug ? buildRunUrl(env.RELAY_APP_URL, slug, runId) : null,
+    runId,
+    workflowSlug: slug ?? "",
+    runUrl: slug ? buildRunUrl(env.RELAY_APP_URL, slug, runId) : null,
     status: interactionStatus(interaction),
     messages,
     interaction,
@@ -171,5 +175,12 @@ export class WorkflowNotFoundError extends Error {
   constructor(workflow: string) {
     super(`Unknown workflow: ${workflow}`);
     this.name = "WorkflowNotFoundError";
+  }
+}
+
+export class WorkflowStreamInterruptedError extends Error {
+  constructor() {
+    super("Stream interrupted");
+    this.name = "WorkflowStreamInterruptedError";
   }
 }

@@ -1,5 +1,5 @@
-export { createWorkflow, RelayWorkflow } from "./cf-workflow";
-export { RelayDurableObject } from "./cf-durable-object";
+export { createWorkflow } from "./cf-workflow";
+export { RelayExecutor } from "./cf-executor";
 export { httpHandler } from "./cf-http";
 export { RelayMcpAgent } from "./cf-mcp-agent";
 

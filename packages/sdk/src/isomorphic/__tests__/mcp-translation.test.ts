@@ -12,7 +12,7 @@ import {
 import { formatCallResponseForMcp } from "../mcp-translation";
 
 const CallResponseResultSchema = z.object({
-  run_id: z.string(),
+  runId: z.string(),
   status: z.enum(["awaiting_input", "awaiting_confirm", "complete"]),
   messages: z.array(StreamMessageSchema),
   interaction: z.union([
