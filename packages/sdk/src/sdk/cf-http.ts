@@ -1,8 +1,13 @@
-import { getWorkflowList } from "./registry";
+import { getTableRenderer, getWorkflow, getWorkflowList } from "./registry";
 import {
   WorkflowParamsSchema,
   type StartWorkflowParams,
 } from "../isomorphic/registry-types";
+import type {
+  SerializedColumnDef,
+  LoaderTableData,
+} from "../isomorphic/output";
+import { normalizeCellValue } from "../isomorphic/table";
 import {
   startWorkflowRun,
   respondToWorkflowRun,
@@ -18,6 +23,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+function deriveColumnKey(column: SerializedColumnDef, index: number): string {
+  if (column.type === "accessor") {
+    return column.accessorKey;
+  }
+  return `render_${index}`;
+}
+
 /**
  * HTTP handler for the Relay workflow engine.
  *
@@ -26,6 +38,7 @@ const corsHeaders = {
  * - POST /workflows              - spawns a new workflow instance
  * - GET  /workflows/:id/stream   - connects to NDJSON stream
  * - POST /workflows/:id/event/:name - submits an event
+ * - POST /workflows/:id/table/:stepId/query - fetch paginated table data
  *
  * Call-response endpoints (agents):
  * - POST /api/run                - start a workflow, block until first interaction
@@ -146,7 +159,7 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     await stub.fetch("http://internal/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: params.name, data: params.data }),
+      body: JSON.stringify({ slug: params.name, runId, data: params.data }),
     });
 
     return Response.json({
@@ -195,6 +208,125 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     });
 
     return Response.json({ success: true });
+  }
+
+  // POST /workflows/:id/table/:stepId/query - fetch paginated table data
+  const tableQueryMatch = url.pathname.match(
+    /^\/workflows\/([^/]+)\/table\/([^/]+)\/query$/,
+  );
+  if (req.method === "POST" && tableQueryMatch) {
+    const [, runId, stepId] = tableQueryMatch;
+    const stub = getExecutorStub(env, runId);
+
+    // Table descriptors are stored in the executor DO alongside step cache
+    const descriptorResponse = await stub.fetch(
+      `http://internal/tables/${stepId}`,
+    );
+
+    if (!descriptorResponse.ok) {
+      return Response.json(
+        { error: `Unknown table descriptor: ${stepId}` },
+        { status: 404 },
+      );
+    }
+
+    const descriptor = (await descriptorResponse.json()) as {
+      workflowSlug: string;
+      loaderName: string;
+      params: Record<string, unknown>;
+      tableRendererName?: string;
+      columns?: SerializedColumnDef[];
+      pageSize?: number;
+    };
+
+    const definition = getWorkflow(descriptor.workflowSlug);
+
+    if (!definition) {
+      return Response.json(
+        { error: `Unknown workflow: ${descriptor.workflowSlug}` },
+        { status: 404 },
+      );
+    }
+
+    const loaderDef = definition.loaders?.[descriptor.loaderName];
+    if (!loaderDef) {
+      return Response.json(
+        { error: `Unknown loader: ${descriptor.loaderName}` },
+        { status: 404 },
+      );
+    }
+
+    const body = await req.json<{
+      page?: number;
+      pageSize?: number;
+      query?: string;
+    }>();
+    const page = body.page ?? 0;
+    const pageSize = body.pageSize ?? descriptor.pageSize ?? 20;
+    const query = body.query || undefined;
+
+    const result = await loaderDef.fn(
+      { ...descriptor.params, query, page, pageSize },
+      env,
+    );
+    const renderer = descriptor.tableRendererName
+      ? getTableRenderer(descriptor.tableRendererName)
+      : undefined;
+    const normalizedColumns =
+      descriptor.columns?.map((column, index) => ({
+        key: deriveColumnKey(column, index),
+        label: column.label,
+      })) ??
+      (result.data[0]
+        ? Object.keys(result.data[0] as Record<string, unknown>).map((key) => ({
+            key,
+            label: key,
+          }))
+        : []);
+
+    const payload: LoaderTableData = {
+      columns: normalizedColumns,
+      rows: result.data.map((row: any) => {
+        const cells = Object.fromEntries(
+          normalizedColumns.map((column, index) => {
+            const sourceColumn = descriptor.columns?.[index];
+            const rendererColumn = renderer?.columns[index];
+
+            let value: unknown;
+            if (rendererColumn) {
+              if (typeof rendererColumn === "string") {
+                value = row[rendererColumn];
+              } else if ("accessorKey" in rendererColumn) {
+                value = row[rendererColumn.accessorKey];
+              } else {
+                value = rendererColumn.renderCell(row);
+              }
+            } else if (sourceColumn?.type === "accessor") {
+              value = row[sourceColumn.accessorKey];
+            } else {
+              value = row[column.key];
+            }
+
+            return [column.key, normalizeCellValue(value)];
+          }),
+        );
+
+        // Row keys are identity values — preserve their original primitive type
+        // (string or number) rather than coercing through display normalization.
+        const rawKey = loaderDef.rowKey ? row[loaderDef.rowKey] : undefined;
+        const rowKey =
+          typeof rawKey === "string" || typeof rawKey === "number"
+            ? rawKey
+            : rawKey != null
+              ? String(rawKey)
+              : undefined;
+
+        return { rowKey, cells };
+      }),
+      totalCount: result.totalCount,
+    };
+
+    return Response.json(payload);
   }
 
   return new Response("Not Found", { status: 404 });

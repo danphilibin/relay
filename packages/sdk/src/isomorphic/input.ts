@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { RowKeyValue } from "./table";
+import { LoaderTableDataSchema } from "./table";
 
 /**
  * Input field definition schemas for structured input
@@ -34,14 +36,40 @@ const SelectFieldSchema = z.object({
   required: z.boolean().optional(),
 });
 
+// TODO: break this out into static and dynamic tables
+const TableFieldSchema = z.object({
+  type: z.literal("table"),
+  label: z.string(),
+  description: z.string().optional(),
+  // Loader-backed table — browser fetches pages from this endpoint.
+  // pageSize lives inside loader for server-side pagination.
+  loader: z
+    .object({
+      path: z.string(),
+      pageSize: z.number().optional(),
+    })
+    .optional(),
+  // Static table — all data sent inline in the input request. Uses the same
+  // normalized shape as the loader HTTP response so the client renders both
+  // modes identically. pageSize controls client-side pagination.
+  data: LoaderTableDataSchema.optional(),
+  pageSize: z.number().optional(),
+  /** Field name used to identify rows for selection (defaults to "id") */
+  rowKey: z.string(),
+  /** Whether the user can select one row or many */
+  selection: z.enum(["single", "multiple"]),
+});
+
 export const InputFieldDefinitionSchema = z.discriminatedUnion("type", [
   TextFieldSchema,
   CheckboxFieldSchema,
   NumberFieldSchema,
   SelectFieldSchema,
+  TableFieldSchema,
 ]);
 
 export type InputFieldDefinition = z.infer<typeof InputFieldDefinitionSchema>;
+export type TableFieldDefinition = z.infer<typeof TableFieldSchema>;
 
 export type TextFieldConfig = Omit<
   z.infer<typeof TextFieldSchema>,
@@ -119,6 +147,7 @@ type FieldTypeMap = {
   number: number;
   checkbox: boolean;
   select: string;
+  table: RowKeyValue[];
 };
 
 /**
@@ -188,7 +217,7 @@ export function compileInputFields<TFields extends InputFieldBuilders>(
   );
 }
 
-type InputGroupFn = {
+export type InputGroupFn = {
   <TFields extends InputFieldBuilders>(
     fields: TFields,
   ): Promise<InferBuilderGroupResult<TFields>>;
@@ -207,12 +236,12 @@ type InputGroupFn = {
   ): Promise<InferBuilderGroupResult<TFields> & { $choice: ButtonLabels<B> }>;
 };
 
-type InputTextFn = (
+export type InputTextFn = (
   label: string,
   config?: TextFieldConfig,
 ) => InputFieldBuilder<string, Extract<InputFieldDefinition, { type: "text" }>>;
 
-type InputCheckboxFn = (
+export type InputCheckboxFn = (
   label: string,
   config?: CheckboxFieldConfig,
 ) => InputFieldBuilder<
@@ -220,7 +249,7 @@ type InputCheckboxFn = (
   Extract<InputFieldDefinition, { type: "checkbox" }>
 >;
 
-type InputNumberFn = (
+export type InputNumberFn = (
   label: string,
   config?: NumberFieldConfig,
 ) => InputFieldBuilder<
@@ -228,7 +257,7 @@ type InputNumberFn = (
   Extract<InputFieldDefinition, { type: "number" }>
 >;
 
-type InputSelectFn = <const TOptions extends readonly SelectOption[]>(
+export type InputSelectFn = <const TOptions extends readonly SelectOption[]>(
   label: string,
   config: Omit<SelectFieldConfig<TOptions[number]["value"]>, "options"> & {
     options: TOptions;
@@ -259,24 +288,4 @@ export const field: RelayFieldFactory = {
       ...config,
       options: [...config.options],
     }),
-};
-
-/**
- * Input function type with overloads for simple and structured inputs
- */
-export type RelayInputFn = {
-  // Simple prompt
-  (prompt: string): Promise<string>;
-
-  // Prompt with buttons
-  <const B extends readonly ButtonDef[]>(
-    prompt: string,
-    options: InputOptions<B>,
-  ): Promise<{ value: string; $choice: ButtonLabels<B> }>;
-} & {
-  text: InputTextFn;
-  checkbox: InputCheckboxFn;
-  number: InputNumberFn;
-  select: InputSelectFn;
-  group: InputGroupFn;
 };
