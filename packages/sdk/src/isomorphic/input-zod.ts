@@ -44,6 +44,13 @@ export function inputSchemaToZod(
                 .describe(desc)
             : z.string().describe(desc);
         break;
+      case "table":
+        // TODO: revisit this representation.
+        // Table fields are interactive UI widgets — they aren't representable
+        // as a simple Zod schema for MCP tool registration, so we emit an
+        // array-of-strings placeholder (the selected row keys).
+        shape[key] = z.array(z.string()).describe(desc);
+        break;
       default:
         assertNever(field);
     }

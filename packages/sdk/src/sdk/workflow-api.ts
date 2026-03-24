@@ -100,7 +100,7 @@ export async function startWorkflowRun(
   await stub.fetch("http://internal/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug, data }),
+    body: JSON.stringify({ slug, runId, data }),
   });
 
   const { messages, interaction } = await getNextInteraction(streamResponse);

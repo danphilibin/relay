@@ -3,6 +3,7 @@ import { TextField } from "./fields/TextField";
 import { NumberField } from "./fields/NumberField";
 import { CheckboxField } from "./fields/CheckboxField";
 import { SelectField } from "./fields/SelectField";
+import { TableField } from "./fields/TableField";
 
 export type FieldProps = {
   fieldName: string;
@@ -18,12 +19,12 @@ export type FieldRegistryEntry = {
   component: React.ComponentType<FieldProps>;
 };
 
-export const FIELD_REGISTRY: Record<
-  InputFieldDefinition["type"],
-  FieldRegistryEntry
+export const FIELD_REGISTRY: Partial<
+  Record<InputFieldDefinition["type"], FieldRegistryEntry>
 > = {
   text: { autoFocusable: true, component: TextField },
   number: { autoFocusable: true, component: NumberField },
   checkbox: { autoFocusable: false, component: CheckboxField },
   select: { autoFocusable: false, component: SelectField },
+  table: { autoFocusable: false, component: TableField },
 };

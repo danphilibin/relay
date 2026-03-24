@@ -38,6 +38,7 @@ export type WorkflowStatus =
 export type {
   InputSchema,
   InputFieldDefinition,
+  TableFieldDefinition,
   InputFieldBuilder,
   InputFieldBuilders,
   RelayFieldFactory,
@@ -49,4 +50,11 @@ export type {
   OutputBlock,
   OutputButtonDef,
   OutputMetadataBlock,
+  OutputTableLoaderBlock,
+  LoaderTableData,
+  NormalizedTableColumn,
+  NormalizedTableRow,
+  SerializedColumnDef,
 } from "../isomorphic/output";
+
+export type { RowKeyValue } from "../isomorphic/table";

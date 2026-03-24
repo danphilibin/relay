@@ -17,6 +17,7 @@ export const OutputTableBlockSchema = z.object({
   type: z.literal("output.table"),
   title: z.string().optional(),
   data: z.array(z.record(z.string(), z.string())),
+  pageSize: z.number().optional(),
 });
 
 export const OutputCodeBlockSchema = z.object({
@@ -52,6 +53,27 @@ export const OutputMetadataBlockSchema = z.object({
   ),
 });
 
+// Table data types live in table.ts — re-exported here for backwards compat.
+export {
+  type RowKeyValue,
+  type SerializedColumnDef,
+  type NormalizedTableColumn,
+  type NormalizedTableRow,
+  type LoaderTableData,
+  NormalizedTableColumnSchema,
+  NormalizedTableRowSchema,
+  LoaderTableDataSchema,
+} from "./table";
+
+export const OutputTableLoaderBlockSchema = z.object({
+  type: z.literal("output.table_loader"),
+  title: z.string().optional(),
+  loader: z.object({
+    path: z.string(),
+    pageSize: z.number().optional(),
+  }),
+});
+
 export const OutputBlockSchema = z.discriminatedUnion("type", [
   OutputMarkdownBlockSchema,
   OutputTableBlockSchema,
@@ -60,6 +82,7 @@ export const OutputBlockSchema = z.discriminatedUnion("type", [
   OutputLinkBlockSchema,
   OutputButtonsBlockSchema,
   OutputMetadataBlockSchema,
+  OutputTableLoaderBlockSchema,
 ]);
 
 export type OutputIntent = z.infer<typeof OutputIntentSchema>;
@@ -71,4 +94,7 @@ export type OutputImageBlock = z.infer<typeof OutputImageBlockSchema>;
 export type OutputLinkBlock = z.infer<typeof OutputLinkBlockSchema>;
 export type OutputButtonsBlock = z.infer<typeof OutputButtonsBlockSchema>;
 export type OutputMetadataBlock = z.infer<typeof OutputMetadataBlockSchema>;
+export type OutputTableLoaderBlock = z.infer<
+  typeof OutputTableLoaderBlockSchema
+>;
 export type OutputBlock = z.infer<typeof OutputBlockSchema>;
