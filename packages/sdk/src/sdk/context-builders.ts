@@ -25,6 +25,7 @@ import {
   type RowKeyValue,
   type LoaderTableData,
   normalizeCellValue,
+  coerceRowKey,
 } from "../isomorphic/table";
 import { getWorkflow } from "./registry";
 import type {
@@ -160,13 +161,7 @@ function normalizeStaticTableData<TRow>(
         }),
       );
 
-      const rawKey = row[rowKey];
-      const typedKey =
-        typeof rawKey === "string" || typeof rawKey === "number"
-          ? rawKey
-          : rawKey != null
-            ? String(rawKey)
-            : undefined;
+      const typedKey = coerceRowKey(row[rowKey]);
 
       return { rowKey: typedKey, cells };
     }),

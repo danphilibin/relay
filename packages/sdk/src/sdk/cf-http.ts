@@ -7,7 +7,7 @@ import type {
   SerializedColumnDef,
   LoaderTableData,
 } from "../isomorphic/output";
-import { normalizeCellValue } from "../isomorphic/table";
+import { coerceRowKey, normalizeCellValue } from "../isomorphic/table";
 import {
   startWorkflowRun,
   respondToWorkflowRun,
@@ -311,15 +311,9 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
           }),
         );
 
-        // Row keys are identity values — preserve their original primitive type
-        // (string or number) rather than coercing through display normalization.
-        const rawKey = loaderDef.rowKey ? row[loaderDef.rowKey] : undefined;
-        const rowKey =
-          typeof rawKey === "string" || typeof rawKey === "number"
-            ? rawKey
-            : rawKey != null
-              ? String(rawKey)
-              : undefined;
+        const rowKey = coerceRowKey(
+          loaderDef.rowKey ? row[loaderDef.rowKey] : undefined,
+        );
 
         return { rowKey, cells };
       }),

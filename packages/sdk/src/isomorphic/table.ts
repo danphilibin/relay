@@ -52,12 +52,20 @@ export type NormalizedTableColumn = z.infer<typeof NormalizedTableColumnSchema>;
 export type NormalizedTableRow = z.infer<typeof NormalizedTableRowSchema>;
 export type LoaderTableData = z.infer<typeof LoaderTableDataSchema>;
 
-// ── Display normalization ────────────────────────────────────────────
+/**
+ * Coerces a raw row-key value to a RowKeyValue, preserving the original
+ * primitive type so `resolve()` receives keys matching the source data.
+ */
+export function coerceRowKey(raw: unknown): RowKeyValue | undefined {
+  if (typeof raw === "string" || typeof raw === "number") return raw;
+  return raw != null ? String(raw) : undefined;
+}
 
-/** Coerce an arbitrary cell value to a display string.
+/**
+ * Coerces an arbitrary cell value to a display string.
  * Objects with `label` or `value` fields are unwrapped; everything else
- * is stringified. Used by both the table query endpoint (cf-http) and
- * the static input.table path (cf-workflow). */
+ * is stringified.
+ */
 export function normalizeCellValue(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "object") {
