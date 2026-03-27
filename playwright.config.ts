@@ -27,7 +27,7 @@ export default defineConfig({
           reuseExistingServer: true,
           timeout: 180_000,
           stdout: "ignore",
-          stderr: "pipe",
+          stderr: "ignore",
         },
         {
           command: "pnpm dev:e2e:react",
@@ -35,7 +35,7 @@ export default defineConfig({
           reuseExistingServer: true,
           timeout: 180_000,
           stdout: "ignore",
-          stderr: "pipe",
+          stderr: "ignore",
         },
       ],
   projects: [
