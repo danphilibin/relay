@@ -1,11 +1,15 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import { getWorkflowList } from "./registry";
 import { startWorkflowRun, respondToWorkflowRun } from "./workflow-api";
-import { inputSchemaToZod } from "../isomorphic/input-zod";
-import { formatCallResponseForMcp } from "../isomorphic/mcp-translation";
+import { registerRelayTools } from "./mcp/tools";
 
+/**
+ * Relay's hosted MCP endpoint on Cloudflare. Extends the Cloudflare agents
+ * framework's McpAgent (a Durable Object that handles MCP transport over
+ * HTTP/WebSocket instead of stdio) and registers the standard Relay workflow
+ * tools on it. For the standalone local MCP server, see mcp/server.ts.
+ */
 export class RelayMcpAgent extends McpAgent<Env> {
   server = new McpServer({
     name: "relay",
@@ -13,57 +17,11 @@ export class RelayMcpAgent extends McpAgent<Env> {
   });
 
   async init() {
-    // Register the generic respond tool
-    this.server.tool(
-      "relay_respond",
-      "Respond to a running workflow that is awaiting input or confirmation. " +
-        "Use this after a workflow tool returns a paused state.",
-      {
-        run_id: z
-          .string()
-          .describe("The run_id from the previous workflow response"),
-        event: z
-          .string()
-          .describe("The event name from the interaction (e.g. relay-input-1)"),
-        data: z
-          .record(z.string(), z.unknown())
-          .describe(
-            'Response data. For input: the field values (e.g. {"input": "hello"}). ' +
-              'For confirm: {"approved": true} or {"approved": false}.',
-          ),
-      },
-      async ({ run_id, event, data }) => {
-        const result = await respondToWorkflowRun(
-          this.env,
-          run_id,
-          event,
-          data,
-        );
-        return {
-          content: [{ type: "text", text: formatCallResponseForMcp(result) }],
-        };
-      },
-    );
-
-    // Register one tool per workflow
-    for (const workflow of getWorkflowList()) {
-      const toolName = workflow.slug.replace(/-/g, "_");
-      const description =
-        workflow.description || `Run the "${workflow.title}" workflow`;
-      const zodSchema = inputSchemaToZod(workflow.input);
-
-      this.server.tool(
-        toolName,
-        description,
-        zodSchema,
-        async (params: Record<string, unknown>) => {
-          const data = Object.keys(zodSchema).length > 0 ? params : undefined;
-          const result = await startWorkflowRun(this.env, workflow.slug, data);
-          return {
-            content: [{ type: "text", text: formatCallResponseForMcp(result) }],
-          };
-        },
-      );
-    }
+    await registerRelayTools(this.server, {
+      listWorkflows: () => getWorkflowList(),
+      startWorkflow: (slug, data) => startWorkflowRun(this.env, slug, data),
+      respondToWorkflow: (runId, event, data) =>
+        respondToWorkflowRun(this.env, runId, event, data),
+    });
   }
 }

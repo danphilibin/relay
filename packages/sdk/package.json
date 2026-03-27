@@ -6,7 +6,7 @@
   "exports": {
     ".": "./src/sdk/index.ts",
     "./client": "./src/sdk/client.ts",
-    "./mcp": "./src/sdk/mcp.ts"
+    "./mcp": "./src/sdk/mcp/server.ts"
   },
   "scripts": {
     "test": "vitest run",
