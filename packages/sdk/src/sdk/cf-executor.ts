@@ -18,9 +18,6 @@ import {
   buildConfirm,
 } from "./context-builders";
 
-// Re-export types that other modules import from here
-export { type ExecutorStep, type TableDescriptor } from "./context-builders";
-
 // ── Helpers ──────────────────────────────────────────────────────────
 
 /**

@@ -51,10 +51,12 @@ export type {
   OutputButtonDef,
   OutputMetadataBlock,
   OutputTableLoaderBlock,
+} from "../isomorphic/output";
+
+export type {
+  RowKeyValue,
   LoaderTableData,
   NormalizedTableColumn,
   NormalizedTableRow,
   SerializedColumnDef,
-} from "../isomorphic/output";
-
-export type { RowKeyValue } from "../isomorphic/table";
+} from "../isomorphic/table";

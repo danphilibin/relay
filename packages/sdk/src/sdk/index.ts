@@ -34,14 +34,17 @@ export type {
   SelectOption,
 } from "../isomorphic/input";
 export type {
-  LoaderTableData,
-  NormalizedTableColumn,
-  NormalizedTableRow,
   OutputBlock,
   OutputButtonDef,
   OutputTableLoaderBlock,
-  SerializedColumnDef,
 } from "../isomorphic/output";
+
+export type {
+  LoaderTableData,
+  NormalizedTableColumn,
+  NormalizedTableRow,
+  SerializedColumnDef,
+} from "../isomorphic/table";
 
 export { getWorkflowList, registerWorkflow } from "./registry";
 

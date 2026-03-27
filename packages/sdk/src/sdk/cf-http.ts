@@ -3,11 +3,12 @@ import {
   WorkflowParamsSchema,
   type StartWorkflowParams,
 } from "../isomorphic/registry-types";
-import type {
-  SerializedColumnDef,
-  LoaderTableData,
-} from "../isomorphic/output";
-import { coerceRowKey, normalizeCellValue } from "../isomorphic/table";
+import {
+  coerceRowKey,
+  normalizeCellValue,
+  type SerializedColumnDef,
+  type LoaderTableData,
+} from "../isomorphic/table";
 import {
   startWorkflowRun,
   respondToWorkflowRun,

@@ -53,18 +53,6 @@ export const OutputMetadataBlockSchema = z.object({
   ),
 });
 
-// Table data types live in table.ts — re-exported here for backwards compat.
-export {
-  type RowKeyValue,
-  type SerializedColumnDef,
-  type NormalizedTableColumn,
-  type NormalizedTableRow,
-  type LoaderTableData,
-  NormalizedTableColumnSchema,
-  NormalizedTableRowSchema,
-  LoaderTableDataSchema,
-} from "./table";
-
 export const OutputTableLoaderBlockSchema = z.object({
   type: z.literal("output.table_loader"),
   title: z.string().optional(),
