@@ -13,6 +13,7 @@ import {
   startWorkflowRun,
   respondToWorkflowRun,
   WorkflowNotFoundError,
+  RunNotFoundError,
   WorkflowStreamInterruptedError,
 } from "./workflow-api";
 import { RelayMcpAgent } from "./cf-mcp-agent";
@@ -126,6 +127,9 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
       );
       return Response.json(result);
     } catch (e) {
+      if (e instanceof RunNotFoundError) {
+        return Response.json({ error: e.message }, { status: 404 });
+      }
       if (e instanceof WorkflowStreamInterruptedError) {
         return Response.json({ error: "Stream interrupted" }, { status: 400 });
       }

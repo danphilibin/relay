@@ -68,10 +68,17 @@ export async function registerRelayTools(
       },
     },
     async ({ runId, event, data }) => {
-      const result = await backend.respondToWorkflow(runId, event, data);
-      return {
-        content: [{ type: "text", text: formatCallResponseForMcp(result) }],
-      };
+      try {
+        const result = await backend.respondToWorkflow(runId, event, data);
+        return {
+          content: [{ type: "text", text: formatCallResponseForMcp(result) }],
+        };
+      } catch (e) {
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: errorMessage(e) }],
+        };
+      }
     },
   );
 
@@ -89,12 +96,23 @@ export async function registerRelayTools(
         inputSchema: zodSchema,
       },
       async (params: Record<string, unknown>) => {
-        const data = Object.keys(zodSchema).length > 0 ? params : undefined;
-        const result = await backend.startWorkflow(workflow.slug, data);
-        return {
-          content: [{ type: "text", text: formatCallResponseForMcp(result) }],
-        };
+        try {
+          const data = Object.keys(zodSchema).length > 0 ? params : undefined;
+          const result = await backend.startWorkflow(workflow.slug, data);
+          return {
+            content: [{ type: "text", text: formatCallResponseForMcp(result) }],
+          };
+        } catch (e) {
+          return {
+            isError: true,
+            content: [{ type: "text" as const, text: errorMessage(e) }],
+          };
+        }
       },
     );
   }
+}
+
+function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
 }

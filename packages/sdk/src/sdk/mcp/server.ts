@@ -18,13 +18,31 @@ export type CreateRelayMcpServerOptions = {
 
 // ── Relay API client ─────────────────────────────────────────────
 
+/** Parse a JSON response, throwing a descriptive error for non-OK statuses. */
+async function jsonOrThrow<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    // The worker returns JSON `{ error: "..." }` for known errors.
+    // Fall back to the raw body (truncated) for unexpected HTML error pages.
+    const body = await res.text().catch(() => "");
+    let message: string;
+    try {
+      const parsed = JSON.parse(body) as { error?: string };
+      message = parsed.error || body.slice(0, 200);
+    } catch {
+      message = body.slice(0, 200) || `${res.status} ${res.statusText}`;
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<T>;
+}
+
 function createApiClient(apiUrl: string): RelayMcpBackend {
   return {
     async listWorkflows(): Promise<WorkflowInfo[]> {
       const res = await fetch(`${apiUrl}/workflows`);
-      const data = (await res.json()) as {
+      const data = await jsonOrThrow<{
         workflows: (WorkflowInfo & { mcp?: boolean })[];
-      };
+      }>(res);
       return data.workflows.filter((w) => w.mcp === true);
     },
 
@@ -37,7 +55,7 @@ function createApiClient(apiUrl: string): RelayMcpBackend {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workflow: slug, data }),
       });
-      return res.json() as Promise<CallResponseResult>;
+      return jsonOrThrow<CallResponseResult>(res);
     },
 
     async respondToWorkflow(
@@ -50,7 +68,7 @@ function createApiClient(apiUrl: string): RelayMcpBackend {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ event, data }),
       });
-      return res.json() as Promise<CallResponseResult>;
+      return jsonOrThrow<CallResponseResult>(res);
     },
   };
 }

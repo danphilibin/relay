@@ -130,6 +130,10 @@ export async function respondToWorkflowRun(
   const metaResponse = await stub.fetch("http://internal/metadata");
   const { slug } = (await metaResponse.json()) as { slug: string | null };
 
+  if (!slug) {
+    throw new RunNotFoundError(runId);
+  }
+
   // Open the stream before sending the response so we don't miss messages
   // emitted by the replay, including completions that happen after sleeps.
   const streamResponse = await stub.fetch("http://internal/stream");
@@ -163,8 +167,8 @@ export async function respondToWorkflowRun(
 
   return {
     runId,
-    workflowSlug: slug ?? "",
-    runUrl: slug ? buildRunUrl(env.RELAY_APP_URL, slug, runId) : null,
+    workflowSlug: slug,
+    runUrl: buildRunUrl(env.RELAY_APP_URL, slug, runId),
     status: interactionStatus(interaction),
     messages,
     interaction,
@@ -175,6 +179,13 @@ export class WorkflowNotFoundError extends Error {
   constructor(workflow: string) {
     super(`Unknown workflow: ${workflow}`);
     this.name = "WorkflowNotFoundError";
+  }
+}
+
+export class RunNotFoundError extends Error {
+  constructor(runId: string) {
+    super(`No active workflow run found for ID: ${runId}`);
+    this.name = "RunNotFoundError";
   }
 }
 
