@@ -562,14 +562,17 @@ export function buildLoading(
       await deps.appendMessage(createLoadingMessage(eventName, message, false));
     });
 
-    let completeMessage = message;
-
-    // TODO: currently this runs unconditionally on every loading step;
-    // should we also wrap this in a step.do?
-    await callback({
-      complete: (msg: string) => {
-        completeMessage = msg;
-      },
+    // Wrap the user callback in step.do so side effects don't re-run on
+    // workflow replay. The complete message is returned and memoized so
+    // it's available for the completion step without re-executing.
+    const completeMessage = await step.do(`${eventName}-callback`, async () => {
+      let msg = message;
+      await callback({
+        complete: (m: string) => {
+          msg = m;
+        },
+      });
+      return msg;
     });
 
     await step.do(completeEventName, async () => {
