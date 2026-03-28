@@ -37,11 +37,11 @@ export function slugify(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function registerWorkflow(
-  title: string,
-  handler: RelayHandler,
-  input?: InputSchema,
-  description?: string,
+export function registerWorkflow(opts: {
+  title: string;
+  handler: RelayHandler;
+  input?: InputSchema;
+  description?: string;
   loaders?: Record<
     string,
     {
@@ -50,18 +50,18 @@ export function registerWorkflow(
       rowKey?: LoaderDef["rowKey"];
       resolve?: LoaderDef["resolve"];
     }
-  >,
-  mcp?: boolean,
-): void {
-  const slug = slugify(title);
+  >;
+  mcp?: boolean;
+}): void {
+  const slug = slugify(opts.title);
   workflows.set(slug, {
     slug,
-    title,
-    description,
-    handler,
-    input,
-    mcp,
-    loaders,
+    title: opts.title,
+    description: opts.description,
+    handler: opts.handler,
+    input: opts.input,
+    mcp: opts.mcp,
+    loaders: opts.loaders,
   });
 }
 

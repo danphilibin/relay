@@ -167,12 +167,12 @@ export function createWorkflow(config: {
       )
     : undefined;
 
-  registerWorkflow(
-    config.name,
-    config.handler as RelayHandler,
-    config.input ? compileInputFields(config.input) : undefined,
-    config.description,
+  registerWorkflow({
+    title: config.name,
+    handler: config.handler as RelayHandler,
+    input: config.input ? compileInputFields(config.input) : undefined,
+    description: config.description,
     loaders,
-    config.mcp,
-  );
+    mcp: config.mcp,
+  });
 }
