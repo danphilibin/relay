@@ -13,7 +13,7 @@ export const inputCheckbox = createWorkflow({
       }),
     });
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         value: result.agree,
         type: typeof result.agree,

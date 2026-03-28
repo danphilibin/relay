@@ -66,12 +66,12 @@ export type RelayOutput = {
   image: (opts: { src: string; alt?: string }) => Promise<void>;
   link: (opts: {
     url: string;
-    title?: string;
+    label?: string;
     description?: string;
   }) => Promise<void>;
   buttons: (buttons: OutputButtonDef[]) => Promise<void>;
   metadata: (opts: {
-    title?: string;
+    label?: string;
     data: Record<string, string | number | boolean | null>;
   }) => Promise<void>;
 };

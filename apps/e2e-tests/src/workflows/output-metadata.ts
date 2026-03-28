@@ -1,13 +1,13 @@
 import { createWorkflow } from "relay-sdk";
 
 /**
- * Tests output.metadata() with title and mixed value types.
+ * Tests output.metadata() with label and mixed value types.
  */
 export const outputMetadata = createWorkflow({
   name: "Output Metadata",
   handler: async ({ output }) => {
     await output.metadata({
-      title: "Order Summary",
+      label: "Order Summary",
       data: {
         "Order ID": "ORD-12345",
         Amount: 99.99,

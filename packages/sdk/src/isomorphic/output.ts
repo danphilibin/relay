@@ -15,7 +15,7 @@ export const OutputMarkdownBlockSchema = z.object({
 
 export const OutputTableBlockSchema = z.object({
   type: z.literal("output.table"),
-  title: z.string().optional(),
+  label: z.string().optional(),
   data: z.array(z.record(z.string(), z.string())),
   pageSize: z.number().optional(),
 });
@@ -35,7 +35,7 @@ export const OutputImageBlockSchema = z.object({
 export const OutputLinkBlockSchema = z.object({
   type: z.literal("output.link"),
   url: z.string(),
-  title: z.string().optional(),
+  label: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -46,7 +46,7 @@ export const OutputButtonsBlockSchema = z.object({
 
 export const OutputMetadataBlockSchema = z.object({
   type: z.literal("output.metadata"),
-  title: z.string().optional(),
+  label: z.string().optional(),
   data: z.record(
     z.string(),
     z.union([z.string(), z.number(), z.boolean(), z.null()]),
@@ -55,7 +55,7 @@ export const OutputMetadataBlockSchema = z.object({
 
 export const OutputTableLoaderBlockSchema = z.object({
   type: z.literal("output.table_loader"),
-  title: z.string().optional(),
+  label: z.string().optional(),
   loader: z.object({
     path: z.string(),
     pageSize: z.number().optional(),

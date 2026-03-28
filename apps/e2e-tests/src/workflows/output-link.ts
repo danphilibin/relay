@@ -8,7 +8,7 @@ export const outputLink = createWorkflow({
   handler: async ({ output }) => {
     await output.link({
       url: "https://example.com",
-      title: "Example Site",
+      label: "Example Site",
       description: "A link to an example website",
     });
   },

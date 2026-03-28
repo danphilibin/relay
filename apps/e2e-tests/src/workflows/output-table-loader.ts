@@ -42,7 +42,7 @@ export const outputTableLoader = createWorkflow({
   },
   handler: async ({ output, loaders }) => {
     await output.table({
-      title: "Planets",
+      label: "Planets",
       loader: loaders.planets,
       pageSize: 3,
     });

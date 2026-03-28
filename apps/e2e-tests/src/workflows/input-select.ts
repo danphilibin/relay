@@ -18,7 +18,7 @@ export const inputSelect = createWorkflow({
       }),
     });
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         value: result.color,
         type: typeof result.color,

@@ -28,21 +28,21 @@ export const tables = createWorkflow({
   handler: async ({ input, output, loaders }) => {
     // 1. output.table with data — static, all data over the wire
     await output.table({
-      title: "Users (data)",
+      label: "Users (data)",
       data: (await db.users.findMany()).data,
       pageSize: 5,
     });
 
     // 2. output.table with loader — paginated server-side
     await output.table({
-      title: "Users (loader)",
+      label: "Users (loader)",
       loader: loaders.users,
       pageSize: 5,
     });
 
     // 3. input.table with loader, single selection
     const user = await input.table({
-      title: "Pick a user",
+      label: "Pick a user",
       loader: loaders.users,
       pageSize: 5,
     });
@@ -50,7 +50,7 @@ export const tables = createWorkflow({
 
     // 4. input.table with static data
     const userFromData = await input.table({
-      title: "Pick user (from static data)",
+      label: "Pick user (from static data)",
       data: (await db.users.findMany()).data,
       rowKey: "id",
       pageSize: 5,
@@ -59,7 +59,7 @@ export const tables = createWorkflow({
 
     // 5. input.table with loader, multiple selection
     const orders = await input.table({
-      title: "Pick orders for this user",
+      label: "Pick orders for this user",
       loader: loaders.orders({ userId: user.id }),
       pageSize: 5,
       selection: "multiple",
@@ -71,7 +71,7 @@ export const tables = createWorkflow({
     );
 
     await output.metadata({
-      title: "Selection summary",
+      label: "Selection summary",
       data: {
         userId: user.id,
         orderIds: orders.map((o) => o.id).join(", "),

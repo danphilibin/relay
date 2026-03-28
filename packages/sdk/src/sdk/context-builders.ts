@@ -236,7 +236,7 @@ async function handleStaticTableInput(
   opts: TableInputStaticSingle<any> | TableInputStaticMultiple<any>,
   selection: "single" | "multiple",
 ) {
-  const { title, data, rowKey, pageSize, renderer } = opts;
+  const { label, data, rowKey, pageSize, renderer } = opts;
   const columns = renderer?.columns ?? opts.columns;
   const eventName = deps.stepName("input");
 
@@ -244,9 +244,9 @@ async function handleStaticTableInput(
 
   await step.do(`${eventName}-request`, async () => {
     await deps.appendMessage(
-      createTableInputRequest(eventName, title, {
+      createTableInputRequest(eventName, label, {
         type: "table",
-        label: title,
+        label,
         data: normalizedData,
         pageSize,
         rowKey,
@@ -286,7 +286,7 @@ async function handleLoaderTableInput(
   opts: TableInputSingle<any> | TableInputMultiple<any>,
   selection: "single" | "multiple",
 ) {
-  const { loader: loaderRef, title, pageSize, renderer } = opts;
+  const { loader: loaderRef, label, pageSize, renderer } = opts;
 
   // rowKey comes from the loader definition, not the call site.
   const rowKey = loaderRef.rowKey;
@@ -311,9 +311,9 @@ async function handleLoaderTableInput(
       pageSize,
     });
     await deps.appendMessage(
-      createTableInputRequest(eventName, title, {
+      createTableInputRequest(eventName, label, {
         type: "table",
-        label: title,
+        label,
         loader: {
           path: buildLoaderPath(runId, eventName),
           pageSize,
@@ -369,7 +369,7 @@ export function buildOutput(
       sendOutput({ type: "output.markdown", content }),
     table: async <TRow>(opts: TableOutputStatic | TableOutputLoader<TRow>) => {
       if (isLoaderTable(opts)) {
-        const { loader: loaderRef, title, pageSize, renderer } = opts;
+        const { loader: loaderRef, label, pageSize, renderer } = opts;
         // Table renderers own the display shape when provided; otherwise we fall back
         // to any inline columns passed directly to output.table().
         const columns = renderer?.columns ?? opts.columns;
@@ -378,7 +378,7 @@ export function buildOutput(
 
         const block: OutputBlock = {
           type: "output.table_loader" as const,
-          title,
+          label,
           loader: {
             // The browser only gets a stable query endpoint. The DO stores the
             // descriptor needed to resolve and render this table later on.
@@ -401,7 +401,7 @@ export function buildOutput(
       } else {
         await sendOutput({
           type: "output.table",
-          title: opts.title,
+          label: opts.label,
           data: opts.data,
           pageSize: opts.pageSize,
         });
@@ -411,11 +411,11 @@ export function buildOutput(
       sendOutput({ type: "output.code", code, language }),
     image: async ({ src, alt }) =>
       sendOutput({ type: "output.image", src, alt }),
-    link: async ({ url, title, description }) =>
-      sendOutput({ type: "output.link", url, title, description }),
+    link: async ({ url, label, description }) =>
+      sendOutput({ type: "output.link", url, label, description }),
     buttons: async (buttons) => sendOutput({ type: "output.buttons", buttons }),
-    metadata: async ({ title, data }) =>
-      sendOutput({ type: "output.metadata", title, data }),
+    metadata: async ({ label, data }) =>
+      sendOutput({ type: "output.metadata", label, data }),
   };
 }
 

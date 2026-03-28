@@ -6,7 +6,7 @@ import { TableToolbar } from "./TableToolbar";
 
 interface ServerTableProps {
   loader: { path: string; pageSize?: number };
-  title?: string;
+  label?: string;
   /** When set, rows become selectable with checkboxes. */
   selection?: "single" | "multiple";
   defaultSelectedKeys?: RowKeyValue[];
@@ -20,7 +20,7 @@ interface ServerTableProps {
  */
 export function ServerTable({
   loader,
-  title,
+  label,
   selection,
   defaultSelectedKeys,
   onSelectionChange,
@@ -137,8 +137,8 @@ export function ServerTable({
 
   return (
     <div className="space-y-2">
-      {title && (
-        <div className="text-base font-medium text-[#ddd]">{title}</div>
+      {label && (
+        <div className="text-base font-medium text-[#ddd]">{label}</div>
       )}
 
       <div className="border border-[#222] rounded-md overflow-hidden">

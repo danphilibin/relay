@@ -9,7 +9,7 @@ export const confirmFlow = createWorkflow({
   handler: async ({ confirm, output }) => {
     const approved = await confirm("Do you approve this action?");
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         approved: approved,
         type: typeof approved,

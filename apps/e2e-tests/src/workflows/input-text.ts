@@ -9,7 +9,7 @@ export const inputText = createWorkflow({
   handler: async ({ input, output }) => {
     const value = await input.text("Enter your name");
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         value: value,
         type: typeof value,

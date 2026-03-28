@@ -82,7 +82,7 @@ export const fetchHackernews = createWorkflow({
     if (selectedStory.url) {
       await output.link({
         url: selectedStory.url,
-        title: "Read Article",
+        label: "Read Article",
         description: new URL(selectedStory.url).hostname,
       });
     }

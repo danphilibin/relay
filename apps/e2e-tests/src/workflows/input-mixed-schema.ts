@@ -27,7 +27,7 @@ export const inputMixedSchema = createWorkflow({
       }),
     });
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         name: result.name,
         nameType: typeof result.name,

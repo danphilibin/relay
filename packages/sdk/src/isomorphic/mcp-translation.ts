@@ -44,13 +44,13 @@ function formatOutputBlock(block: OutputBlock): string {
     case "output.markdown":
       return block.content;
     case "output.table":
-      return block.title ? `[Table: ${block.title}]` : "[Table]";
+      return block.label ? `[Table: ${block.label}]` : "[Table]";
     case "output.code":
       return `[Code: ${block.language ?? "plain"}] ${block.code}`;
     case "output.image":
       return `[Image: ${block.alt ?? block.src}]`;
     case "output.link":
-      return `[Link: ${block.title ?? block.url}]`;
+      return `[Link: ${block.label ?? block.url}]`;
     case "output.buttons":
       return `[Buttons: ${block.buttons.map((b) => b.label).join(", ")}]`;
     default:

@@ -12,7 +12,7 @@ export const inputButtons = createWorkflow({
       { buttons: ["Save", { label: "Discard", intent: "danger" }] },
     );
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         value: result.value,
         choice: result.$choice,

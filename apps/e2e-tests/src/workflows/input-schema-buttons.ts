@@ -17,7 +17,7 @@ export const inputSchemaButtons = createWorkflow({
       },
     );
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         note: result.note,
         noteType: typeof result.note,

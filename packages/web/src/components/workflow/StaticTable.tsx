@@ -7,7 +7,7 @@ const DEFAULT_PAGE_SIZE = 20;
 
 interface StaticTableProps {
   data: LoaderTableData;
-  title?: string;
+  label?: string;
   pageSize?: number;
   /** When set, rows become selectable with checkboxes. */
   selection?: "single" | "multiple";
@@ -21,7 +21,7 @@ interface StaticTableProps {
  */
 export function StaticTable({
   data,
-  title,
+  label,
   pageSize = DEFAULT_PAGE_SIZE,
   selection,
   defaultSelectedKeys,
@@ -106,8 +106,8 @@ export function StaticTable({
 
   return (
     <div className="space-y-2">
-      {title && (
-        <div className="text-base font-medium text-[#ddd]">{title}</div>
+      {label && (
+        <div className="text-base font-medium text-[#ddd]">{label}</div>
       )}
 
       <div className="border border-[#222] rounded-md overflow-hidden">

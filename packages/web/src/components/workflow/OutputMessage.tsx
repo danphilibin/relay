@@ -45,7 +45,7 @@ export function OutputMessage({ block }: OutputMessageProps) {
       return (
         <StaticTable
           data={data}
-          title={block.title}
+          label={block.label}
           pageSize={block.pageSize}
         />
       );
@@ -66,9 +66,9 @@ export function OutputMessage({ block }: OutputMessageProps) {
     case "output.link":
       return (
         <div className="space-y-1">
-          {block.title && (
+          {block.label && (
             <div className="text-base font-medium text-[#ddd]">
-              {block.title}
+              {block.label}
             </div>
           )}
           {block.description && (
@@ -115,14 +115,14 @@ export function OutputMessage({ block }: OutputMessageProps) {
       );
 
     case "output.table_loader":
-      return <ServerTable loader={block.loader} title={block.title} />;
+      return <ServerTable loader={block.loader} label={block.label} />;
 
     case "output.metadata":
       return (
         <div className="space-y-3">
-          {block.title && (
+          {block.label && (
             <div className="text-base font-medium text-[#ddd]">
-              {block.title}
+              {block.label}
             </div>
           )}
           <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">

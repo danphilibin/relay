@@ -254,14 +254,14 @@ export function tableRenderer<TRow>(
 
 /** Static table (existing) */
 export type TableOutputStatic = {
-  title?: string;
+  label?: string;
   data: Array<Record<string, string>>;
   pageSize?: number;
 };
 
 /** Loader-backed table — columns are optional, typed against TRow */
 export type TableOutputLoader<TRow = unknown> = {
-  title?: string;
+  label?: string;
   loader: LoaderRef<TRow>;
   pageSize?: number;
   columns?: LoaderColumnDef<TRow>[];
@@ -272,7 +272,7 @@ export type TableOutputLoader<TRow = unknown> = {
 
 /** Options for selecting a single row from a loader-backed table. */
 export type TableInputSingle<TRow> = {
-  title: string;
+  label: string;
   loader: LoaderRef<TRow>;
   pageSize?: number;
   columns?: LoaderColumnDef<TRow>[];
@@ -282,7 +282,7 @@ export type TableInputSingle<TRow> = {
 
 /** Options for selecting multiple rows from a loader-backed table. */
 export type TableInputMultiple<TRow> = {
-  title: string;
+  label: string;
   loader: LoaderRef<TRow>;
   pageSize?: number;
   columns?: LoaderColumnDef<TRow>[];
@@ -292,7 +292,7 @@ export type TableInputMultiple<TRow> = {
 
 /** Static table input — single selection, all data passed over the wire. */
 export type TableInputStaticSingle<TRow> = {
-  title: string;
+  label: string;
   data: TRow[];
   rowKey: keyof TRow & string;
   pageSize?: number;
@@ -303,7 +303,7 @@ export type TableInputStaticSingle<TRow> = {
 
 /** Static table input — multiple selection, all data passed over the wire. */
 export type TableInputStaticMultiple<TRow> = {
-  title: string;
+  label: string;
   data: TRow[];
   rowKey: keyof TRow & string;
   pageSize?: number;

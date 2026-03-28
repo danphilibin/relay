@@ -14,7 +14,7 @@ export const inputNumber = createWorkflow({
       }),
     });
     await output.metadata({
-      title: "Result",
+      label: "Result",
       data: {
         value: result.quantity,
         type: typeof result.quantity,

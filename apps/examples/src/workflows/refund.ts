@@ -66,7 +66,7 @@ export const refund = createWorkflow({
     });
 
     await output.table({
-      title: "Refund Summary",
+      label: "Refund Summary",
       data: selectedItems.map((i) => ({
         Item: i.name,
         Price: `$${i.price.toFixed(2)}`,
@@ -94,7 +94,7 @@ export const refund = createWorkflow({
     const refundId = `REF-${Date.now()}`;
 
     await output.metadata({
-      title: "Refund Processed",
+      label: "Refund Processed",
       data: {
         "Refund ID": refundId,
         Amount: `$${refundTotal.toFixed(2)}`,
