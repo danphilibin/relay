@@ -219,11 +219,15 @@ export class RelayExecutor extends DurableObject<Env> {
     if (request.method === "POST" && eventMatch) {
       const [, eventName] = eventMatch;
       const payload = await request.json();
+      const pendingEvent = await this.getPendingEvent();
 
-      // TODO: Validate that this event matches the workflow's current pending
-      // interaction before persisting it. Right now any client can pre-seed
-      // deterministic future event names and the replay will consume them later.
-      // Persist the event so the next replay can pick it up
+      if (pendingEvent !== eventName) {
+        return Response.json(
+          { error: `Unexpected event: ${eventName}` },
+          { status: 409 },
+        );
+      }
+
       await this.ctx.storage.put(`event:${eventName}`, payload);
 
       const result = await this.replay();
@@ -423,10 +427,15 @@ export class RelayExecutor extends DurableObject<Env> {
 
       const messages = await this.getMessages();
 
+      await this.ctx.storage.delete("pendingEvent");
+
       return { status: "complete", messages };
     } catch (e) {
       if (e instanceof SuspendExecution) {
         const messages = await this.getMessages();
+
+        await this.ctx.storage.put("pendingEvent", e.eventName);
+
         return {
           status: "suspended",
           pendingEvent: e.eventName,
@@ -452,6 +461,10 @@ export class RelayExecutor extends DurableObject<Env> {
 
   private async getMessages(): Promise<StreamMessage[]> {
     return (await this.ctx.storage.get<StreamMessage[]>("messages")) || [];
+  }
+
+  private async getPendingEvent(): Promise<string | undefined> {
+    return await this.ctx.storage.get<string>("pendingEvent");
   }
 
   // ── Step implementation ──────────────────────────────────────────
