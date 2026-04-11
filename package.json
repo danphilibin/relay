@@ -22,6 +22,9 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "prepare": "lefthook install",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm -r build && changeset publish",
     "===== PACKAGES =====": "",
     "examples": "pnpm --filter relay-examples",
     "web": "pnpm --filter relay-web",
@@ -31,6 +34,7 @@
     "@relay-tools/sdk": "workspace:*"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@playwright/test": "^1.57.0",
     "concurrently": "^9.2.1",
     "lefthook": "^2.1.1",
