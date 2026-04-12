@@ -16,6 +16,17 @@ async function proxy({ request }: { request: Request }): Promise<Response> {
     );
   }
 
+  if (env.WORKOS_CLIENT_ID) {
+    const { getAuth } = await import("@workos/authkit-tanstack-react-start");
+    const { user } = await getAuth();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
   // Strip the /worker/ prefix to get the path the worker expects.
   const url = new URL(request.url);
   const targetPath = url.pathname.replace(/^\/worker\/?/, "/");
