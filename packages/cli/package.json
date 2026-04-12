@@ -1,0 +1,20 @@
+{
+  "name": "@relay-tools/cli",
+  "version": "0.1.0",
+  "description": "CLI for scaffolding and developing Relay workflow projects",
+  "bin": {
+    "relay": "./bin/cli.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "type": "module",
+  "dependencies": {
+    "@relay-tools/web": "workspace:*",
+    "cac": "^6.7.14",
+    "wrangler": "^4.77.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

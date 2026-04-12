@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 
+// ── Deprecation notice ──────────────────────────────────────────
+// relay-web has been replaced by @relay-tools/cli. Print a notice
+// for every invocation so users know to migrate.
+console.warn(
+  "\x1b[33m" +
+    "⚠ relay-web is deprecated. Use @relay-tools/cli instead:\n" +
+    "    npx @relay-tools/cli dev\n" +
+    "    npx @relay-tools/cli create my-project\n" +
+    "\x1b[0m",
+);
+
 import cac from "cac";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";

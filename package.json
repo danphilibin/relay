@@ -26,6 +26,7 @@
     "version": "changeset version",
     "release": "pnpm -r build && changeset publish",
     "===== PACKAGES =====": "",
+    "cli": "pnpm --filter @relay-tools/cli",
     "examples": "pnpm --filter relay-examples",
     "web": "pnpm --filter @relay-tools/web",
     "sdk": "pnpm --filter @relay-tools/sdk"
