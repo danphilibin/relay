@@ -4,6 +4,7 @@ export const refund = createWorkflow({
   name: "Process Refund",
   description:
     "Look up an order, select items, and process a refund with policy validation and approval gates.",
+  mcp: true,
   handler: async ({ input, output, confirm }) => {
     const { orderId } = await input.group("Enter order information", {
       orderId: input.text("Order ID", {
