@@ -2,6 +2,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "relay-web",
   "compatibility_date": "2025-09-02",
-  "compatibility_flags": ["nodejs_compat"],
+  // global_fetch_strictly_public: the /worker/** and /mcp proxy routes
+  // fetch RELAY_WORKER_URL. Without this flag, a Worker fetching another
+  // *.workers.dev Worker on the same account always gets a 404. The flag
+  // routes fetch() over the public internet like any other client.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "main": "@tanstack/react-start/server-entry",
 }

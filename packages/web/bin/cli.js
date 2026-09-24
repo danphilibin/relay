@@ -34,7 +34,10 @@ function generateConfig({ name, vars }) {
     main: "index.js",
     assets: { directory: "../client" },
     compatibility_date: "2025-09-02",
-    compatibility_flags: ["nodejs_compat"],
+    // global_fetch_strictly_public: keep in sync with wrangler.jsonc. The
+    // proxy routes fetch RELAY_WORKER_URL, and without this flag a Worker
+    // fetching another *.workers.dev Worker on the same account gets a 404.
+    compatibility_flags: ["nodejs_compat", "global_fetch_strictly_public"],
     no_bundle: true,
     rules: [{ type: "ESModule", globs: ["**/*.js", "**/*.mjs"] }],
     ...(vars && Object.keys(vars).length > 0 ? { vars } : {}),
