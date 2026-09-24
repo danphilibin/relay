@@ -33,7 +33,7 @@ On first deploy, Wrangler will create a Workers project called `relay-tools`. No
 ### 2. Deploy the frontend
 
 ```bash
-pnpm --filter relay-web run deploy
+pnpm --filter @relay-tools/web run deploy
 ```
 
 On first deploy, Wrangler will create a Pages project called `relay-web`. Note the URL it prints (e.g. `https://relay-web.pages.dev`).

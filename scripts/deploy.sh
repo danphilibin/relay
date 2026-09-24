@@ -31,5 +31,5 @@ echo ""
 
 # Set the worker URL as a Cloudflare secret for the web app, then deploy.
 # The web app proxies API requests to this URL at runtime (not baked into the build).
-echo "$WORKER_URL" | pnpm --filter relay-web exec wrangler secret put RELAY_WORKER_URL
-pnpm --filter relay-web run deploy
+echo "$WORKER_URL" | pnpm --filter @relay-tools/web exec wrangler secret put RELAY_WORKER_URL
+pnpm --filter @relay-tools/web run deploy
