@@ -1,18 +1,114 @@
-import { useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+  type TransitionEvent,
+} from "react";
 import { CaretDown, CaretRight, Terminal } from "@phosphor-icons/react";
 import type { StreamMessage, WorkflowStatus } from "@relay-tools/sdk/client";
 
-interface DevConsoleProps {
+interface DevConsoleRun {
   status: WorkflowStatus;
   runId: string | null;
   messages: StreamMessage[];
 }
 
-export function DevConsole({ status, runId, messages }: DevConsoleProps) {
+const DevConsoleContext = createContext<{
+  run: DevConsoleRun | null;
+  setRun: (run: DevConsoleRun | null) => void;
+  isVisible: boolean;
+  toggle: () => void;
+} | null>(null);
+
+export function DevConsoleProvider({ children }: { children: ReactNode }) {
+  const [run, setRun] = useState<DevConsoleRun | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const toggle = useCallback(() => setIsVisible((visible) => !visible), []);
+  return (
+    <DevConsoleContext.Provider value={{ run, setRun, isVisible, toggle }}>
+      {children}
+    </DevConsoleContext.Provider>
+  );
+}
+
+/** Shared with the welcome-page miniature, which toggles the same panel. */
+export function useDevConsoleToggle() {
+  const ctx = useContext(DevConsoleContext);
+  if (!ctx) {
+    throw new Error("useDevConsoleToggle requires DevConsoleProvider");
+  }
+  return { isVisible: ctx.isVisible, toggle: ctx.toggle };
+}
+
+/**
+ * The console lives in the root layout, so a workflow page publishes
+ * its run here. Layout effects, with a separate unmount clear, avoid
+ * flashing the empty state between messages.
+ */
+export function usePublishDevConsoleRun(
+  status: WorkflowStatus,
+  runId: string | null,
+  messages: StreamMessage[],
+) {
+  const setRun = useContext(DevConsoleContext)?.setRun;
+
+  useLayoutEffect(() => {
+    setRun?.({ status, runId, messages });
+  }, [status, runId, messages, setRun]);
+
+  useLayoutEffect(() => {
+    return () => setRun?.(null);
+  }, [setRun]);
+
+  if (!setRun) {
+    throw new Error("usePublishDevConsoleRun requires DevConsoleProvider");
+  }
+}
+
+function useDevConsoleRun(): DevConsoleRun | null {
+  const ctx = useContext(DevConsoleContext);
+  if (!ctx) {
+    throw new Error("DevConsole requires DevConsoleProvider");
+  }
+  return ctx.run;
+}
+
+export function DevConsole() {
+  const run = useDevConsoleRun();
+  const { isVisible, toggle } = useDevConsoleToggle();
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(
     new Set(),
   );
+  // Stay mounted through the close animation so it can animate out.
+  const [rendered, setRendered] = useState(isVisible);
+
+  useEffect(() => {
+    if (isVisible) {
+      setRendered(true);
+    } else if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // No transition fires with reduced motion, so unmount immediately
+      setRendered(false);
+    }
+  }, [isVisible]);
+
+  const handleTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
+    if (
+      e.target === e.currentTarget &&
+      e.propertyName === "width" &&
+      !isVisible
+    ) {
+      setRendered(false);
+    }
+  };
+
+  // Indices belong to one run's message list.
+  useEffect(() => {
+    setExpandedMessages(new Set());
+  }, [run?.runId]);
 
   const toggleMessage = (index: number) => {
     setExpandedMessages((prev) => {
@@ -27,7 +123,7 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
   };
 
   const expandAll = () => {
-    setExpandedMessages(new Set(messages.map((_, i) => i)));
+    setExpandedMessages(new Set(run?.messages.map((_, i) => i) ?? []));
   };
 
   const collapseAll = () => {
@@ -38,7 +134,7 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
     <>
       {/* Fixed toggle button - always visible */}
       <button
-        onClick={() => setIsVisible(!isVisible)}
+        onClick={toggle}
         className="fixed right-4 bottom-4 p-2 bg-[#1a1a1a] border border-[#333] rounded-lg hover:bg-[#222] transition-colors z-50"
         title={isVisible ? "Hide Dev Console" : "Show Dev Console"}
       >
@@ -48,70 +144,82 @@ export function DevConsole({ status, runId, messages }: DevConsoleProps) {
         />
       </button>
 
-      {/* Panel */}
-      {isVisible && (
-        <div className="w-[300px] h-full border-l border-[#222] bg-[#0d0d0d] flex flex-col shrink-0">
-          {/* Header */}
-          <div className="px-3 py-2 border-b border-[#222] flex items-center gap-2">
-            <Terminal size={14} className="text-[#666]" />
-            <span className="text-xs font-medium text-[#888]">Dev Console</span>
-          </div>
-
-          {/* Metadata */}
-          <div className="px-3 py-2 border-b border-[#222] space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wider text-[#555]">
-                Run ID
-              </span>
-              <span className="text-xs font-mono text-[#888]">
-                {runId ? truncateId(runId) : "—"}
+      {rendered && (
+        <div
+          className={`h-full shrink-0 overflow-hidden transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none starting:w-0 starting:opacity-0 ${isVisible ? "w-75 opacity-100" : "w-0 opacity-0"}`}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          <div className="w-75 h-full border-l border-[#222] bg-[#0d0d0d] flex flex-col">
+            {/* Header */}
+            <div className="px-3 py-3 border-b border-[#222] flex items-center gap-2">
+              <Terminal size={14} className="text-[#666]" />
+              <span className="text-xs font-medium text-[#888]">
+                Dev console
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wider text-[#555]">
-                Status
-              </span>
-              <StatusBadge status={status} />
-            </div>
-          </div>
 
-          {/* Controls */}
-          <div className="px-3 py-1.5 border-b border-[#222] flex items-center justify-between">
-            <span className="text-[10px] text-[#555]">
-              {messages.length} message{messages.length !== 1 ? "s" : ""}
-            </span>
-            <button
-              onClick={
-                expandedMessages.size === messages.length
-                  ? collapseAll
-                  : expandAll
-              }
-              className="text-[10px] text-[#666] hover:text-[#888] transition-colors"
-            >
-              {expandedMessages.size === messages.length
-                ? "Collapse"
-                : "Expand"}{" "}
-              all
-            </button>
-          </div>
+            {run ? (
+              <>
+                <div className="px-3 py-2 border-b border-[#222] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-[#555]">
+                      Run ID
+                    </span>
+                    <span className="text-xs font-mono text-[#888]">
+                      {run.runId ? truncateId(run.runId) : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-[#555]">
+                      Status
+                    </span>
+                    <StatusBadge status={run.status} />
+                  </div>
+                </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto">
-            {messages.length === 0 ? (
-              <div className="p-3 text-xs text-[#555] text-center">
-                No messages yet
-              </div>
+                <div className="px-3 py-1.5 border-b border-[#222] flex items-center justify-between">
+                  <span className="text-[10px] text-[#555]">
+                    {run.messages.length} message
+                    {run.messages.length !== 1 ? "s" : ""}
+                  </span>
+                  <button
+                    onClick={
+                      expandedMessages.size === run.messages.length
+                        ? collapseAll
+                        : expandAll
+                    }
+                    className="text-[10px] text-[#666] hover:text-[#888] transition-colors"
+                  >
+                    {expandedMessages.size === run.messages.length
+                      ? "Collapse"
+                      : "Expand"}{" "}
+                    all
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  {run.messages.length === 0 ? (
+                    <div className="p-3 text-xs text-[#555] text-center">
+                      No messages yet
+                    </div>
+                  ) : (
+                    <div>
+                      {run.messages.map((message, index) => (
+                        <MessageRow
+                          key={`${message.id}-${index}`}
+                          message={message}
+                          index={index}
+                          isExpanded={expandedMessages.has(index)}
+                          onToggle={() => toggleMessage(index)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
-              <div>
-                {messages.map((message, index) => (
-                  <MessageRow
-                    key={`${message.id}-${index}`}
-                    message={message}
-                    index={index}
-                    isExpanded={expandedMessages.has(index)}
-                    onToggle={() => toggleMessage(index)}
-                  />
-                ))}
+              <div className="flex-1 flex items-center justify-center p-6 text-center">
+                <p className="text-xs text-[#555]">No workflow running</p>
               </div>
             )}
           </div>

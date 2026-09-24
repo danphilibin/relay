@@ -4,7 +4,7 @@ import { GithubLogo } from "@phosphor-icons/react";
 import { useWorkflowStream } from "../../hooks/useWorkflowStream";
 import { MessageList } from "./MessageList";
 import { LoadingMessage } from "./LoadingMessage";
-import { DevConsole } from "./DevConsole";
+import { usePublishDevConsoleRun } from "./DevConsole";
 
 interface WorkflowPageProps {
   workflowName: string;
@@ -26,6 +26,8 @@ export function WorkflowPage({ workflowName, runId }: WorkflowPageProps) {
     runId,
   });
 
+  usePublishDevConsoleRun(status, currentRunId, messages);
+
   // Auto-scroll on new messages
   useEffect(() => {
     if (containerRef.current) {
@@ -34,7 +36,7 @@ export function WorkflowPage({ workflowName, runId }: WorkflowPageProps) {
   }, [messages]);
 
   return (
-    <div className="flex-1 flex h-full w-full">
+    <div className="flex-1 flex h-full w-full min-w-0">
       <div className="flex-1 flex flex-col min-w-0">
         <div className="w-full border-b border-[#222] px-6 h-16 flex items-center justify-between">
           <h1 className="text-base font-semibold text-[#fafafa]">
@@ -47,10 +49,10 @@ export function WorkflowPage({ workflowName, runId }: WorkflowPageProps) {
               icon={GithubLogo}
               external
             >
-              View Source
+              View source
             </LinkButton>
             <Button size="base" variant="primary" onClick={startNewRun}>
-              New Run
+              New run
             </Button>
           </div>
         </div>
@@ -79,7 +81,6 @@ export function WorkflowPage({ workflowName, runId }: WorkflowPageProps) {
           </div>
         </div>
       </div>
-      <DevConsole status={status} runId={currentRunId} messages={messages} />
     </div>
   );
 }

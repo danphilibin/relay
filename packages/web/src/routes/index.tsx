@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import { Terminal } from "@phosphor-icons/react";
 import { useWorkflows } from "../lib/workflows-context";
 import { McpInstructions } from "../components/McpInstructions";
+import { useDevConsoleToggle } from "../components/workflow/DevConsole";
 
 const rootRoute = getRouteApi("__root__");
 
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { error } = useWorkflows();
   const { authEnabled } = rootRoute.useLoaderData();
+  const { isVisible, toggle } = useDevConsoleToggle();
 
   // The /mcp endpoint is disabled when auth is enabled (see routes/mcp.tsx),
   // so the MCP option is only offered in open-access mode.
@@ -44,18 +47,22 @@ function Home() {
   );
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 min-w-0 overflow-y-auto">
       <div className="mx-auto max-w-2xl px-6 py-16 text-[15px] leading-relaxed text-[#999]">
         <h1 className="text-2xl font-semibold tracking-tight text-white mb-3">
           Welcome!
         </h1>
         <p className="mb-4">
-          This is a demo of Relay, a framework for interactive backend scripts.
+          This is a demo of Relay, a framework for interactive backend
+          workflows.
         </p>
 
         {showMcp ? (
           <>
-            <p className="mb-5">There are two ways to run Relay workflows:</p>
+            <p className="mb-5">
+              A Relay workflow is a durable function that can pause for input
+              and display output. There are two ways to run them:
+            </p>
             <ol className="space-y-8">
               <Step number={1} title="In the browser">
                 {browserStep}
@@ -68,6 +75,36 @@ function Home() {
         ) : (
           browserStep
         )}
+
+        <p className="mt-8">
+          Each workflow run prints its output to a JSON log. Click the{" "}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={isVisible ? "Hide Dev Console" : "Show Dev Console"}
+            title={isVisible ? "Hide Dev Console" : "Show Dev Console"}
+            className="inline-flex align-[-5px] mx-0.5 p-1 bg-[#1a1a1a] border border-[#333] rounded-md cursor-pointer"
+          >
+            <Terminal
+              size={16}
+              className={isVisible ? "text-[#9ec1ff]" : "text-[#888]"}
+              aria-hidden
+            />
+          </button>{" "}
+          button in the bottom right corner to inspect the output.
+        </p>
+        <p className="mt-4">
+          The code for each workflow can be found{" "}
+          <a
+            href="https://github.com/danphilibin/relay/tree/main/apps/examples/src/workflows"
+            target="_blank"
+            rel="noreferrer"
+            className="text-white underline underline-offset-2"
+          >
+            on GitHub
+          </a>
+          .
+        </p>
       </div>
     </div>
   );

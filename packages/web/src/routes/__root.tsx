@@ -14,6 +14,10 @@ import {
 import { SignOut } from "@phosphor-icons/react";
 import { getAuthConfig, requireAuth } from "../lib/auth";
 import { WorkflowsProvider, useWorkflows } from "../lib/workflows-context";
+import {
+  DevConsole,
+  DevConsoleProvider,
+} from "../components/workflow/DevConsole";
 import "../app.css";
 
 export const Route = createRootRoute({
@@ -53,10 +57,15 @@ function RootComponent() {
     <RootDocument>
       <AuthShell authEnabled={authEnabled}>
         <WorkflowsProvider>
-          <div className="flex h-screen bg-kumo-base text-kumo-default font-sans">
-            <Sidebar authEnabled={authEnabled} />
-            <Outlet />
-          </div>
+          <DevConsoleProvider>
+            <div className="flex h-screen bg-kumo-base text-kumo-default font-sans">
+              <Sidebar authEnabled={authEnabled} />
+              <div className="flex flex-1 min-w-0">
+                <Outlet />
+                <DevConsole />
+              </div>
+            </div>
+          </DevConsoleProvider>
         </WorkflowsProvider>
       </AuthShell>
     </RootDocument>
