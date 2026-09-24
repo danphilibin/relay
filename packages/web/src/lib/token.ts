@@ -16,6 +16,19 @@ export const getToken = createServerFn({ method: "GET" }).handler(async () => {
     if (!user) throw new Error("Unauthorized");
   }
 
+  return mintWorkerToken();
+});
+
+/**
+ * Signs a 5-minute worker JWT with RELAY_SIGNING_KEY, or returns null
+ * when no signing key is configured (worker auth is off).
+ *
+ * Server-only. Callers are responsible for checking the user is allowed
+ * to act before minting — this function does no auth of its own.
+ */
+export async function mintWorkerToken(): Promise<string | null> {
+  const { env } = await import("../env.server");
+
   const signingKey = env.RELAY_SIGNING_KEY;
   if (!signingKey) return null;
 
@@ -27,4 +40,4 @@ export const getToken = createServerFn({ method: "GET" }).handler(async () => {
     },
     signingKey,
   );
-});
+}

@@ -4,17 +4,10 @@
  * server-side only — the client never needs to know it.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { forwardToWorker } from "../../lib/worker-proxy";
 
 async function proxy({ request }: { request: Request }): Promise<Response> {
   const { env } = await import("../../env.server");
-  const workerUrl = (env.RELAY_WORKER_URL ?? "").trim().replace(/\/+$/, "");
-
-  if (!workerUrl) {
-    return new Response(
-      JSON.stringify({ error: "RELAY_WORKER_URL is not configured" }),
-      { status: 502, headers: { "Content-Type": "application/json" } },
-    );
-  }
 
   if (env.WORKOS_CLIENT_ID) {
     const { getAuth } = await import("@workos/authkit-tanstack-react-start");
@@ -30,35 +23,7 @@ async function proxy({ request }: { request: Request }): Promise<Response> {
   // Strip the /worker/ prefix to get the path the worker expects.
   const url = new URL(request.url);
   const targetPath = url.pathname.replace(/^\/worker\/?/, "/");
-  const targetUrl = `${workerUrl}${targetPath}${url.search}`;
-
-  let proxyResponse: Response;
-  try {
-    // Forward the request as-is (method, headers, body).
-    // The Cloudflare Workers runtime handles streaming natively.
-    proxyResponse = await fetch(targetUrl, {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-      // @ts-expect-error — Cloudflare Workers supports duplex streaming
-      duplex: "half",
-    });
-  } catch {
-    return new Response(
-      JSON.stringify({
-        error: `Could not connect to worker. Is the worker running?`,
-      }),
-      { status: 502, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
-  // Return the response directly, preserving status, headers, and
-  // streaming body (important for NDJSON workflow streams).
-  return new Response(proxyResponse.body, {
-    status: proxyResponse.status,
-    statusText: proxyResponse.statusText,
-    headers: proxyResponse.headers,
-  });
+  return forwardToWorker(request, targetPath);
 }
 
 export const Route = createFileRoute("/worker/$")({

@@ -97,20 +97,19 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 function Sidebar({ authEnabled }: { authEnabled: boolean }) {
   const { workflows, loading, error } = useWorkflows();
 
-  const baseClasses =
-    "block w-full text-left px-3.5 py-3 rounded-md mb-1 transition-colors";
+  const baseClasses = "block w-full text-left px-3.5 py-3 rounded-md mb-1";
 
   return (
-    <div className="w-[240px] bg-[#0a0a0a] border-r border-[#222] flex flex-col">
-      <div className="p-5 h-14 border-b border-[#222] flex items-center justify-between">
+    <div className="w-60 bg-[#0a0a0a] border-r border-[#222] flex flex-col">
+      <div className="p-5 flex items-center justify-between">
         <Link
           to="/"
-          className="text-base font-semibold tracking-tight flex items-center gap-2"
+          className="text-lg tracking-[-0.01em] font-semibold flex items-center gap-2"
         >
           Relay
         </Link>
       </div>
-      <div className="flex-1 overflow-y-auto py-3 px-2">
+      <div className="flex-1 overflow-y-auto pb-3 px-2">
         {loading || error ? null : workflows.length === 0 ? (
           <div className="px-3 py-2 text-sm text-[#555]">No workflows</div>
         ) : (
@@ -123,7 +122,7 @@ function Sidebar({ authEnabled }: { authEnabled: boolean }) {
                 className: `${baseClasses} bg-[#1a1a1a] text-white`,
               }}
               inactiveProps={{
-                className: `${baseClasses} text-[#888] hover:bg-[#1a1a1a] hover:text-white`,
+                className: `${baseClasses} text-[#888] hover:bg-white/5 hover:text-white`,
               }}
             >
               <div className="font-medium text-sm">{workflow.title}</div>
@@ -157,7 +156,7 @@ function UserFooter() {
         </div>
         <button
           onClick={() => signOut()}
-          className="shrink-0 p-1.5 rounded-md text-[#666] hover:text-white hover:bg-[#1a1a1a] transition-colors"
+          className="shrink-0 p-1.5 rounded-md text-[#666] hover:text-white hover:bg-[#1a1a1a]"
           title="Sign out"
         >
           <SignOut size={16} />

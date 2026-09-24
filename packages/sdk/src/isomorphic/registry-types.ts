@@ -8,6 +8,7 @@ export type WorkflowMeta = {
   slug: string;
   title: string;
   description?: string;
+  mcp?: boolean;
 };
 
 export const WorkflowParamsSchema = z.object({

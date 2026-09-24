@@ -36,7 +36,7 @@ export function WorkflowPage({ workflowName, runId }: WorkflowPageProps) {
   return (
     <div className="flex-1 flex h-full w-full">
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="w-full border-b border-[#222] px-8 h-16 flex items-center justify-between">
+        <div className="w-full border-b border-[#222] px-6 h-16 flex items-center justify-between">
           <h1 className="text-base font-semibold text-[#fafafa]">
             {formatWorkflowName(workflowName)}
           </h1>
@@ -49,13 +49,13 @@ export function WorkflowPage({ workflowName, runId }: WorkflowPageProps) {
             >
               View Source
             </LinkButton>
-            <Button variant="primary" onClick={startNewRun}>
+            <Button size="base" variant="primary" onClick={startNewRun}>
               New Run
             </Button>
           </div>
         </div>
         <div ref={containerRef} className="flex-1 overflow-y-auto">
-          <div className="p-8 space-y-4">
+          <div className="px-6 py-8 space-y-4">
             {status === "connecting" && (
               <LoadingMessage text="Connecting..." complete={false} />
             )}

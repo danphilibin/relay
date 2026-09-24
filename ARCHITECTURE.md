@@ -79,6 +79,8 @@ The core hook is `useWorkflowStream` — it manages the full lifecycle of connec
 
 The app is deployed as a TanStack Start SSR app on Cloudflare Workers. Server functions handle auth and token minting (see the Authentication section). All browser → worker API calls go through `apiFetch()` in `lib/api.ts`, which routes them to `/worker/**`. A catch-all API route (`routes/worker/$.tsx`) proxies these requests server-side to `RELAY_WORKER_URL`, so the worker URL is never exposed to the client. `apiFetch()` handles token caching and 401 retry.
 
+The app also serves a public `/mcp` route (`routes/mcp.tsx`) that forwards to the worker's `/mcp`, so the home page can show MCP connection instructions using the app's own URL. It only exists in open-access mode (it returns 404 when WorkOS is configured). If `RELAY_SIGNING_KEY` is set, it signs a worker JWT for each request, the same way `getToken` does for browsers. Both proxy routes share `lib/worker-proxy.ts`.
+
 ### `apps/examples`
 
 Example Cloudflare Worker demonstrating the deployment shape: imports `@relay-tools/sdk`, defines workflows, deploys independently. Contains several example workflows covering simple to complex cases.
@@ -99,11 +101,11 @@ Thin MCP server entrypoint that delegates to `@relay-tools/sdk/mcp`. Used for ru
 - **The frontend is workflow-agnostic.** The React app renders any workflow purely from the `StreamMessage` stream. There is no per-workflow UI code.
 - **The Durable Object is the source of truth.** All messages are persisted in the executor DO. The stream replays full history on connect, so the client can recover from disconnects or page reloads.
 - **Handlers must be deterministic.** The replay engine uses a counter-based naming scheme (`relay-input-0`, `relay-input-1`, etc.). Handlers must always execute the same steps in the same order.
-- **Auth is opt-in via env vars.** No credentials configured → open access. Either `RELAY_SIGNING_KEY` or `RELAY_API_KEY` present → every HTTP request (except `/mcp`) must carry a valid Bearer token.
+- **Auth is opt-in via env vars.** No credentials configured → open access. Either `RELAY_SIGNING_KEY` or `RELAY_API_KEY` present → every HTTP request must carry a valid Bearer token, including `/mcp`.
 
 ## Authentication
 
-Auth is **optional** — when no credentials are configured, everything runs in open-access mode (local dev). When either `RELAY_SIGNING_KEY` or `RELAY_API_KEY` is set on the worker, the HTTP handler requires a valid `Bearer` token on every request (except `/mcp`, which uses DO bindings).
+Auth is **optional** — when no credentials are configured, everything runs in open-access mode (local dev). When either `RELAY_SIGNING_KEY` or `RELAY_API_KEY` is set on the worker, the HTTP handler requires a valid `Bearer` token on every request, including `/mcp` — the check runs before MCP requests are handed to `RelayMcpAgent`.
 
 Two token types are supported:
 
