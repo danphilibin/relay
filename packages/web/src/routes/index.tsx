@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A demo of Relay, a framework for internal tools that humans and agents can run.",
+          "A demo of Relay, a framework for interactive backend scripts.",
       },
     ],
   }),
@@ -51,8 +51,7 @@ function Home() {
           Welcome!
         </h1>
         <p className="mb-4">
-          This is a demo of Relay, a framework for internal tools that humans
-          and agents can run.
+          This is a demo of Relay, a framework for interactive backend scripts.
         </p>
 
         {showMcp ? (
