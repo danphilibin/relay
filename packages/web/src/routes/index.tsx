@@ -8,7 +8,7 @@ const rootRoute = getRouteApi("__root__");
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Welcome to Relay" },
+      { title: "Relay" },
       {
         name: "description",
         content:
