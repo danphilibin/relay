@@ -100,7 +100,7 @@ function Sidebar({ authEnabled }: { authEnabled: boolean }) {
   const baseClasses = "block w-full text-left px-3.5 py-3 rounded-md mb-1";
 
   return (
-    <div className="w-60 bg-[#0a0a0a] border-r border-[#222] flex flex-col">
+    <div className="w-60 bg-[#0a0a0a] border-r border-[#222] flex flex-col flex-none">
       <div className="p-5 flex items-center justify-between">
         <Link
           to="/"
