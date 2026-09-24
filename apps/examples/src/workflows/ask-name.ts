@@ -5,7 +5,7 @@ export const askName = createWorkflow({
   mcp: true,
   handler: async ({ input, output }) => {
     await output.markdown(
-      "Hello! This workflow is paused and awaiting your input. Enter your name in the box below.",
+      "Hello! This function requires input to continue. Enter your name in the box below.",
     );
     const name = await input.text("What's your name?");
     await output.markdown(`Nice to meet you, ${name}!`);
