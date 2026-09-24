@@ -21,17 +21,16 @@ export const Route = createFileRoute("/")({
 
 /**
  * Welcome screen. Renders immediately — nothing here waits on the
- * workflow list, which only feeds the MCP example prompt and the
- * inline connection error.
+ * workflow list, which is only used to show an inline error if the
+ * worker can't be reached.
  */
 function Home() {
-  const { workflows, error } = useWorkflows();
+  const { error } = useWorkflows();
   const { authEnabled } = rootRoute.useLoaderData();
 
   // The /mcp endpoint is disabled when auth is enabled (see routes/mcp.tsx),
   // so the MCP option is only offered in open-access mode.
   const showMcp = !authEnabled;
-  const exampleWorkflow = workflows.find((w) => w.mcp);
 
   const browserStep = (
     <>
@@ -62,7 +61,7 @@ function Home() {
                 {browserStep}
               </Step>
               <Step number={2} title="From your agent, over MCP">
-                <McpInstructions exampleWorkflow={exampleWorkflow} />
+                <McpInstructions />
               </Step>
             </ol>
           </>

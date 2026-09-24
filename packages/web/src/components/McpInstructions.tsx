@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { Check, Copy } from "@phosphor-icons/react";
-import type { WorkflowMeta } from "@relay-tools/sdk/client";
 
 /**
  * Welcome-screen instructions for connecting an MCP client to this demo.
  * The URL points at this app's own /mcp route (see routes/mcp.tsx),
  * which forwards to the worker — so visitors never need the worker URL.
- *
- * `exampleWorkflow` is undefined until the workflow list loads; the
- * example prompt simply appears once it's available.
  */
-export function McpInstructions({
-  exampleWorkflow,
-}: {
-  exampleWorkflow?: WorkflowMeta;
-}) {
+export function McpInstructions() {
   const mcpUrl = useMcpUrl();
 
   return (
@@ -36,14 +28,12 @@ export function McpInstructions({
         Settings → Connectors → Add custom connector, then paste the URL above.
       </p>
 
-      {exampleWorkflow && (
-        <p className="mt-5">
-          Then try asking:{" "}
-          <span className="text-white">
-            “Run the {exampleWorkflow.title} workflow”
-          </span>
-        </p>
-      )}
+      {/* Hardcoded: Process Refund (apps/examples) best shows off a
+          multi-step workflow that pauses for input. It must stay mcp: true. */}
+      <p className="mt-5">
+        Then try asking:{" "}
+        <span className="text-white">“Run the Process Refund workflow”</span>
+      </p>
     </>
   );
 }
