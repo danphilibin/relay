@@ -61,6 +61,18 @@ async function getNextInteraction(
   throw new WorkflowStreamInterruptedError();
 }
 
+/**
+ * Confirm event names come from the executor's step-name counter
+ * (`relay-confirm-N`, see RelayExecutor.stepName), so the event name alone
+ * tells us whether the agent is trying to answer a confirm. We check the
+ * name rather than the payload shape because the payload is agent-controlled
+ * — e.g. `{"approved": "yes"}` would slip past a shape check and still be
+ * read as truthy by `confirm()`.
+ */
+function isConfirmEvent(event: string): boolean {
+  return event.startsWith("relay-confirm-");
+}
+
 function buildRunUrl(
   appUrl: string,
   slug: string,
@@ -134,6 +146,15 @@ export async function respondToWorkflowRun(
     throw new RunNotFoundError(runId);
   }
 
+  // Approvals are human-only: agents (MCP, CLI) can't answer a confirm.
+  // The user approves in the web app, which submits through the browser
+  // endpoint (POST /workflows/:id/event/:name) rather than this function.
+  if (isConfirmEvent(event)) {
+    throw new BrowserApprovalRequiredError(
+      buildRunUrl(env.RELAY_APP_URL, slug, runId),
+    );
+  }
+
   // Open the stream before sending the response so we don't miss messages
   // emitted by the replay, including completions that happen after sleeps.
   const streamResponse = await stub.fetch("http://internal/stream");
@@ -193,5 +214,16 @@ export class WorkflowStreamInterruptedError extends Error {
   constructor() {
     super("Stream interrupted");
     this.name = "WorkflowStreamInterruptedError";
+  }
+}
+
+export class BrowserApprovalRequiredError extends Error {
+  constructor(runUrl: string | null) {
+    const where = runUrl ?? "the Relay web app";
+    super(
+      `Approvals can't be submitted by an agent. ` +
+        `Ask the user to approve or reject it in the browser: ${where}`,
+    );
+    this.name = "BrowserApprovalRequiredError";
   }
 }

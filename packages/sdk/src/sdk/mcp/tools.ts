@@ -50,8 +50,10 @@ export async function registerRelayTools(
     "relay_respond",
     {
       description:
-        "Respond to a running workflow that is awaiting input or confirmation. " +
-        "Use this after a workflow tool returns a paused state.",
+        "Respond to a running workflow that is awaiting input. " +
+        "Use this after a workflow tool returns a paused state. " +
+        "Confirmations (approvals) can't be answered here — the user must " +
+        "approve them in the browser.",
       inputSchema: {
         runId: z
           .string()
@@ -62,8 +64,7 @@ export async function registerRelayTools(
         data: z
           .record(z.string(), z.unknown())
           .describe(
-            'Response data. For input: the field values (e.g. {"input": "hello"}). ' +
-              'For confirm: {"approved": true} or {"approved": false}.',
+            'Response data: the field values (e.g. {"input": "hello"}).',
           ),
       },
     },

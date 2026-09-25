@@ -1,6 +1,8 @@
 import type { InputFieldDefinition, InputSchema } from "./input";
 import type {
   CallResponseResult,
+  ConfirmRequestMessage,
+  InputRequestMessage,
   InteractionPoint,
   StreamMessage,
 } from "./messages";
@@ -100,6 +102,37 @@ function formatInputSchema(schema: InputSchema): string[] {
   return lines;
 }
 
+/** Paused on an input: the agent fills in the fields via relay_respond. */
+function formatInputRequest(interaction: InputRequestMessage): string[] {
+  const lines = [`Prompt: ${interaction.prompt}`];
+  lines.push(...formatInputSchema(interaction.schema));
+  if (interaction.buttons.length > 0) {
+    const labels = interaction.buttons.map((button) => button.label).join(", ");
+    lines.push(`Buttons: ${labels}`);
+  }
+  lines.push("");
+  lines.push("Use relay_respond to continue this workflow.");
+  return lines;
+}
+
+/**
+ * Paused on a confirm: approvals are human-only (relay_respond rejects
+ * confirm events), so send the agent to the browser instead.
+ */
+function formatConfirmRequest(
+  interaction: ConfirmRequestMessage,
+  runUrl: string | null,
+): string[] {
+  const where = runUrl ?? "the Relay web app";
+  return [
+    `Confirm: ${interaction.message}`,
+    "",
+    `This approval must be made by the user in the browser: ${where}`,
+    "Ask the user to approve or reject it there. " +
+      "The workflow will continue in the browser.",
+  ];
+}
+
 export function formatCallResponseForMcp(result: CallResponseResult): string {
   const lines: string[] = [];
 
@@ -128,21 +161,16 @@ export function formatCallResponseForMcp(result: CallResponseResult): string {
     lines.push(`Run ID: ${result.runId}`);
     lines.push(`Event: ${result.interaction.id}`);
 
-    if (result.interaction.type === "input_request") {
-      lines.push(`Prompt: ${result.interaction.prompt}`);
-      lines.push(...formatInputSchema(result.interaction.schema));
-      if (result.interaction.buttons.length > 0) {
-        const labels = result.interaction.buttons
-          .map((button) => button.label)
-          .join(", ");
-        lines.push(`Buttons: ${labels}`);
-      }
-    } else {
-      lines.push(`Confirm: ${result.interaction.message}`);
+    switch (result.interaction.type) {
+      case "input_request":
+        lines.push(...formatInputRequest(result.interaction));
+        break;
+      case "confirm_request":
+        lines.push(...formatConfirmRequest(result.interaction, result.runUrl));
+        break;
+      default:
+        assertNever(result.interaction);
     }
-
-    lines.push("");
-    lines.push("Use relay_respond to continue this workflow.");
   }
 
   return lines.join("\n");

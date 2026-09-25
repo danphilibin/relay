@@ -15,6 +15,7 @@ import {
   WorkflowNotFoundError,
   RunNotFoundError,
   WorkflowStreamInterruptedError,
+  BrowserApprovalRequiredError,
 } from "./workflow-api";
 import { RelayMcpAgent } from "./cf-mcp-agent";
 import { getExecutorStub } from "./cf-executor";
@@ -198,6 +199,9 @@ async function handleRequest(req: Request, env: Env): Promise<Response> {
     } catch (e) {
       if (e instanceof RunNotFoundError) {
         return Response.json({ error: e.message }, { status: 404 });
+      }
+      if (e instanceof BrowserApprovalRequiredError) {
+        return Response.json({ error: e.message }, { status: 403 });
       }
       if (e instanceof WorkflowStreamInterruptedError) {
         return Response.json({ error: "Stream interrupted" }, { status: 400 });

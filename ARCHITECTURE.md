@@ -180,10 +180,10 @@ The handler context (`RelayContext`) passed to every workflow:
 
 ### Call-response API (agents)
 
-| Method | Path                   | Action                                                  |
-| ------ | ---------------------- | ------------------------------------------------------- |
-| `POST` | `/api/run`             | Starts a workflow, blocks until first interaction point |
-| `POST` | `/api/run/:id/respond` | Submits a response, blocks until next interaction point |
+| Method | Path                   | Action                                                                                                                               |
+| ------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST` | `/api/run`             | Starts a workflow, blocks until first interaction point                                                                              |
+| `POST` | `/api/run/:id/respond` | Submits an input response, blocks until next interaction point. Rejects confirm events (403) — approvals must be made in the browser |
 
 Both return a `CallResponseResult`:
 
