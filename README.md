@@ -1,12 +1,10 @@
 # Relay
 
-Relay is an internal tools framework concept that pairs [Cloudflare Workflows](https://developers.cloudflare.com/workflows/) with [Durable Objects](https://developers.cloudflare.com/durable-objects/) to enable durable, interactive backend functions that pause for input, show progress, and stream UI instructions to browsers and agents.
+Relay is a conceptual framework for building interactive, durable, and scalable backend functions that pause for input, show progress, and stream UI instructions to browsers and agents. It's built on top of [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/) and [Cloudflare Workers](https://developers.cloudflare.com/workers/) and is a spiritual successor to [Interval](https://docs.intervalkit.com/).
 
-_A spiritual successor to [Interval](https://docs.intervalkit.com/)_
+**⭐ Live demo: [relay-demo.philib.in](https://relay-demo.philib.in)** — run the example workflows in your browser, or connect an agent to them over MCP.
 
-**Live demo: [relay-demo.philib.in](https://relay-demo.philib.in)** — run the example workflows in your browser, or connect an agent to them over MCP.
-
-## Local development
+## Run locally
 
 ```bash
 pnpm install
@@ -133,9 +131,4 @@ createWorkflow({
 });
 ```
 
-Field builders are awaitable on their own and composable in groups. For
-upfront workflow input, use `field.*` in `createWorkflow({ input })`. Relay
-still compiles those builders down to the same schema-driven protocol sent to
-the browser, so the frontend remains workflow-agnostic.
-
-Each workflow instance gets a Durable Object (keyed by instance ID) that supplies a persistent message buffer. The `RelayWorkflow` entrypoint wraps `step.do()` and `step.waitForEvent()` under the hood — `input()` sends an input request message, then waits for an event with the user's response. Messages are durably stored and streamed to clients via NDJSON, so the stream survives page reloads.
+Each workflow instance gets a Durable Object (keyed by instance ID) that supplies a persistent message buffer. The `RelayWorkflow` entrypoint wraps `step.do()` and `step.waitForEvent()` under the hood — `input()` sends an input request message, then waits for an event with the user's response. Messages are durably stored and streamed to clients via NDJSON, so the stream survives page reloads. When running a workflow, click the icon in the bottom-right to see the raw message stream.
