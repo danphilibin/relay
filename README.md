@@ -131,4 +131,68 @@ createWorkflow({
 });
 ```
 
-Each workflow instance gets a Durable Object (keyed by instance ID) that supplies a persistent message buffer. The `RelayWorkflow` entrypoint wraps `step.do()` and `step.waitForEvent()` under the hood — `input()` sends an input request message, then waits for an event with the user's response. Messages are durably stored and streamed to clients via NDJSON, so the stream survives page reloads. When running a workflow, click the icon in the bottom-right to see the raw message stream.
+### Architecture
+
+Every workflow run gets its own `RelayExecutor` [Durable Object](https://developers.cloudflare.com/durable-objects/), which runs the handler and stores every message the run produces. Browsers and agents are two different clients of that same object:
+
+```mermaid
+flowchart LR
+    subgraph Clients
+        Browser["Browser<br/>(React UI)"]
+        Agent["Agent<br/>(Claude, etc.)"]
+    end
+
+    subgraph Web["Web app (relay-web)"]
+        Proxy["/worker/** proxy"]
+        WebMcp["/mcp proxy"]
+    end
+
+    subgraph Worker["Worker (relay-tools)"]
+        Http["httpHandler"]
+        McpAgent["RelayMcpAgent"]
+        Exec[("RelayExecutor DO<br/>one per run")]
+    end
+
+    Browser -- "HTTP + live stream" --> Proxy --> Http
+    Agent -- "MCP" --> WebMcp --> McpAgent
+    Http -- "stream + events" --> Exec
+    McpAgent -- "blocking calls" --> Exec
+```
+
+- **Browsers** open an NDJSON stream of the run's messages and post response over HTTP whenever the workflow asks for input.
+- **Agents** call MCP tools that block until the workflow needs input or finishes, then answer with `relay_respond`.
+
+### Pausing for input
+
+When a workflow calls `input()`, it suspends: execution stops and nothing waits in memory until someone answers. When the answer arrives, the workflow resumes and `input()` returns the answer as if it had been waiting the whole time. Under the hood, resuming works by replay. Every primitive (`output`, `input`, `loading`, `confirm`) saves its result in the Durable Object, so the handler runs again from the top, skips past completed steps using their saved results, and continues from the `input()`.
+
+> [!NOTE]
+> This is essentially a small re-implementation of [Cloudflare Workflows](https://developers.cloudflare.com/workflows/) inside a Durable Object, with the same `step.do()` / `step.waitForEvent()` / `step.sleep()` model. Relay originally ran on Workflows, but each event took several seconds (typically 3–8s) before the workflow started running again — too slow for an interactive UI. The Durable Object executor wakes up in milliseconds.
+
+```mermaid
+sequenceDiagram
+    participant C as Browser
+    participant DO as RelayExecutor DO
+    participant H as Workflow handler
+
+    C->>DO: Start run
+    DO->>H: Run handler
+    H->>DO: input("What is your name?")
+    DO-->>C: input_request (streamed)
+    H--xDO: No answer yet — suspend
+    Note over DO: Run is parked until an answer arrives
+
+    C->>DO: Submit "Ada"
+    DO-->>C: input_received (streamed)
+    DO->>H: Replay handler from the top
+    Note over H: Earlier steps return saved results
+    H->>DO: input(...) resolves to "Ada"
+    H->>DO: output.markdown("Thanks Ada!")
+    DO-->>C: output, workflow_complete (streamed)
+```
+
+Because the handler is replayed, it must be deterministic: the same steps must run in the same order every time.
+
+Messages are saved in the Durable Object, and connecting to the stream replays the full history, so reloading the page picks up exactly where the run left off. When running a workflow, click the icon in the bottom-right to see the raw message stream.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full picture.
