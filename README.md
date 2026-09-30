@@ -34,6 +34,9 @@ createWorkflow({
 });
 ```
 
+<img width="800" height="539" alt="relay-demo" src="https://github.com/user-attachments/assets/107b5556-0480-4e9d-87e1-93f8fdb53664" />
+
+
 On startup, the SDK sends your workflow registry to the hosted Relay app where you can trigger any workflow from the browser. Input and output instructions are transmitted as JSON, and each step is written to a persistent per-run JSON stream so you get an audit trail of the entire workflow run.
 
 But wait, there's more:
