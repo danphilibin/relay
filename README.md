@@ -1,8 +1,46 @@
 # Relay
 
-Relay is a conceptual framework for building interactive, durable, and scalable backend functions that pause for input, show progress, and stream UI instructions to browsers and agents. It's built on top of [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/) and [Cloudflare Workers](https://developers.cloudflare.com/workers/) and is a spiritual successor to [Interval](https://docs.intervalkit.com/).
+Relay is a conceptual framework for building interactive backend functions that pause for input, show progress, and stream UI instructions to browsers and agents. It's built on top of [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/) and [Cloudflare Workers](https://developers.cloudflare.com/workers/) and is a spiritual successor to [Interval](https://docs.intervalkit.com/).
 
 **⭐ Live demo: [relay-demo.philib.in](https://relay-demo.philib.in)** — run the example workflows in your browser, or connect an agent to them over MCP.
+
+## How it works
+
+Relay workflows are like CLI scripts: they're mostly business logic with inputs and outputs sprinkled in. They live in your codebase and you deploy them to your own infra.
+
+Workflows are defined with `createWorkflow()`. The handler is a durable function that exposes input and output helpers. The input methods are effectively a `step.do()` + `step.waitForEvent()`; the function suspends when they're called and resumes when input is received.
+
+```ts
+// src/workflows/newsletter-signup.ts
+import { createWorkflow } from "@relay-tools/sdk";
+
+createWorkflow({
+  name: "Newsletter Signup",
+  handler: async ({ input, output, loading }) => {
+    const name = await input.text("What is your name?");
+
+    const { email, subscribe } = await input.group("More info", {
+      email: input.text("Email"),
+      subscribe: input.checkbox("Subscribe?"),
+    });
+
+    await loading("Processing...", async ({ complete }) => {
+      // do async work
+      complete("Done!");
+    });
+
+    await output.markdown(`Thanks ${name}!`);
+  },
+});
+```
+
+On startup, the SDK sends your workflow registry to the hosted Relay app where you can trigger any workflow from the browser. Input and output instructions are transmitted as JSON, and each step is written to a persistent per-run JSON stream so you get an audit trail of the entire workflow run.
+
+But wait, there's more:
+
+- Workflows can [define an `input` schema](./apps/examples/src/workflows/newsletter-signup.ts). You can trigger workflows with the input prefilled, or it will ask for input on the first step if not provided.
+- Workflows can [register named loaders](./apps/examples/src/workflows/tables.ts) that can supply large amounts of data to tables and charts.
+- Workflows can be [exposed as MCP tools](./apps/examples/src/workflows/process-refund.ts) so they can be used by agents. Instead of humans entering input in the browser, agents supply input via MCP.
 
 ## Run locally
 
@@ -104,34 +142,7 @@ This starts a local MCP server that connects to `http://localhost:8787` by defau
 claude mcp add relay-tools -e RELAY_WORKER_URL=https://relay-tools.your-subdomain.workers.dev -- npx tsx mcp/server.ts
 ```
 
-## How it works
-
-Workflows are defined with `createWorkflow()`. The handler receives a context with `input()`, `output()`, `loading()`, and `confirm()` helpers:
-
-```ts
-import { createWorkflow } from "@relay-tools/sdk";
-
-createWorkflow({
-  name: "Newsletter Signup",
-  handler: async ({ input, output, loading }) => {
-    const name = await input.text("What is your name?");
-
-    const { email, subscribe } = await input.group("More info", {
-      email: input.text("Email"),
-      subscribe: input.checkbox("Subscribe?"),
-    });
-
-    await loading("Processing...", async ({ complete }) => {
-      // do async work
-      complete("Done!");
-    });
-
-    await output.markdown(`Thanks ${name}!`);
-  },
-});
-```
-
-### Architecture
+## Architecture
 
 Every workflow run gets its own `RelayExecutor` [Durable Object](https://developers.cloudflare.com/durable-objects/), which runs the handler and stores every message the run produces. Browsers and agents are two different clients of that same object:
 
